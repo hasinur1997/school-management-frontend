@@ -5,6 +5,7 @@ import "@workspace/ui/globals.css"
 import { cn } from "@workspace/ui/lib/utils"
 import { AccentProvider } from "@/components/accent-provider"
 import { ErrorBoundary } from "@/components/error-state"
+import { QueryProvider } from "@/components/query-provider"
 import { RouteProgress } from "@/components/route-progress"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -44,9 +45,11 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AccentProvider>
-            <RouteProgress />
-            <ErrorBoundary>{children}</ErrorBoundary>
-            <Toaster />
+            <QueryProvider>
+              <RouteProgress />
+              <ErrorBoundary>{children}</ErrorBoundary>
+              <Toaster />
+            </QueryProvider>
           </AccentProvider>
         </ThemeProvider>
       </body>

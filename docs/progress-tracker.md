@@ -10,7 +10,7 @@ This frontend consumes the Laravel REST API documented in `docs/api/*.md` and `d
 
 ## Current Goal
 
-- Task 1.3 (`tasks/task-1.3-api-client.md`): API client (Axios + envelope + errors) + TanStack Query + types.
+- Task 1.4 (`tasks/task-1.4-auth.md`): Auth — login, httpOnly-cookie session, permissions context, route guard, change-password.
 
 ## How To Work (per session)
 
@@ -26,7 +26,7 @@ Each feature-spec (`feature-specs/NN-*.md`) is the module overview; the `tasks/*
 ### Phase 1 — Foundation — `feature-specs/01..05`
 - [x] [1.1](tasks/task-1.1-design-system.md) — Design system: tokens, two-axis themes, fonts, switcher
 - [x] [1.2](tasks/task-1.2-ui-primitives-state.md) — shadcn primitives + shared state/feedback components
-- [ ] [1.3](tasks/task-1.3-api-client.md) — API client (Axios + envelope + errors) + TanStack Query + types
+- [x] [1.3](tasks/task-1.3-api-client.md) — API client (Axios + envelope + errors) + TanStack Query + types
 - [ ] [1.4](tasks/task-1.4-auth.md) — Auth: login, session cookie, permissions context, route guard, change-password
 - [ ] [1.5](tasks/task-1.5-app-shell.md) — App shell: sidebar + topbar + nav + user menu + branch switcher
 - [ ] [1.6](tasks/task-1.6-global-search.md) — Topbar global command search
@@ -74,6 +74,7 @@ Each feature-spec (`feature-specs/NN-*.md`) is the module overview; the `tasks/*
 
 - [1.1] Design system: Tailwind v4 tokens in `globals.css` (`@theme inline`, light `:root` + `.dark`), two-axis theming (color mode via `next-themes`, accent via `data-accent` on `<html>` with pre-paint script + `AccentProvider`), Geist sans/mono fonts with tabular figures, `cn()` util, and a mount-guarded `ThemeSwitcher` dropdown. `npm run build` passes.
 - [1.2] shadcn primitives + shared state/feedback components: shadcn primitives in `packages/ui/src/components/*` (Button, Input, Select, Dialog, Sheet, Table, Badge, Card, Tabs, DropdownMenu, Form/Field/Label, Sonner, Skeleton, Pagination, Calendar, Popover, Avatar, Command, Separator, Textarea, InputGroup) — CLI output, never hand-edited. App-level state/feedback in `apps/web/components/*`: `StatusBadge` (domain→state-token tones), `Button loading` wrapper, `ErrorBoundary` + `ErrorPanel`, `EmptyState`, `RouteProgress`, and `Table/Card/CardGrid/Detail` skeletons. Toast helpers in `lib/toast.ts` (`toastSuccess`/`toastError`/`getErrorMessage`, prefer API `message` + fallback, stable `id` to avoid stacking). Reusable `app/loading.tsx` + `app/error.tsx` + `app/global-error.tsx`. Layout wires `RouteProgress`, `ErrorBoundary`, and Sonner `Toaster`. `npm run build` + `lint` pass.
+- [1.3] API client + server state: shared Axios instance in `lib/api/client.ts` (base URL from `NEXT_PUBLIC_API_BASE_URL`, `Accept: application/json`, request interceptor attaches `Authorization: Bearer {token}`, response interceptor unwraps the `{ success, message, data, meta? }` envelope and normalizes errors). Typed errors in `lib/api/errors.ts` (`ApiError`/`ApiValidationError` field→messages/`ApiForbiddenError`/`ApiNotFoundError`/`ApiNetworkError` retryable, + `is*` guards). `lib/api/session.ts` is the in-memory token bridge for auth 1.4 (`setApiToken`/`getApiToken`/`clearApiToken`/`setUnauthorizedHandler`); `401` calls `handleUnauthorized` → clears token + redirects to `/login` (default until auth overrides). `lib/api/query-keys.ts` documents+builds the `[module, action, params]` convention (`params` includes `branch` for super admin). `lib/api/query-client.ts` factory with defaults (no refetch-on-focus, retry only network/5xx once, `STALE_TIME` REFERENCE/STANDARD/SHORT). `components/query-provider.tsx` mounts `QueryClientProvider` (one client per session) wired into root layout. Envelope/`meta` types in `types/api.ts`. Reference hook `hooks/example-query.ts` proves the unwrap+meta round-trip. Axios + @tanstack/react-query added to `apps/web`. `npm run build` + `tsc` + `eslint` clean.
 
 ## In Progress
 
