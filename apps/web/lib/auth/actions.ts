@@ -21,6 +21,21 @@ export interface LoginInput {
   password: string
 }
 
+/**
+ * Rename API validation keys to the field names the form renders, so a `422`
+ * lands on the matching input (e.g. the API's `login` → the form's `email`).
+ */
+function remapFieldErrors(
+  errors: ValidationErrors,
+  map: Record<string, string>
+): ValidationErrors {
+  const out: ValidationErrors = {}
+  for (const [key, messages] of Object.entries(errors)) {
+    out[map[key] ?? key] = messages
+  }
+  return out
+}
+
 export type LoginActionResult =
   | { ok: true }
   | { ok: false; message: string; errors?: ValidationErrors }
@@ -36,11 +51,22 @@ export async function loginAction(
 ): Promise<LoginActionResult> {
   const result = await serverApiRequest<LoginResponse>("/auth/login", {
     method: "POST",
-    body: { email: input.email, password: input.password },
+    // The API takes a generic `login` identifier (email/username) plus a
+    // `device_name` to label the issued token — not `email`/`password`.
+    body: {
+      login: input.email,
+      password: input.password,
+      device_name: "web",
+    },
   })
 
   if (!result.ok) {
-    return { ok: false, message: result.message, errors: result.errors }
+    // The API validates the identifier as `login`; surface it on the email
+    // input the form actually renders.
+    const errors = result.errors
+      ? remapFieldErrors(result.errors, { login: "email" })
+      : undefined
+    return { ok: false, message: result.message, errors }
   }
 
   // Be tolerant of a `token` / `access_token` envelope key.

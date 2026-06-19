@@ -44,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       {
         label: "Dashboard",
-        href: "/dashboard",
+        href: "/",
         icon: LayoutDashboard,
         permission: "dashboard.view",
       },

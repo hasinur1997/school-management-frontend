@@ -17,6 +17,9 @@ import { NAV_GROUPS, type NavItem } from "@/components/app-shell/nav-items"
 
 /** A route is active when it matches exactly or is a parent of the current path. */
 function isActive(pathname: string, href: string): boolean {
+  // "/" is the dashboard root; it must match exactly so it doesn't light up as a
+  // parent of every other route.
+  if (href === "/") return pathname === "/"
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 

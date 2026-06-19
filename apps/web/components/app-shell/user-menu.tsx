@@ -20,6 +20,7 @@ import { Button } from "@workspace/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -65,16 +66,18 @@ export function UserMenu() {
           }
         />
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="flex flex-col gap-0.5">
-            <span className="truncate text-sm font-medium text-copy-primary">
-              {user.name}
-            </span>
-            {user.email ? (
-              <span className="truncate text-xs font-normal text-copy-muted">
-                {user.email}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="flex flex-col gap-0.5">
+              <span className="truncate text-sm font-medium text-copy-primary">
+                {user.name}
               </span>
-            ) : null}
-          </DropdownMenuLabel>
+              {user.email ? (
+                <span className="truncate text-xs font-normal text-copy-muted">
+                  {user.email}
+                </span>
+              ) : null}
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
 

@@ -17,7 +17,7 @@ export function Brand({
 }) {
   return (
     <Link
-      href="/dashboard"
+      href="/"
       className={cn("flex items-center gap-2 font-semibold text-copy-primary", className)}
     >
       <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand text-white">

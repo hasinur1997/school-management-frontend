@@ -1,7 +1,8 @@
 "use client"
 
 /**
- * Dashboard — the role-aware landing screen (task 1.7). It renders summary
+ * Dashboard — the role-aware landing screen (task 1.7) and the authenticated
+ * root route (`/`). It renders summary
  * cards from `GET /dashboard` and nothing else: only the figures the API sends
  * for this user/branch, formatted client-side but never computed (see
  * `DashboardSummary`). For a super admin, the figures reflect the active branch

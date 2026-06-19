@@ -15,6 +15,7 @@ import { Button } from "@workspace/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -67,7 +68,9 @@ export function BranchSwitcher() {
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Branch</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Branch</DropdownMenuLabel>
+        </DropdownMenuGroup>
 
         <BranchOption
           selected={activeBranchId === null}

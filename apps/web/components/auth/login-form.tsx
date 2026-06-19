@@ -56,7 +56,7 @@ export function LoginForm() {
     const result = await loginAction(values)
 
     if (result.ok) {
-      router.replace("/dashboard")
+      router.replace("/")
       router.refresh()
       return
     }
