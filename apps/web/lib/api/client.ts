@@ -23,11 +23,12 @@ import {
   ApiNotFoundError,
   ApiValidationError,
 } from "./errors"
+import { getActiveBranchId } from "./branch"
 import { getApiToken, handleUnauthorized } from "./session"
 
 /** Base URL for the Laravel API; overridable per environment. */
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1"
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://app-api.test/api/v1"
 
 const FALLBACK_MESSAGE = "Something went wrong. Please try again."
 
@@ -39,12 +40,20 @@ export const http: AxiosInstance = axios.create({
   },
 })
 
-// Request: attach the bearer token from the session, when present.
+// Request: attach the bearer token from the session, when present, plus the
+// active `branch_id` for super-admin sessions (the branch bridge stays `null`
+// for everyone else, so non-super-admin users never send it — see `branch.ts`).
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getApiToken()
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`)
   }
+
+  const branchId = getActiveBranchId()
+  if (branchId !== null) {
+    config.params = { ...config.params, branch_id: branchId }
+  }
+
   return config
 })
 

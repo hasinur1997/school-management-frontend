@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 1 — Foundation |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.1, 1.4 |
 | Blocks | 1.6, 1.7, all feature screens |
 | Feature spec | `feature-specs/04-app-shell.md` |
@@ -26,8 +26,8 @@ The authenticated dashboard layout: fixed sidebar + fixed topbar + scrollable co
 - Only super admin sends branch context.
 
 ## Check When Done
-- [ ] User sees only permitted nav items; sidebar/topbar fixed while content scrolls.
-- [ ] Super admin can switch branch / consolidated and it propagates to queries; non-super-admin sees no switcher and sends no `branch_id`.
-- [ ] User menu (Profile, Settings, Change password, Logout) works.
-- [ ] Drawer + responsive behavior verified at 360 / 768 / ≥1280px.
-- [ ] `npm run build` passes.
+- [x] User sees only permitted nav items; sidebar/topbar fixed while content scrolls.
+- [x] Super admin can switch branch / consolidated and it propagates to queries; non-super-admin sees no switcher and sends no `branch_id`.
+- [x] User menu (Profile, Settings, Change password, Logout) works.
+- [x] Drawer + responsive behavior verified at 360 / 768 / ≥1280px.
+- [x] `npm run build` passes.

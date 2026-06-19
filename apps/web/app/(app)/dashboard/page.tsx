@@ -1,13 +1,11 @@
 "use client"
 
 /**
- * Placeholder dashboard. The real dashboard (1.7) and app shell (1.5) replace
- * this; for now it proves the auth round-trip end to end: the permission
- * context is populated, `<Can>` gates content, change-password works, and
- * logout clears the session. Kept intentionally minimal.
+ * Placeholder dashboard. The real dashboard (1.7) replaces this; it now renders
+ * inside the app shell (1.5), which owns the topbar, navigation, user menu, and
+ * branch switcher. Kept minimal: it proves the auth round-trip — the permission
+ * context is populated and `<Can>` gates content.
  */
-
-import * as React from "react"
 
 import {
   Card,
@@ -16,34 +14,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
-import { Button } from "@/components/button"
 import { useAuth } from "@/components/auth/auth-provider"
 import { Can } from "@/components/auth/can"
-import { ChangePasswordDialog } from "@/components/auth/change-password-dialog"
-import { LogoutButton } from "@/components/auth/logout-button"
 
 export default function DashboardPage() {
   const { user, permissions, roles } = useAuth()
-  const [changeOpen, setChangeOpen] = React.useState(false)
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold text-copy-primary">
-            Welcome, {user.name}
-          </h1>
-          <p className="truncate text-sm text-copy-muted">
-            {user.email ?? "Signed in"}
-            {roles.length ? ` · ${roles.join(", ")}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setChangeOpen(true)}>
-            Change password
-          </Button>
-          <LogoutButton />
-        </div>
+    <div className="flex flex-col gap-6">
+      <header className="min-w-0">
+        <h1 className="truncate text-xl font-semibold text-copy-primary">
+          Welcome, {user.name}
+        </h1>
+        <p className="truncate text-sm text-copy-muted">
+          {user.email ?? "Signed in"}
+          {roles.length ? ` · ${roles.join(", ")}` : ""}
+        </p>
       </header>
 
       <Card className="rounded-xl">
@@ -85,8 +71,6 @@ export default function DashboardPage() {
           Dashboard widgets will appear here (task 1.7).
         </p>
       </Can>
-
-      <ChangePasswordDialog open={changeOpen} onOpenChange={setChangeOpen} />
     </div>
   )
 }

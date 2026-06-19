@@ -38,6 +38,13 @@ export interface AuthContextValue {
   permissions: string[]
   /** Role names (display only — never gate on these). */
   roles: string[]
+  /**
+   * Super admin = a user with no owning branch (`architecture-context.md`:
+   * every non-super-admin belongs to exactly one branch; super admin switches
+   * context). Derived from the API's branch data, not a role name — only super
+   * admin sees the branch switcher and sends `branch_id`.
+   */
+  isSuperAdmin: boolean
   /** Whether the user holds the given permission. */
   hasPermission: (permission: string) => boolean
   /** Refetch `GET /auth/me` (e.g. after a profile change). */
@@ -101,6 +108,7 @@ export function AuthProvider({
       user,
       permissions,
       roles: user.roles ?? [],
+      isSuperAdmin: user.branch_id == null && user.branch == null,
       hasPermission: (permission: string) => permissionSet.has(permission),
       refresh: () => query.refetch(),
     }

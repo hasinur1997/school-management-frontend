@@ -28,6 +28,11 @@ export {
   setApiToken,
   setUnauthorizedHandler,
 } from "./session"
+export {
+  clearActiveBranchId,
+  getActiveBranchId,
+  setActiveBranchId,
+} from "./branch"
 export { queryKey } from "./query-keys"
 export type {
   QueryAction,
