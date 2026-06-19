@@ -15,7 +15,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { Brand } from "@/components/app-shell/brand"
 import { BranchSwitcher } from "@/components/app-shell/branch-switcher"
-import { SearchPlaceholder } from "@/components/app-shell/search-placeholder"
+import { GlobalSearch } from "@/components/app-shell/global-search"
 import { UserMenu } from "@/components/app-shell/user-menu"
 
 export function Topbar({
@@ -46,9 +46,9 @@ export function Topbar({
         <Brand />
       </div>
 
-      {/* Center: global search slot. */}
+      {/* Center: global command search. */}
       <div className="flex flex-1 justify-center">
-        <SearchPlaceholder />
+        <GlobalSearch />
       </div>
 
       {/* Right: theme, branch, notifications, user. */}

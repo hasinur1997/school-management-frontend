@@ -1,0 +1,21 @@
+"use client"
+
+/**
+ * `useDebouncedValue` — returns a copy of `value` that only updates after it has
+ * stayed unchanged for `delay` ms. Used by the global search (task 1.6) to keep
+ * keystrokes from firing a request per character; the debounced value is what
+ * feeds the query hooks.
+ */
+
+import * as React from "react"
+
+export function useDebouncedValue<T>(value: T, delay = 250): T {
+  const [debounced, setDebounced] = React.useState(value)
+
+  React.useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(id)
+  }, [value, delay])
+
+  return debounced
+}

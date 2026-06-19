@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 1 — Foundation |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.5 |
 | Blocks | — |
 | Feature spec | `feature-specs/04-app-shell.md` |
@@ -25,7 +25,7 @@ The topbar center **command-palette** search across modules and entities, permis
 - Permission-filter every result; never surface a record the user lacks access to (API stays authoritative on select).
 
 ## Check When Done
-- [ ] `Cmd/Ctrl+K` opens search; modules + entities returned and navigate on select.
-- [ ] Results are permission-filtered; loading + empty states present.
-- [ ] Collapses to icon `< md`.
-- [ ] `npm run build` passes.
+- [x] `Cmd/Ctrl+K` opens search; modules + entities returned and navigate on select.
+- [x] Results are permission-filtered; loading + empty states present.
+- [x] Collapses to icon `< md`.
+- [x] `npm run build` passes.
