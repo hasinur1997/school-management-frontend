@@ -104,12 +104,19 @@ export function AuthProvider({
     if (!user) return null
     const permissions = user.permissions ?? []
     const permissionSet = new Set(permissions)
+    // Super admin = a user with no owning branch (`architecture-context.md`).
+    // The backend grants them implicit all-access (Laravel `Gate::before`), so
+    // `/auth/me` may return an empty `permissions` list; mirror that here by
+    // bypassing the permission gate, otherwise every gated surface (sidebar,
+    // `<Can>`, route guards) would hide for a super admin.
+    const isSuperAdmin = user.branch_id == null && user.branch == null
     return {
       user,
       permissions,
       roles: user.roles ?? [],
-      isSuperAdmin: user.branch_id == null && user.branch == null,
-      hasPermission: (permission: string) => permissionSet.has(permission),
+      isSuperAdmin,
+      hasPermission: (permission: string) =>
+        isSuperAdmin || permissionSet.has(permission),
       refresh: () => query.refetch(),
     }
     // `query.refetch` is stable; depend on the resolved user only.

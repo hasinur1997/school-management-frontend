@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Academic & People |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.1, 2.4 (teacher select source) |
 | Blocks | — |
 | Feature spec | `feature-specs/06-academic-structure.md` |
@@ -24,7 +24,7 @@ Class-teacher / subject-teacher assignment management, and branch management (su
 - Branch CRUD is super-admin only; assignments require their documented permission. Gate with `<Can>`.
 
 ## Check When Done
-- [ ] Assignments list/filter/create/edit/delete works.
-- [ ] Branches CRUD works for super admin and is hidden for others.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Assignments list/filter/create/edit/delete works.
+- [x] Branches CRUD works for super admin and is hidden for others.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

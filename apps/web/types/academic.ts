@@ -42,3 +42,24 @@ export interface Subject {
   code?: string | null
   class_id?: number
 }
+
+/**
+ * `GET /teacher-assignments` — a teacher assigned to a class (task 2.3). Covers
+ * both class-teacher (no subject) and subject-teacher (with a subject) records.
+ * Foreign keys identify the relation; the optional `*_name` fields are the
+ * expanded labels the list endpoint typically returns and are read defensively
+ * (falling back to `#id` when absent — see `assignments-manager.tsx`).
+ */
+export interface TeacherAssignment {
+  id: number
+  teacher_id: number
+  class_id: number
+  section_id?: number | null
+  subject_id?: number | null
+  session_id?: number | null
+  teacher_name?: string | null
+  class_name?: string | null
+  section_name?: string | null
+  subject_name?: string | null
+  session_name?: string | null
+}

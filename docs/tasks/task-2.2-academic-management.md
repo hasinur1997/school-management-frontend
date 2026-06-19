@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Academic & People |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.1 |
 | Blocks | — |
 | Feature spec | `feature-specs/06-academic-structure.md` |
@@ -27,7 +27,7 @@ Management screens (settings area) to list and (with permission) create/edit/del
 - Reads open to all authenticated users; writes require the documented permissions — gate buttons/actions with `<Can>`.
 
 ## Check When Done
-- [ ] Sessions/classes/sections/subjects can be listed and (with permission) created/edited/deleted.
-- [ ] Writes invalidate the shared selector caches.
-- [ ] Loading/empty/error states present; gating correct.
-- [ ] `npm run build` passes.
+- [x] Sessions/classes/sections/subjects can be listed and (with permission) created/edited/deleted.
+- [x] Writes invalidate the shared selector caches.
+- [x] Loading/empty/error states present; gating correct.
+- [x] `npm run build` passes.
