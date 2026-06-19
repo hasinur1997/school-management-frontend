@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 1 — Foundation |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.2, 1.3 |
 | Blocks | 1.5, every authenticated screen |
 | Feature spec | `feature-specs/03-auth.md` |
@@ -31,8 +31,8 @@ Token auth end to end: login, httpOnly-cookie session, current-user/permissions 
 - Gate on permissions, never role names. API `401/403/404` is authoritative.
 
 ## Check When Done
-- [ ] User can log in → dashboard → log out.
-- [ ] `GET /auth/me` populates permissions; `<Can>` hides/shows correctly.
-- [ ] Unauthenticated access to a protected route redirects to login.
-- [ ] Change-password works and surfaces validation errors.
-- [ ] `npm run build` passes.
+- [x] User can log in → dashboard → log out.
+- [x] `GET /auth/me` populates permissions; `<Can>` hides/shows correctly.
+- [x] Unauthenticated access to a protected route redirects to login.
+- [x] Change-password works and surfaces validation errors.
+- [x] `npm run build` passes.
