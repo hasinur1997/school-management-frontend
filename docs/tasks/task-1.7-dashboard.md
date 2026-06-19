@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 1 — Foundation |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.5 |
 | Blocks | — |
 | Feature spec | `feature-specs/05-dashboard.md` |
@@ -25,7 +25,7 @@ Role-aware landing screen rendering only the summary figures the API returns for
 - Skeleton loading; empty (no figures) and error states.
 
 ## Check When Done
-- [ ] Dashboard renders cards from `GET /dashboard`.
-- [ ] Super-admin branch/consolidated switch updates figures.
-- [ ] Loading / empty / error states present.
-- [ ] `npm run build` passes.
+- [x] Dashboard renders cards from `GET /dashboard`.
+- [x] Super-admin branch/consolidated switch updates figures.
+- [x] Loading / empty / error states present.
+- [x] `npm run build` passes.
