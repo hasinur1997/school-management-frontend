@@ -1,8 +1,11 @@
 import { Geist, Geist_Mono } from "next/font/google"
 
+import { Toaster } from "@workspace/ui/components/sonner"
 import "@workspace/ui/globals.css"
 import { cn } from "@workspace/ui/lib/utils"
 import { AccentProvider } from "@/components/accent-provider"
+import { ErrorBoundary } from "@/components/error-state"
+import { RouteProgress } from "@/components/route-progress"
 import { ThemeProvider } from "@/components/theme-provider"
 
 const fontSans = Geist({
@@ -40,7 +43,11 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <AccentProvider>{children}</AccentProvider>
+          <AccentProvider>
+            <RouteProgress />
+            <ErrorBoundary>{children}</ErrorBoundary>
+            <Toaster />
+          </AccentProvider>
         </ThemeProvider>
       </body>
     </html>

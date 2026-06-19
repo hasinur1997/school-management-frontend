@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 1 — Foundation |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | — |
 | Blocks | 1.2 and every screen |
 | Feature spec | `feature-specs/01-design-system.md` |
@@ -28,8 +28,8 @@ Stand up the visual foundation: Tailwind v4, all design tokens, the two-axis the
 - Mobile-first; touch targets ≥ 44px; no horizontal overflow.
 
 ## Check When Done
-- [ ] Tokens defined; light + dark both resolve.
-- [ ] Color mode switches and persists; all six accents apply via `data-accent` in both modes and persist.
-- [ ] Theme switcher renders and changes mode + accent without hydration mismatch.
-- [ ] Renders cleanly at 360 / 768 / ≥1280px, no overflow.
-- [ ] `npm run build` passes.
+- [x] Tokens defined; light + dark both resolve.
+- [x] Color mode switches and persists; all six accents apply via `data-accent` in both modes and persist.
+- [x] Theme switcher renders and changes mode + accent without hydration mismatch.
+- [x] Renders cleanly at 360 / 768 / ≥1280px, no overflow.
+- [x] `npm run build` passes.

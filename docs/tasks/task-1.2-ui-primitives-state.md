@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 1 — Foundation |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.1 |
 | Blocks | every screen |
 | Feature spec | `feature-specs/01-design-system.md` |
@@ -26,7 +26,7 @@ Install the shadcn primitive set and the reusable feedback/resilience components
 - Project styling/layout/logic lives in app-level components, never in `components/ui/*`.
 
 ## Check When Done
-- [ ] All listed primitives installed and render with project tokens.
-- [ ] Status badge helper covers all four state mappings.
-- [ ] ErrorBoundary/error panel, skeletons, `<Button loading>`, EmptyState, route-progress, and success/error toast helpers exist and render.
-- [ ] `npm run build` passes.
+- [x] All listed primitives installed and render with project tokens.
+- [x] Status badge helper covers all four state mappings.
+- [x] ErrorBoundary/error panel, skeletons, `<Button loading>`, EmptyState, route-progress, and success/error toast helpers exist and render.
+- [x] `npm run build` passes.
