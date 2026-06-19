@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Academic & People |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.3, 1.5 |
 | Blocks | 2.2, attendance, marks, promotion, fees, reports |
 | Feature spec | `feature-specs/06-academic-structure.md` |
@@ -23,7 +23,7 @@ The shared, cached dropdown sources reused across every module that filters by a
 - Selects are controlled, support placeholder/loading/empty/disabled states, and surface `branch_id` automatically for super admin only.
 
 ## Check When Done
-- [ ] All four selectors fetch, cache, and render loading/empty states.
-- [ ] Section/Subject selects react to the chosen class.
-- [ ] Hooks reused (no duplicate fetch logic) by later modules.
-- [ ] `npm run build` passes.
+- [x] All four selectors fetch, cache, and render loading/empty states.
+- [x] Section/Subject selects react to the chosen class.
+- [x] Hooks reused (no duplicate fetch logic) by later modules.
+- [x] `npm run build` passes.
