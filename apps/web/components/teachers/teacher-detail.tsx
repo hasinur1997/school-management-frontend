@@ -38,6 +38,7 @@ import {
   useResendTeacherCredentials,
 } from "@/hooks/teachers"
 import {
+  assignmentSummaryLabels,
   isTeacherActive,
   teacherDisplayName,
   teacherInitials,
@@ -222,28 +223,31 @@ export function TeacherDetail({ id }: { id: number }) {
             />
           ) : (
             <ul className="flex flex-col gap-2">
-              {assignments.map((a, i) => (
+              {assignments.map((a, i) => {
+                const labels = assignmentSummaryLabels(a)
+                return (
                 <li
                   key={a.id ?? i}
                   className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-surface-border bg-base/40 px-3 py-2 text-sm"
                 >
                   <span className="font-medium text-copy-primary">
-                    {a.class_name || `Class #${a.class_id}`}
+                    {labels.class}
                   </span>
-                  {a.section_name ? (
-                    <span className="text-copy-muted">· {a.section_name}</span>
+                  {labels.section ? (
+                    <span className="text-copy-muted">· {labels.section}</span>
                   ) : null}
-                  {a.subject_name ? (
+                  {labels.subject ? (
                     <StatusBadge
                       status="Subject"
                       tone="info"
-                      label={a.subject_name}
+                      label={labels.subject}
                     />
                   ) : (
                     <StatusBadge status="Class teacher" tone="neutral" />
                   )}
                 </li>
-              ))}
+                )
+              })}
             </ul>
           )}
         </section>

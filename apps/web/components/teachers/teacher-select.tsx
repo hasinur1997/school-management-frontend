@@ -29,8 +29,11 @@ export function TeacherSelect({
 }: TeacherSelectProps) {
   const { data, isLoading, isError } = useTeacherOptions()
 
+  // Coerce ids to numbers: the select's `value` is numeric, so a string id from
+  // the API would never match the selected teacher (breaking the edit form's
+  // pre-fill and the filter's selected label).
   const options = (data ?? []).map((teacher) => ({
-    value: teacher.id,
+    value: Number(teacher.id),
     label: teacher.full_name || teacher.name || `Teacher #${teacher.id}`,
   }))
 

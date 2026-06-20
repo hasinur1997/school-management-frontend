@@ -125,10 +125,12 @@ function toDefaults(
     address: teacher?.address ?? "",
     is_active: teacher ? isTeacherActive(teacher) : true,
     branch_id: teacher?.branch_id ?? defaultBranchId,
+    // Resolve ids defensively: the API may expand relations as nested objects
+    // (`class`/`section`/`subject`) rather than flat `*_id` fields.
     assignments: (teacher?.assignments ?? []).map((a) => ({
-      class_id: a.class_id,
-      section_id: a.section_id ?? null,
-      subject_id: a.subject_id ?? null,
+      class_id: a.class_id ?? a.class?.id ?? a.school_class?.id ?? 0,
+      section_id: a.section_id ?? a.section?.id ?? null,
+      subject_id: a.subject_id ?? a.subject?.id ?? null,
     })),
   }
 }

@@ -32,7 +32,7 @@ import {
   useTeacherAssignments,
   useDeleteTeacherAssignment,
 } from "@/hooks/academic"
-import type { TeacherAssignment } from "@/types/academic"
+import { assignmentLabels, type TeacherAssignment } from "@/types/academic"
 import { ASSIGNMENT_MANAGE } from "./permissions"
 import { DeleteDialog } from "./delete-dialog"
 import { RowActions } from "./row-actions"
@@ -41,10 +41,10 @@ import { AssignmentFormDialog } from "./assignment-form-dialog"
 const EMPTY = "—"
 
 function teacherLabel(a: TeacherAssignment) {
-  return a.teacher_name || `Teacher #${a.teacher_id}`
+  return assignmentLabels(a).teacher
 }
 function classLabel(a: TeacherAssignment) {
-  return a.class_name || `Class #${a.class_id}`
+  return assignmentLabels(a).class
 }
 
 export function AssignmentsManager() {
@@ -250,19 +250,21 @@ function AssignmentList({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assignments.map((assignment) => (
+            {assignments.map((assignment) => {
+              const labels = assignmentLabels(assignment)
+              return (
               <TableRow key={assignment.id}>
                 <TableCell className="font-medium text-copy-primary">
-                  {teacherLabel(assignment)}
+                  {labels.teacher}
                 </TableCell>
                 <TableCell className="text-copy-secondary">
-                  {classLabel(assignment)}
+                  {labels.class}
                 </TableCell>
                 <TableCell className="text-copy-secondary">
-                  {assignment.section_name || EMPTY}
+                  {labels.section || EMPTY}
                 </TableCell>
                 <TableCell className="text-copy-secondary">
-                  {assignment.subject_name || EMPTY}
+                  {labels.subject || EMPTY}
                 </TableCell>
                 <Can permission={ASSIGNMENT_MANAGE}>
                   <TableCell className="text-right">
@@ -274,26 +276,29 @@ function AssignmentList({
                   </TableCell>
                 </Can>
               </TableRow>
-            ))}
+              )
+            })}
           </TableBody>
         </Table>
       </div>
 
       {/* Card list < md */}
       <ul className="flex flex-col gap-3 md:hidden">
-        {assignments.map((assignment) => (
+        {assignments.map((assignment) => {
+          const labels = assignmentLabels(assignment)
+          return (
           <li
             key={assignment.id}
             className="flex items-start justify-between gap-3 rounded-xl border border-surface-border bg-surface p-4"
           >
             <div className="min-w-0 space-y-1">
               <p className="truncate font-medium text-copy-primary">
-                {teacherLabel(assignment)}
+                {labels.teacher}
               </p>
               <p className="truncate text-sm text-copy-muted">
-                {classLabel(assignment)}
-                {assignment.section_name ? ` · ${assignment.section_name}` : ""}
-                {assignment.subject_name ? ` · ${assignment.subject_name}` : ""}
+                {labels.class}
+                {labels.section ? ` · ${labels.section}` : ""}
+                {labels.subject ? ` · ${labels.subject}` : ""}
               </p>
             </div>
             <Can permission={ASSIGNMENT_MANAGE}>
@@ -304,7 +309,8 @@ function AssignmentList({
               />
             </Can>
           </li>
-        ))}
+          )
+        })}
       </ul>
     </>
   )

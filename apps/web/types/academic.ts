@@ -57,9 +57,41 @@ export interface TeacherAssignment {
   section_id?: number | null
   subject_id?: number | null
   session_id?: number | null
+  /** Flat expanded labels — present when the API resolves them inline. */
   teacher_name?: string | null
   class_name?: string | null
   section_name?: string | null
   subject_name?: string | null
   session_name?: string | null
+  /**
+   * Nested relations — the standard Laravel resource shape when the API expands
+   * the related models instead of (or alongside) the flat `*_name` labels. Read
+   * defensively via `assignmentLabel`; `class` may arrive under either key.
+   */
+  teacher?: { id: number; name?: string | null; full_name?: string | null } | null
+  class?: { id: number; name?: string | null } | null
+  school_class?: { id: number; name?: string | null } | null
+  section?: { id: number; name?: string | null } | null
+  subject?: { id: number; name?: string | null } | null
+  session?: { id: number; name?: string | null } | null
+}
+
+/**
+ * Resolve a teacher-assignment's display labels from whichever shape the API
+ * returns — flat `*_name` first, then the nested relation object, then a
+ * `#id` fallback (or `null` for the optional section/subject so the UI can show
+ * a dash). Keeps the list/table reads identical regardless of contract shape.
+ */
+export function assignmentLabels(a: TeacherAssignment) {
+  const teacher =
+    a.teacher_name ||
+    a.teacher?.full_name ||
+    a.teacher?.name ||
+    `Teacher #${a.teacher_id}`
+  const klass =
+    a.class_name || a.class?.name || a.school_class?.name || `Class #${a.class_id}`
+  const section = a.section_name || a.section?.name || null
+  const subject = a.subject_name || a.subject?.name || null
+  const session = a.session_name || a.session?.name || null
+  return { teacher, class: klass, section, subject, session }
 }

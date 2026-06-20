@@ -34,12 +34,40 @@ export interface NamedRef {
  */
 export interface TeacherAssignmentSummary {
   id?: number
-  class_id: number
+  class_id?: number | null
   section_id?: number | null
   subject_id?: number | null
+  /** Flat expanded labels — present when the API resolves them inline. */
   class_name?: string | null
   section_name?: string | null
   subject_name?: string | null
+  /**
+   * Nested relations — the standard Laravel resource shape when the API expands
+   * the related models instead of the flat `*_name` labels. Read defensively via
+   * `assignmentSummaryLabels`; `class` may arrive under either key.
+   */
+  class?: { id: number; name?: string | null } | null
+  school_class?: { id: number; name?: string | null } | null
+  section?: { id: number; name?: string | null } | null
+  subject?: { id: number; name?: string | null } | null
+}
+
+/**
+ * Resolve a profile assignment summary's display labels from whichever shape the
+ * API returns — flat `*_name` first, then the nested relation object, then a
+ * `#id` fallback for the class (or `null` for the optional section/subject so the
+ * UI can omit them). Mirrors `assignmentLabels` in `types/academic.ts`.
+ */
+export function assignmentSummaryLabels(a: TeacherAssignmentSummary) {
+  const classId = a.class_id ?? a.class?.id ?? a.school_class?.id
+  const klass =
+    a.class_name ||
+    a.class?.name ||
+    a.school_class?.name ||
+    (classId != null ? `Class #${classId}` : "Class")
+  const section = a.section_name || a.section?.name || null
+  const subject = a.subject_name || a.subject?.name || null
+  return { class: klass, section, subject }
 }
 
 /**

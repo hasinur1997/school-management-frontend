@@ -11,8 +11,9 @@ import { namedList, type Teacher } from "@/types/teacher"
 export function teacherClassNames(teacher: Teacher): string[] {
   const explicit = namedList(teacher.classes)
   if (explicit.length > 0) return unique(explicit)
+  // Read the label from the flat field or the nested relation object.
   const fromAssignments = (teacher.assignments ?? [])
-    .map((a) => a.class_name)
+    .map((a) => a.class_name || a.class?.name || a.school_class?.name)
     .filter((n): n is string => !!n)
   return unique(fromAssignments)
 }
@@ -22,7 +23,7 @@ export function teacherSubjectNames(teacher: Teacher): string[] {
   const explicit = namedList(teacher.subjects)
   if (explicit.length > 0) return unique(explicit)
   const fromAssignments = (teacher.assignments ?? [])
-    .map((a) => a.subject_name)
+    .map((a) => a.subject_name || a.subject?.name)
     .filter((n): n is string => !!n)
   return unique(fromAssignments)
 }

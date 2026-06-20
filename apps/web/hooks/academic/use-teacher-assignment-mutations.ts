@@ -18,6 +18,8 @@ import type { TeacherAssignment } from "@/types/academic"
 export interface TeacherAssignmentInput {
   teacher_id: number
   class_id: number
+  /** Required — assignments are scoped to an academic session. */
+  session_id: number
   /** Optional — a class-teacher assignment may have no section. */
   section_id?: number | null
   /** Optional — absent marks a class-teacher (vs subject-teacher) assignment. */

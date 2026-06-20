@@ -36,12 +36,18 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Button } from "@/components/button"
-import { ClassSelect, SectionSelect, SubjectSelect } from "@/components/academic"
+import {
+  ClassSelect,
+  SectionSelect,
+  SessionSelect,
+  SubjectSelect,
+} from "@/components/academic"
 import { TeacherSelect } from "@/components/teachers/teacher-select"
 import { isValidationError } from "@/lib/api"
 import { toastError, toastSuccess } from "@/lib/toast"
 import {
   useCreateTeacherAssignment,
+  useSessions,
   useUpdateTeacherAssignment,
   type TeacherAssignmentInput,
 } from "@/hooks/academic"
@@ -52,6 +58,7 @@ const schema = z
   .object({
     teacher_id: z.number().int().positive().nullable(),
     class_id: z.number().int().positive().nullable(),
+    session_id: z.number().int().positive().nullable(),
     section_id: z.number().int().positive().nullable(),
     subject_id: z.number().int().positive().nullable(),
   })
@@ -70,6 +77,13 @@ const schema = z
         message: "Select a class",
       })
     }
+    if (values.session_id == null) {
+      ctx.addIssue({
+        path: ["session_id"],
+        code: z.ZodIssueCode.custom,
+        message: "Select a session",
+      })
+    }
   })
 
 type AssignmentFormValues = z.infer<typeof schema>
@@ -77,6 +91,7 @@ type AssignmentFormValues = z.infer<typeof schema>
 const FIELD_NAMES = [
   "teacher_id",
   "class_id",
+  "session_id",
   "section_id",
   "subject_id",
 ] as const
@@ -96,28 +111,36 @@ export function AssignmentFormDialog({
   const isEdit = assignment != null
   const createMutation = useCreateTeacherAssignment()
   const updateMutation = useUpdateTeacherAssignment()
+  const { data: sessions } = useSessions()
 
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       teacher_id: null,
       class_id: null,
+      session_id: null,
       section_id: null,
       subject_id: null,
     },
   })
   const [banner, setBanner] = React.useState<string | null>(null)
 
-  // Seed the form from the assignment each time the dialog opens.
+  // Seed the form from the assignment each time the dialog opens. On create,
+  // default the session to the current academic session when one is known.
   React.useEffect(() => {
     if (!open) return
+    const defaultSessionId =
+      assignment?.session_id ??
+      sessions?.find((session) => session.is_current)?.id ??
+      null
     form.reset({
       teacher_id: assignment?.teacher_id ?? null,
       class_id: assignment?.class_id ?? null,
+      session_id: defaultSessionId,
       section_id: assignment?.section_id ?? null,
       subject_id: assignment?.subject_id ?? null,
     })
-  }, [open, assignment, form])
+  }, [open, assignment, sessions, form])
 
   // Clear the banner on close (kept out of the open effect to avoid a
   // synchronous setState during render).
@@ -129,10 +152,11 @@ export function AssignmentFormDialog({
 
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
-    // teacher_id/class_id are guaranteed non-null by the schema refinement.
+    // teacher_id/class_id/session_id are guaranteed non-null by the refinement.
     const payload: TeacherAssignmentInput = {
       teacher_id: values.teacher_id!,
       class_id: values.class_id!,
+      session_id: values.session_id!,
       section_id: values.section_id ?? null,
       subject_id: values.subject_id ?? null,
     }
@@ -193,6 +217,25 @@ export function AssignmentFormDialog({
                       onValueChange={field.onChange}
                       disabled={submitting}
                       aria-label="Teacher"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="session_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Session</FormLabel>
+                  <FormControl>
+                    <SessionSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={submitting}
+                      aria-label="Session"
                     />
                   </FormControl>
                   <FormMessage />

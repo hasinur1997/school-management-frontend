@@ -18,13 +18,36 @@ import { api, queryKey, STALE_TIME } from "@/lib/api"
 import { useBranch } from "@/components/branch/branch-provider"
 import type { TeacherOption } from "@/types/teacher"
 
+/**
+ * Normalise `/teachers` into a bare options array regardless of how the backend
+ * shapes a paginated list. The standard envelope keeps `data` as the row array
+ * (with `meta` alongside), but some paginated endpoints nest the whole paginator
+ * under `data` (`{ data: [...], current_page, … }`). Either way we want the rows;
+ * anything unexpected degrades to an empty list rather than crashing the select.
+ */
+function toTeacherOptions(payload: unknown): TeacherOption[] {
+  if (Array.isArray(payload)) return payload as TeacherOption[]
+  if (
+    payload &&
+    typeof payload === "object" &&
+    Array.isArray((payload as { data?: unknown }).data)
+  ) {
+    return (payload as { data: TeacherOption[] }).data
+  }
+  return []
+}
+
 export function useTeacherOptions() {
   const { branchParam } = useBranch()
 
   return useQuery({
     queryKey: queryKey("teachers", "options", { branch: branchParam }),
-    queryFn: () =>
-      api.get<TeacherOption[]>("/teachers", { params: { per_page: 200 } }),
+    queryFn: async () => {
+      const payload = await api.get<unknown>("/teachers", {
+        params: { per_page: 200 },
+      })
+      return toTeacherOptions(payload)
+    },
     staleTime: STALE_TIME.REFERENCE,
   })
 }
