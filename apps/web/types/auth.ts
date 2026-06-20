@@ -21,8 +21,8 @@ export interface AuthUser {
   email: string | null
   username?: string | null
   phone?: string | null
-  /** Profile photo URL the API serves, when set. */
-  avatar_url?: string | null
+  /** Profile photo URL the API serves (`UserResource.photo_url`), when set. */
+  photo_url?: string | null
   /** Owning branch (single-branch users); `null`/absent for super admin. */
   branch_id?: number | null
   branch?: AuthBranch | null
@@ -36,4 +36,23 @@ export interface AuthUser {
 export interface LoginResponse {
   token: string
   user: AuthUser
+}
+
+/**
+ * Editable fields of the signed-in user's own profile (`PUT /auth/profile`).
+ * Authorization, role, branch, and permission data are never editable here —
+ * those stay API-owned. The photo is uploaded separately as multipart.
+ */
+export interface ProfileUpdateInput {
+  name: string
+  email?: string | null
+  phone?: string | null
+}
+
+/** Display name initials for the avatar fallback when no photo is set. */
+export function userInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
 }

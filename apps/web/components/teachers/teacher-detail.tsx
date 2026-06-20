@@ -131,9 +131,9 @@ export function TeacherDetail({ id }: { id: number }) {
       <BackLink />
 
       {/* Header */}
-      <div className="flex flex-col gap-4 rounded-xl border border-surface-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <div className="flex min-w-0 items-center gap-4">
-          <Avatar size="lg" className="size-16 shrink-0">
+      <div className="flex flex-col gap-4 rounded-xl border border-surface-border bg-surface p-4 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+        <div className="flex min-w-0 items-start gap-4">
+          <Avatar className="size-28 shrink-0">
             {teacher.photo_url ? (
               <AvatarImage src={teacher.photo_url} alt="" />
             ) : null}

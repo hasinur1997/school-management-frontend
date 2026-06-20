@@ -29,14 +29,7 @@ import {
 import { useAuth } from "@/components/auth/auth-provider"
 import { ChangePasswordDialog } from "@/components/auth/change-password-dialog"
 import { LogoutButton } from "@/components/auth/logout-button"
-
-/** Initials fallback for the avatar when no photo is set. */
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return "?"
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
-  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
-}
+import { userInitials } from "@/types/auth"
 
 export function UserMenu() {
   const router = useRouter()
@@ -54,10 +47,10 @@ export function UserMenu() {
               aria-label="Open user menu"
             >
               <Avatar size="sm">
-                {user.avatar_url ? (
-                  <AvatarImage src={user.avatar_url} alt="" />
+                {user.photo_url ? (
+                  <AvatarImage src={user.photo_url} alt="" />
                 ) : null}
-                <AvatarFallback>{initialsOf(user.name)}</AvatarFallback>
+                <AvatarFallback>{userInitials(user.name)}</AvatarFallback>
               </Avatar>
               <span className="hidden max-w-[10rem] truncate text-sm font-medium text-copy-primary sm:inline">
                 {user.name}

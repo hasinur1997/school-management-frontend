@@ -11,5 +11,6 @@ export {
   useUpdateTeacher,
   useToggleTeacherStatus,
   useUploadTeacherPhoto,
+  useDeleteTeacherPhoto,
   useResendTeacherCredentials,
 } from "./use-teacher-mutations"

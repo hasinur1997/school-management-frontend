@@ -64,6 +64,14 @@ export function useUploadTeacherPhoto() {
   })
 }
 
+export function useDeleteTeacherPhoto() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (id: number) => api.delete<Teacher>(`/teachers/${id}/photo`),
+    onSuccess: invalidate,
+  })
+}
+
 export function useResendTeacherCredentials() {
   return useMutation({
     mutationFn: (id: number) =>

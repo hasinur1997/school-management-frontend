@@ -1,13 +1,13 @@
 "use client"
 
 /**
- * Photo dialog for a teacher (task 2.4). When a photo exists it is shown with a
+ * Avatar dialog for the signed-in user. When a photo exists it is shown with a
  * "Remove image" option; otherwise an `ImageDropzone` (click-to-select +
- * drag-and-drop) is shown. Upload is multipart `POST /teachers/{id}/photo` via
- * `useUploadTeacherPhoto`; removing the existing photo and saving issues
- * `DELETE /teachers/{id}/photo` via `useDeleteTeacherPhoto`. "Remove" only clears
- * the dialog — the saved photo is deleted on save, never before. Validates type
- * (jpg/png) and size (≤ 2MB) client-side; the API stays authoritative (`422`).
+ * drag-and-drop) is shown. Upload is multipart `POST /auth/photo` via
+ * `useUploadAvatar`; removing the existing photo and saving issues
+ * `DELETE /auth/photo` via `useDeleteAvatar`. "Remove" only clears the dialog —
+ * the saved photo is deleted on save, never before. Validates type (jpg/png)
+ * and size (≤ 2MB) client-side; the API stays authoritative (`422` is surfaced).
  */
 
 import * as React from "react"
@@ -21,31 +21,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar"
 import { Button } from "@/components/button"
 import { ImageDropzone } from "@/components/image-dropzone"
 import { ImageCropper, type ImageCropperHandle } from "@/components/image-cropper"
 import { toastError, toastSuccess } from "@/lib/toast"
 import { isValidationError } from "@/lib/api"
-import { useUploadTeacherPhoto, useDeleteTeacherPhoto } from "@/hooks/teachers"
-import { teacherInitials, type Teacher } from "@/types/teacher"
+import {
+  useUploadAvatar,
+  useDeleteAvatar,
+} from "@/hooks/auth/use-profile-mutations"
+import { userInitials, type AuthUser } from "@/types/auth"
 
 const MAX_BYTES = 2 * 1024 * 1024 // 2MB
 const ACCEPTED = ["image/jpeg", "image/png"]
 
-export interface TeacherPhotoDialogProps {
+export interface ProfilePhotoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  teacher: Teacher | null
+  user: AuthUser
 }
 
-export function TeacherPhotoDialog({
+export function ProfilePhotoDialog({
   open,
   onOpenChange,
-  teacher,
-}: TeacherPhotoDialogProps) {
-  const uploadMutation = useUploadTeacherPhoto()
-  const deleteMutation = useDeleteTeacherPhoto()
+  user,
+}: ProfilePhotoDialogProps) {
+  const uploadMutation = useUploadAvatar()
+  const deleteMutation = useDeleteAvatar()
   const cropperRef = React.useRef<ImageCropperHandle>(null)
   const [file, setFile] = React.useState<File | null>(null)
   const [error, setError] = React.useState<string | null>(null)
@@ -66,9 +73,9 @@ export function TeacherPhotoDialog({
   }, [previewUrl])
 
   // Newly chosen file wins; otherwise show the existing photo unless removed.
-  const previewSrc = previewUrl ?? (removed ? null : teacher?.photo_url ?? null)
+  const previewSrc = previewUrl ?? (removed ? null : user.photo_url ?? null)
   const hasImage = !!previewSrc
-  const isRemoval = !file && removed && !!teacher?.photo_url
+  const isRemoval = !file && removed && !!user.photo_url
   const busy = uploadMutation.isPending || deleteMutation.isPending
 
   function handleClose(next: boolean) {
@@ -92,17 +99,16 @@ export function TeacherPhotoDialog({
   }
 
   async function handleSubmit() {
-    if (!teacher) return
     setError(null)
     try {
       if (file) {
         const cropped =
           (await cropperRef.current?.getCroppedFile()) ?? file
-        await uploadMutation.mutateAsync({ id: teacher.id, file: cropped })
-        toastSuccess("Photo updated.", { id: "teacher-photo" })
+        await uploadMutation.mutateAsync(cropped)
+        toastSuccess("Photo updated.", { id: "profile-photo" })
       } else if (isRemoval) {
-        await deleteMutation.mutateAsync(teacher.id)
-        toastSuccess("Photo removed.", { id: "teacher-photo" })
+        await deleteMutation.mutateAsync()
+        toastSuccess("Photo removed.", { id: "profile-photo" })
       } else {
         return
       }
@@ -112,7 +118,7 @@ export function TeacherPhotoDialog({
         setError(err.first("photo") || err.message)
         return
       }
-      toastError(err, "Couldn't update the photo.", { id: "teacher-photo" })
+      toastError(err, "Couldn't update the photo.", { id: "profile-photo" })
     }
   }
 
@@ -150,8 +156,8 @@ export function TeacherPhotoDialog({
                 className="object-cover"
               />
               <AvatarFallback>
-                {teacher ? (
-                  teacherInitials(teacher)
+                {user.name ? (
+                  userInitials(user.name)
                 ) : (
                   <ImageUp className="size-10" />
                 )}
