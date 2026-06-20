@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Academic & People |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.1 |
 | Blocks | 2.3 (assignment teacher source), 3.3 |
 | Feature spec | `feature-specs/07-teachers.md` |
@@ -27,7 +27,7 @@ Full teacher management: list, profile, create-with-assignments (API generates +
 - All actions gated by documented teacher permissions; super admin sees all branches.
 
 ## Check When Done
-- [ ] Teachers listed, filtered, created (with assignments), edited, photo-updated, status-toggled, credentials resent.
-- [ ] Credential-dispatch confirmation shown on create.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Teachers listed, filtered, created (with assignments), edited, photo-updated, status-toggled, credentials resent.
+- [x] Credential-dispatch confirmation shown on create.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.
