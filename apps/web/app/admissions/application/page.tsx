@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react"
 import type { Metadata } from "next"
 import { Libre_Franklin } from "next/font/google"
-import { GraduationCap } from "lucide-react"
 
 import { AdmissionWizard } from "@/components/admissions/public/admission-wizard"
 
@@ -44,6 +43,43 @@ const admissionTheme = {
   "--state-error": "#e5484d",
 } as CSSProperties
 
+/**
+ * Field styling for the Admission form, scoped to `.admission-fields`. The app's
+ * shared shadcn inputs are compact (32px); the design handoff calls for large,
+ * prominent fields (46px, 15px text, 10px radius, 1.5px border with a soft accent
+ * focus ring) and 13.5px/600 labels. Scoping by wrapper class keeps the rest of
+ * the app's inputs untouched while overriding only on this route.
+ */
+const admissionFieldCss = `
+.admission-fields label[data-slot="form-label"] {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f2d44;
+  margin-bottom: 7px;
+}
+.admission-fields [data-slot="input"],
+.admission-fields [data-slot="select-trigger"] {
+  height: auto;
+  min-height: 46px;
+  border-radius: 10px;
+  border-width: 1.5px;
+  border-color: #d8dfe9;
+  background: #fff;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #16213b;
+}
+.admission-fields [data-slot="select-trigger"] {
+  width: 100%;
+}
+.admission-fields [data-slot="input"]:focus-visible,
+.admission-fields [data-slot="select-trigger"]:focus-visible {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-dim);
+}
+.admission-fields [data-slot="input"]::placeholder { color: #a7b1c2; }
+`
+
 export const metadata: Metadata = {
   title: "Admission Application",
   description: "Apply for admission online.",
@@ -61,20 +97,18 @@ export default async function AdmissionApplicationPage({
       className={`${libreFranklin.className} min-h-svh bg-base px-4 py-8 sm:py-12`}
       style={admissionTheme}
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <style>{admissionFieldCss}</style>
+      <div className="mx-auto flex w-full max-w-215 flex-col gap-6">
         <header className="flex flex-col items-center gap-2 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-            <GraduationCap className="size-6" aria-hidden />
-          </span>
-          <h1 className="text-xl font-semibold text-copy-primary sm:text-2xl">
+          <h1 className="text-[30px] font-extrabold tracking-tight text-copy-primary">
             Admission Application
           </h1>
-          <p className="max-w-md text-sm text-copy-muted">
+          <p className="max-w-md text-[15px] text-copy-muted">
             Complete each step to submit your application. Your progress is kept as you go.
           </p>
         </header>
 
-        <div className="rounded-2xl border border-surface-border bg-surface p-4 shadow-sm sm:p-6 lg:p-8">
+        <div className="admission-fields rounded-[20px] border border-surface-border bg-surface p-5 shadow-[0_10px_40px_rgba(19,41,75,0.07)] sm:p-7 lg:px-10 lg:py-8">
           <AdmissionWizard resumeApplicationNo={application_no ?? null} />
         </div>
 

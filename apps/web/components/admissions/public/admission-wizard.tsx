@@ -223,8 +223,8 @@ export function AdmissionWizard({ resumeApplicationNo }: AdmissionWizardProps) {
       <StepIndicator current={step} furthest={furthest} onStepSelect={goToStep} />
 
       <div className="border-t border-surface-border pt-5">
-        <h2 className="text-lg font-semibold text-copy-primary">{STEPS[step]?.label}</h2>
-        <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-copy-muted">
+        <h2 className="text-xl font-bold text-copy-primary">{STEPS[step]?.label}</h2>
+        <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-copy-muted">
           Step {step + 1} of {STEPS.length}
         </p>
       </div>

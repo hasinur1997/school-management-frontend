@@ -46,7 +46,7 @@ export function StepPreviousEducation({ form }: { form: UseFormReturn<AdmissionF
                 </Button>
               ) : null}
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-7 gap-y-5 sm:grid-cols-2">
               <TextField
                 control={control}
                 name={`previous_educations.${index}.exam_name`}

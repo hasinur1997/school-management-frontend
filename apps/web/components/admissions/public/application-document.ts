@@ -1,9 +1,8 @@
 /**
  * Client-side application document (task 2.5). The server-generated PDF route is
  * not available yet, so the confirmation screen produces a downloadable PDF from
- * the data the visitor just submitted. The layout is the *exact same* markup the
- * on-screen Preview renders — both come from `buildApplicationHtml` — so the two
- * can never drift. The styled markup is rendered offscreen, rasterized with
+ * the data the visitor just submitted. The layout (`buildApplicationHtml`) mirrors
+ * the on-screen Preview design. The styled markup is rendered offscreen, rasterized with
  * html2canvas (so it preserves the design *and* Bangla text, which jsPDF's
  * built-in fonts can't draw), then embedded into a multi-page jsPDF and saved
  * directly — no print dialog, no new tab.

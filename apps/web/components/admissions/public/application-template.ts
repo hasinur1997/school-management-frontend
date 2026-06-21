@@ -1,14 +1,13 @@
 /**
- * Single source of truth for the admission application document design (task
- * 2.5). Both the on-screen Preview step and the downloadable PDF render the
- * *exact same* markup produced here, so the two can never drift: the PDF
- * rasterizes this HTML with html2canvas, and the Preview injects it directly and
- * scales it to fit. Styled as a formal printed admission form (navy header,
- * affix-photo box, bordered field grids, signature lines).
+ * Markup for the downloadable admission application PDF (task 2.5). The
+ * confirmation screen rasterizes this HTML with html2canvas and embeds it into a
+ * jsPDF, so the visitor downloads a styled document of what they submitted.
  *
- * The document is authored at a fixed page width (`DOC_WIDTH`) so the layout is
- * deterministic across both surfaces; the Preview applies a CSS transform to fit
- * its container.
+ * The layout mirrors the on-screen Preview design (`step-preview.tsx`): a navy
+ * header banner, a branch-summary card beside the applicant photo, then
+ * accent-headed sectioned cards of key/value rows. It's authored at a fixed
+ * width (`DOC_WIDTH`) for deterministic rasterization, and uses flexbox (not CSS
+ * grid, which html2canvas lays out unreliably) throughout.
  */
 
 import type { AdmissionFormValues } from "./schema"
@@ -39,19 +38,17 @@ function esc(value: string | null | undefined): string {
     .replace(/"/g, "&quot;")
 }
 
-/** A label/value cell pair inside a `.kv` grid. */
-function kv(label: string, value: string | null | undefined): string {
-  return `<div class="kv-row"><span class="kv-k">${esc(label)}</span><span class="kv-v">${esc(value) || DASH}</span></div>`
+type Row = [label: string, value: string | null | undefined]
+
+/** One key/value row. `wide` spans the full card width (head card rows). */
+function row(label: string, value: string | null | undefined, wide = false): string {
+  return `<div class="row${wide ? " wide" : ""}"><span class="k">${esc(label)}</span><span class="v">${esc(value) || DASH}</span></div>`
 }
 
-/** A titled card (used for the Father/Mother and address columns). */
-function card(title: string, rows: string): string {
-  return `<div class="card"><div class="card-head">${esc(title)}</div><div class="kv">${rows}</div></div>`
-}
-
-/** A section heading with a trailing rule. */
-function sectionHead(title: string): string {
-  return `<div class="sec-head"><span>${esc(title)}</span><span class="rule"></span></div>`
+/** An accent-headed section card with a 2-column body of key/value rows. */
+function section(title: string, rows: Row[]): string {
+  const body = rows.map(([k, v]) => row(k, v)).join("")
+  return `<div class="card"><div class="card-head">${esc(title)}</div><div class="card-body">${body}</div></div>`
 }
 
 /** The scoped stylesheet for the document. */
@@ -62,97 +59,76 @@ function styles(): string {
   .appdoc {
     width: ${DOC_WIDTH}px;
     font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans Bengali", sans-serif;
-    color: #14284e;
+    color: #16213b;
     background: #ffffff;
-    line-height: 1.45;
+    line-height: 1.4;
+    padding: 32px;
   }
 
-  /* Header */
-  .appdoc .doc-head {
+  .appdoc .stack > * + * { margin-top: 22px; }
+
+  /* Navy header banner */
+  .appdoc .banner {
     display: flex; justify-content: space-between; align-items: center;
-    background: #13294f; color: #ffffff; padding: 28px 40px;
+    background: #13294b; border-radius: 16px; padding: 24px 28px;
   }
   .appdoc .brand { display: flex; align-items: center; gap: 18px; }
   .appdoc .logo {
-    width: 64px; height: 64px; border-radius: 12px;
-    background: #1f3a66; border: 1px solid rgba(255,255,255,0.18);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 32px; font-weight: 800; color: #ffffff;
+    width: 54px; height: 54px; border-radius: 12px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+    /* html2canvas centres single-line text via line-height more reliably than
+       flexbox; the box is border-box so line-height is height minus the borders. */
+    text-align: center; line-height: 52px;
+    font-size: 24px; font-weight: 800; color: #ffffff;
   }
-  .appdoc .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.18em; color: #9fb3d6; margin-bottom: 5px; }
-  .appdoc .doc-head h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.01em; }
+  .appdoc .kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.2em; color: #9fb6d6; text-transform: uppercase; }
+  .appdoc .banner h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; margin-top: 3px; }
   .appdoc .head-right { text-align: right; }
-  .appdoc .appno-label { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #9fb3d6; }
-  .appdoc .appno { font-size: 24px; font-weight: 800; margin-top: 2px; color: #ffffff; }
+  .appdoc .appno-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; color: #9fb6d6; text-transform: uppercase; }
+  .appdoc .appno { font-size: 20px; font-weight: 700; margin-top: 2px; color: #ffffff; }
   .appdoc .class-badge {
-    display: inline-block; margin-top: 12px; background: #2f6df0; color: #ffffff;
-    font-size: 13px; font-weight: 700; padding: 5px 14px; border-radius: 6px;
+    display: inline-block; margin-top: 9px; background: #2f6fed; color: #ffffff;
+    font-size: 12.5px; font-weight: 700; border-radius: 7px;
+    /* Centre vertically via a fixed height + matching line-height (html2canvas
+       does not honour vertical padding centring on inline-block text). */
+    height: 26px; line-height: 26px; padding: 0 13px;
   }
 
-  /* Body */
-  .appdoc .body { padding: 28px 40px 36px; }
-
-  /* Top: info card + affix photo */
-  .appdoc .top { display: flex; gap: 24px; align-items: flex-start; }
+  /* Head row: branch summary + applicant photo */
+  .appdoc .top { display: flex; gap: 22px; align-items: stretch; }
   .appdoc .info-card {
-    flex: 1; border: 1px solid #e3e8f0; border-top: 3px solid #2f6df0;
-    border-radius: 10px; overflow: hidden;
+    flex: 1; border: 1px solid #e6ebf2; border-radius: 13px; overflow: hidden;
   }
-  .appdoc .affix {
-    flex: 0 0 150px; width: 150px; height: 168px;
-    border: 2px dashed #c6d3e8; border-radius: 10px; background: #f4f8fd;
-    display: flex; align-items: center; justify-content: center; text-align: center;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #98a8c4; padding: 14px;
+  .appdoc .info-card .bar { height: 4px; background: #2f6fed; }
+  .appdoc .photo {
+    flex: 0 0 152px; width: 152px; border: 1.5px solid #e6ebf2; border-radius: 14px;
+    background: #ffffff; padding: 9px;
   }
-  .appdoc .affix img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+  .appdoc .photo img { width: 100%; height: 168px; object-fit: cover; border-radius: 9px; display: block; }
+  .appdoc .photo .empty {
+    width: 100%; height: 168px; border-radius: 9px; background: #f4f8fd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #98a8c4;
+  }
 
-  /* Sections */
-  .appdoc .sec-head {
-    display: flex; align-items: center; gap: 14px; margin: 26px 0 12px;
-    font-size: 13px; font-weight: 800; letter-spacing: 0.12em; color: #13294f; text-transform: uppercase;
-  }
-  .appdoc .sec-head .rule { flex: 1; height: 0; border-top: 1.5px solid #13294f; }
-
-  /* Key/value grids */
-  .appdoc .kv-table { border: 1px solid #e3e8f0; border-radius: 10px; overflow: hidden; }
-  .appdoc .kv-row { display: flex; border-top: 1px solid #e9edf4; }
-  .appdoc .kv-table > .kv-row:first-child, .appdoc .kv > .kv-row:first-child { border-top: 0; }
-  .appdoc .kv-k {
-    flex: 0 0 34%; width: 34%; background: #f4f7fc; padding: 12px 16px;
-    font-size: 13px; color: #5b6678;
-  }
-  .appdoc .kv-v { flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 700; color: #14284e; word-break: break-word; }
-
-  /* Two-column card rows */
-  .appdoc .cols { display: flex; gap: 20px; }
-  .appdoc .col { flex: 1; }
-  .appdoc .card { border: 1px solid #e3e8f0; border-radius: 10px; overflow: hidden; }
+  /* Section cards */
+  .appdoc .card { border: 1px solid #e6ebf2; border-radius: 13px; overflow: hidden; }
   .appdoc .card-head {
-    background: #eef3fb; color: #2f6df0; font-size: 12px; font-weight: 800;
-    letter-spacing: 0.08em; padding: 11px 16px; text-transform: uppercase;
+    background: #f7fafc; border-bottom: 1px solid #e6ebf2; padding: 11px 18px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #2f6fed;
   }
-  .appdoc .card .kv-k { flex: 0 0 42%; width: 42%; }
+  .appdoc .card-body { display: flex; flex-wrap: wrap; }
 
-  /* Previous education table */
-  .appdoc .edu { border: 1px solid #e3e8f0; border-radius: 10px; overflow: hidden; }
-  .appdoc .edu-row { display: flex; border-top: 1px solid #e9edf4; }
-  .appdoc .edu-head { background: #f4f7fc; border-top: 0; }
-  .appdoc .edu-row > span { padding: 13px 16px; font-size: 14px; font-weight: 700; color: #14284e; }
-  .appdoc .edu-head > span { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #828a99; text-transform: uppercase; }
-  .appdoc .edu-c-inst { flex: 2; }
-  .appdoc .edu-c-exam { flex: 2; }
-  .appdoc .edu-c-gpa { flex: 1; }
-  .appdoc .edu-c-year { flex: 1; }
-
-  /* Declaration + signatures */
-  .appdoc .declare {
-    margin-top: 30px; padding-top: 20px; border-top: 1px solid #e3e8f0;
-    font-size: 13px; line-height: 1.7; color: #6b7585;
+  /* Key/value rows (2-up; .wide spans full width) */
+  .appdoc .row {
+    flex: 0 0 50%; width: 50%;
+    display: flex; justify-content: space-between; gap: 14px; align-items: baseline;
+    padding: 11px 18px; border-bottom: 1px solid #f0f3f8;
   }
-  .appdoc .signs { display: flex; gap: 28px; margin-top: 52px; }
-  .appdoc .sign { flex: 1; text-align: center; }
-  .appdoc .sign .line { border-top: 1.5px solid #9aa6ba; margin-bottom: 9px; }
-  .appdoc .sign .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #6b7585; text-transform: uppercase; }
+  .appdoc .info-card .row { padding: 13px 18px; }
+  .appdoc .row.wide { flex: 0 0 100%; width: 100%; }
+  .appdoc .row .k { color: #7a8aa0; font-size: 14px; white-space: nowrap; }
+  .appdoc .row .v { color: #16213b; font-size: 14px; font-weight: 600; text-align: right; word-break: break-word; }
 </style>`
 }
 
@@ -161,124 +137,89 @@ export function buildApplicationHtml(data: ApplicationDocData): string {
   const v = data.values
   const logo = (data.schoolName || data.branchName || "?").trim().charAt(0).toUpperCase()
 
-  const educationRows = v.previous_educations
-    .filter((r) => r.exam_name.trim() && r.institution_name.trim())
-    .map(
-      (r) =>
-        `<div class="edu-row"><span class="edu-c-inst">${esc(r.institution_name)}</span><span class="edu-c-exam">${esc(r.exam_name)}</span><span class="edu-c-gpa">${esc(r.gpa) || DASH}</span><span class="edu-c-year">${esc(r.passing_year) || DASH}</span></div>`
-    )
-    .join("")
+  const photo = data.photoUrl
+    ? `<div class="photo"><img src="${esc(data.photoUrl)}" alt="Applicant photo" /></div>`
+    : `<div class="photo"><div class="empty">No photo</div></div>`
 
-  const educationSection = educationRows
-    ? `${sectionHead("Previous Education")}
-      <div class="edu">
-        <div class="edu-row edu-head">
-          <span class="edu-c-inst">Institution</span>
-          <span class="edu-c-exam">Examination</span>
-          <span class="edu-c-gpa">GPA</span>
-          <span class="edu-c-year">Year</span>
-        </div>
-        ${educationRows}
-      </div>`
-    : ""
+  const filledEducations = v.previous_educations.filter(
+    (r) => r.exam_name.trim() || r.institution_name.trim()
+  )
+  const educationRows: Row[] = filledEducations.flatMap((r, i) => {
+    const n = filledEducations.length > 1 ? ` #${i + 1}` : ""
+    return [
+      [`Exam${n}`, r.exam_name],
+      [`Institution${n}`, r.institution_name],
+      [`GPA${n}`, r.gpa],
+      [`Passing year${n}`, r.passing_year],
+    ] as Row[]
+  })
 
-  const affix = data.photoUrl
-    ? `<div class="affix"><img src="${esc(data.photoUrl)}" alt="Student photo" /></div>`
-    : `<div class="affix">AFFIX<br/>PASSPORT<br/>PHOTO</div>`
+  const documentRows: Row[] = (v.documents ?? []).map((f, i) => [`File #${i + 1}`, f.name])
 
   return `${styles()}
 <div class="appdoc">
-  <div class="doc-head">
-    <div class="brand">
-      <div class="logo">${esc(logo)}</div>
-      <div>
-        <div class="kicker">${esc((data.schoolName || data.branchName).toUpperCase())}</div>
-        <h1>Admission Application</h1>
-      </div>
-    </div>
-    <div class="head-right">
-      <div class="appno-label">APPLICATION NO.</div>
-      <div class="appno">${esc(data.applicationNo) || "Pending"}</div>
-      <div class="class-badge">${esc(data.className)}</div>
-    </div>
-  </div>
-
-  <div class="body">
-    <div class="top">
-      <div class="info-card">
-        <div class="kv">
-          ${kv("Branch", data.branchName)}
-          ${kv("Class applying for", data.className)}
-          ${kv("Session", data.session)}
+  <div class="stack">
+    <div class="banner">
+      <div class="brand">
+        <div class="logo">${esc(logo)}</div>
+        <div>
+          <div class="kicker">${esc(data.schoolName || data.branchName)}</div>
+          <h1>Admission Application</h1>
         </div>
       </div>
-      ${affix}
-    </div>
-
-    ${sectionHead("Student Details")}
-    <div class="kv-table">
-      ${kv("Name (Bangla)", v.name_bn)}
-      ${kv("Name (English)", v.name_en)}
-      ${kv("Date of birth", v.date_of_birth)}
-      ${kv("Birth registration no.", v.birth_reg_no)}
-      ${kv("Religion", v.religion)}
-      ${kv("Nationality", v.nationality)}
-      ${kv("Caste", v.caste)}
-    </div>
-
-    ${sectionHead("Guardian Information")}
-    <div class="cols">
-      <div class="col">
-        ${card(
-          "Father",
-          kv("Name (Bangla)", v.father_name_bn) +
-            kv("Name (English)", v.father_name_en) +
-            kv("National ID", v.father_nid) +
-            kv("Mobile", v.father_mobile)
-        )}
-      </div>
-      <div class="col">
-        ${card(
-          "Mother",
-          kv("Name (Bangla)", v.mother_name_bn) +
-            kv("Name (English)", v.mother_name_en) +
-            kv("National ID", v.mother_nid) +
-            kv("Mobile", v.mother_mobile)
-        )}
+      <div class="head-right">
+        <div class="appno-label">Application No.</div>
+        <div class="appno">${esc(data.applicationNo) || "Pending"}</div>
+        <div class="class-badge">${esc(data.className)}</div>
       </div>
     </div>
 
-    ${sectionHead("Address")}
-    <div class="cols">
-      <div class="col">
-        ${card(
-          "Present Address",
-          kv("Village", v.present_village) +
-            kv("Post office", v.present_post_office) +
-            kv("Upazila", v.present_upazila) +
-            kv("District", v.present_district)
-        )}
+    <div class="top">
+      <div class="info-card">
+        <div class="bar"></div>
+        ${row("Branch", data.branchName, true)}
+        ${row("Class", data.className, true)}
+        ${row("Session", data.session, true)}
       </div>
-      <div class="col">
-        ${card(
-          "Permanent Address",
-          kv("Village", v.permanent_village) +
-            kv("Post office", v.permanent_post_office) +
-            kv("Upazila", v.permanent_upazila) +
-            kv("District", v.permanent_district)
-        )}
-      </div>
+      ${photo}
     </div>
 
-    ${educationSection}
+    ${section("Student", [
+      ["Name (Bangla)", v.name_bn],
+      ["Name (English)", v.name_en],
+      ["Date of birth", v.date_of_birth],
+      ["Birth reg. no.", v.birth_reg_no],
+      ["Religion", v.religion],
+      ["Nationality", v.nationality],
+      ["Caste", v.caste],
+    ])}
 
-    <p class="declare">I hereby declare that the information provided in this application is true and correct to the best of my knowledge. I understand that any false statement may result in the cancellation of admission.</p>
+    ${section("Guardian", [
+      ["Father (English)", v.father_name_en],
+      ["Father mobile", v.father_mobile],
+      ["Father NID", v.father_nid],
+      ["Mother (English)", v.mother_name_en],
+      ["Mother mobile", v.mother_mobile],
+      ["Mother NID", v.mother_nid],
+    ])}
 
-    <div class="signs">
-      <div class="sign"><div class="line"></div><div class="lbl">Applicant's Signature</div></div>
-      <div class="sign"><div class="line"></div><div class="lbl">Guardian's Signature</div></div>
-      <div class="sign"><div class="line"></div><div class="lbl">Authority &amp; Seal</div></div>
-    </div>
+    ${section("Present address", [
+      ["Village / street", v.present_village],
+      ["Post office", v.present_post_office],
+      ["Upazila", v.present_upazila],
+      ["District", v.present_district],
+    ])}
+
+    ${section("Permanent address", [
+      ["Village / street", v.permanent_village],
+      ["Post office", v.permanent_post_office],
+      ["Upazila", v.permanent_upazila],
+      ["District", v.permanent_district],
+    ])}
+
+    ${educationRows.length ? section("Education", educationRows) : ""}
+
+    ${documentRows.length ? section("Documents", documentRows) : ""}
   </div>
 </div>`
 }

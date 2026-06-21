@@ -53,6 +53,8 @@ export interface TextFieldProps {
   type?: string
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"]
   autoComplete?: string
+  /** Extra classes on the field wrapper — e.g. `sm:col-span-2` to span the grid. */
+  className?: string
 }
 
 /** A single labelled text input wired through RHF `FormField`. */
@@ -66,13 +68,14 @@ export function TextField({
   type = "text",
   inputMode,
   autoComplete = "off",
+  className,
 }: TextFieldProps) {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={className}>
           <FormLabel>
             {label}
             {required ? <Req /> : null}

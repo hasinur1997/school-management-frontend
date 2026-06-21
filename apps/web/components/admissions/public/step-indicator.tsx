@@ -35,18 +35,18 @@ export function StepIndicator({ current, furthest, onStepSelect }: StepIndicator
                 disabled={!isReachable}
                 aria-current={isCurrent ? "step" : undefined}
                 className={cn(
-                  "flex min-h-9 items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                  "flex min-h-9 items-center gap-2.5 rounded-md text-sm font-semibold transition-colors",
                   isReachable ? "cursor-pointer" : "cursor-not-allowed",
                   isCurrent
-                    ? "bg-brand/10 font-medium text-brand"
-                    : isReachable
-                      ? "text-copy-secondary hover:bg-subtle"
+                    ? "text-brand"
+                    : isDone
+                      ? "text-copy-secondary"
                       : "text-copy-muted"
                 )}
               >
                 <span
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium transition-all",
+                    "flex size-8 shrink-0 items-center justify-center rounded-full border-[1.5px] text-sm font-bold transition-all",
                     isCurrent
                       ? "border-brand bg-brand text-white ring-4 ring-brand/15"
                       : isDone
@@ -54,12 +54,12 @@ export function StepIndicator({ current, furthest, onStepSelect }: StepIndicator
                         : "border-surface-border text-copy-muted"
                   )}
                 >
-                  {isDone ? <Check className="size-3.5" aria-hidden /> : index + 1}
+                  {isDone ? <Check className="size-4" aria-hidden /> : index + 1}
                 </span>
-                <span className="hidden sm:inline">{step.label}</span>
+                <span>{step.label}</span>
               </button>
               {index < STEPS.length - 1 ? (
-                <span className="hidden h-px w-4 bg-surface-border sm:block" aria-hidden />
+                <span className="hidden h-0.5 w-6 rounded-full bg-surface-border sm:block" aria-hidden />
               ) : null}
             </li>
           )

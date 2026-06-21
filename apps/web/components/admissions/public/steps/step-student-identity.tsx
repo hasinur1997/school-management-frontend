@@ -14,7 +14,7 @@ import type { AdmissionFormValues } from "../schema"
 export function StepStudentIdentity({ form }: { form: UseFormReturn<AdmissionFormValues> }) {
   const { control } = form
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-x-7 gap-y-5 sm:grid-cols-2">
       <TextField control={control} name="name_bn" label="Name (Bangla)" required />
       <TextField control={control} name="name_en" label="Name (English)" required />
       <TextField
@@ -37,7 +37,12 @@ export function StepStudentIdentity({ form }: { form: UseFormReturn<AdmissionFor
         label="Nationality"
         disabled
       />
-      <TextField control={control} name="caste" label="Caste (optional)" />
+      <TextField
+        control={control}
+        name="caste"
+        label="Caste (optional)"
+        className="sm:col-span-2"
+      />
     </div>
   )
 }
