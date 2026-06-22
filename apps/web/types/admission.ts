@@ -117,10 +117,74 @@ export interface AdmissionStatus {
   /** Online-payment attempts so far; caps retries against the settings limit. */
   payment_attempts?: number | null
   student_name?: string | null
-  branch_name?: string | null
-  class_name?: string | null
   /** Server-generated application PDF, when the API returns a direct URL. */
   pdf_url?: string | null
+
+  // Applicant detail surfaced by the public status-check page (task 2.9). All
+  // optional / read defensively — the contract (`docs/api/admissions.md`) is
+  // absent, so the field map follows the ticket exactly.
+  name_bn?: string | null
+  name_en?: string | null
+  date_of_birth?: string | null
+  birth_reg_no?: string | null
+  religion?: string | null
+  nationality?: string | null
+  caste?: string | null
+
+  // Branch / class / session / photo arrive in either the flat `*_name` shape or
+  // the standard Laravel nested-relation shape (the API expands related models,
+  // same as teacher assignments). Read both via the resolvers below.
+  branch_name?: string | null
+  class_name?: string | null
+  desired_class_name?: string | null
+  session_name?: string | null
+  branch?: { id?: number; name?: string | null; code?: string | null } | null
+  class?: { id?: number; name?: string | null } | null
+  school_class?: { id?: number; name?: string | null } | null
+  desired_class?: { id?: number; name?: string | null } | null
+  session?: { id?: number; name?: string | null } | null
+  academic_session?: { id?: number; name?: string | null } | null
+
+  /** Applicant photo; may be relative (prefix with the API base URL). */
+  photo_url?: string | null
+  photo?: string | null
+  photo_path?: string | null
+  applicant_photo_url?: string | null
+  student_photo_url?: string | null
+}
+
+/** Branch display name, from the flat label or the nested relation. */
+export function statusBranchName(s: AdmissionStatus): string | null {
+  return s.branch_name || s.branch?.name || null
+}
+
+/** Desired-class display name, from the flat label or any nested relation key. */
+export function statusClassName(s: AdmissionStatus): string | null {
+  return (
+    s.class_name ||
+    s.desired_class_name ||
+    s.class?.name ||
+    s.school_class?.name ||
+    s.desired_class?.name ||
+    null
+  )
+}
+
+/** Academic-session label, from the flat label or the nested relation. */
+export function statusSessionName(s: AdmissionStatus): string | null {
+  return s.session_name || s.session?.name || s.academic_session?.name || null
+}
+
+/** Raw applicant photo path (may be relative), from whichever key the API used. */
+export function statusPhotoUrl(s: AdmissionStatus): string | null {
+  return (
+    s.photo_url ||
+    s.applicant_photo_url ||
+    s.student_photo_url ||
+    s.photo ||
+    s.photo_path ||
+    null
+  )
 }
 
 /** `POST /invoices/{invoice_id}/payments/online` → SSLCommerz hosted-checkout URL. */
