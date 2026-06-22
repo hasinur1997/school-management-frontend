@@ -1,7 +1,15 @@
 /**
- * Public admission hooks (task 2.5). Read/write the public, unauthenticated
- * admission endpoints. Import from `@/hooks/admissions`.
+ * Admission hooks. The public, unauthenticated submission/status endpoints
+ * (task 2.5) and the authenticated review queue/detail + approve/reject
+ * mutations (task 2.6). Import from `@/hooks/admissions`.
  */
+
+export { useAdmissions, ADMISSIONS_PER_PAGE } from "./use-admissions"
+export { useAdmission } from "./use-admission"
+export {
+  useApproveAdmission,
+  useRejectAdmission,
+} from "./use-admission-mutations"
 
 export { usePublicSettings } from "./use-public-settings"
 export { useSubmitAdmission } from "./use-submit-admission"

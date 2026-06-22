@@ -14,11 +14,11 @@ import { api, queryKey, STALE_TIME } from "@/lib/api"
 import { useBranch } from "@/components/branch/branch-provider"
 import type { Teacher } from "@/types/teacher"
 
-export function useTeacher(id: number | null) {
+export function useTeacher(id: string | null) {
   const { branchParam } = useBranch()
 
   return useQuery({
-    queryKey: queryKey("teachers", "detail", { id: id ?? 0, branch: branchParam }),
+    queryKey: queryKey("teachers", "detail", { id: id ?? "", branch: branchParam }),
     queryFn: () => api.get<Teacher>(`/teachers/${id}`),
     enabled: id != null,
     staleTime: STALE_TIME.STANDARD,

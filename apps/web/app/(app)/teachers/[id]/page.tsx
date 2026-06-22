@@ -20,7 +20,7 @@ export default function TeacherDetailPage({
 }) {
   const { id } = React.use(params)
   const canView = usePermission(TEACHER_VIEW)
-  const teacherId = Number(id)
+  const teacherId = String(id)
 
   if (!canView) {
     return (
@@ -32,7 +32,7 @@ export default function TeacherDetailPage({
     )
   }
 
-  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+  if (typeof teacherId !== 'string') {
     return (
       <EmptyState
         title="Teacher not found"

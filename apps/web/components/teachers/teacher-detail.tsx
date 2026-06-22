@@ -50,7 +50,7 @@ import { ConfirmDialog } from "./confirm-dialog"
 
 const EMPTY = "—"
 
-export function TeacherDetail({ id }: { id: number }) {
+export function TeacherDetail({ id }: { id: string }) {
   const { data: teacher, isPending, isError, error, refetch } = useTeacher(id)
   const toggleStatus = useToggleTeacherStatus()
   const resendCredentials = useResendTeacherCredentials()

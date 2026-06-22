@@ -187,6 +187,167 @@ export function statusPhotoUrl(s: AdmissionStatus): string | null {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Admin review surface (task 2.6)
+// ---------------------------------------------------------------------------
+
+/**
+ * A document attached to an application (`documents[]`). The detail resource
+ * returns `{ name, url }` (Spatie media); a couple of alternate keys are
+ * tolerated. Resolve via `documentLabel` / `documentUrl`.
+ */
+export interface AdmissionDocument {
+  name?: string | null
+  file_name?: string | null
+  url?: string | null
+  file_url?: string | null
+  path?: string | null
+}
+
+/** The three admission lifecycle states (`App\Enums\AdmissionStatus`). */
+export type AdmissionStatusValue = "pending" | "approved" | "rejected"
+
+/**
+ * An admission application as seen by the authenticated review surface. The list
+ * (`AdmissionListResource`) returns a compact subset — `id`, `application_no`,
+ * `name_en`, `desired_class`, `father_mobile`, `status`, `submitted_at`; the
+ * detail (`AdmissionDetailResource`) returns the full record below. Both read
+ * through this shape with optional fields. `desired_class` is the nested
+ * `{ id, name }` relation (read via `statusClassName`).
+ */
+export interface Admission {
+  id: number
+  application_no: string
+  status: string
+  submitted_at?: string | null
+
+  // Student identity
+  name_bn?: string | null
+  name_en?: string | null
+  date_of_birth?: string | null
+  birth_reg_no?: string | null
+  religion?: string | null
+  nationality?: string | null
+  caste?: string | null
+
+  // Guardian
+  father_name_bn?: string | null
+  father_name_en?: string | null
+  father_nid?: string | null
+  father_mobile?: string | null
+  mother_name_bn?: string | null
+  mother_name_en?: string | null
+  mother_nid?: string | null
+  mother_mobile?: string | null
+
+  // Address
+  present_division?: string | null
+  present_district?: string | null
+  present_upazila?: string | null
+  present_post_office?: string | null
+  present_village?: string | null
+  permanent_division?: string | null
+  permanent_district?: string | null
+  permanent_upazila?: string | null
+  permanent_post_office?: string | null
+  permanent_village?: string | null
+
+  // Previous education + uploaded documents
+  previous_educations?: PreviousEducationInput[] | null
+  documents?: AdmissionDocument[] | null
+
+  // Decision metadata
+  rejection_reason?: string | null
+  reviewed_by?: { id?: number; name?: string | null } | null
+  reviewed_at?: string | null
+
+  // Desired class — the nested `{ id, name }` relation. The `class`/`school_class`
+  // keys are kept only for the shared `statusClassName` resolver's fallbacks.
+  desired_class?: { id?: number; name?: string | null } | null
+  class?: { id?: number; name?: string | null } | null
+  school_class?: { id?: number; name?: string | null } | null
+  desired_class_name?: string | null
+  class_name?: string | null
+
+  /** Applicant photo (absolute URL from `photoUrl()`), or null. */
+  photo_url?: string | null
+}
+
+/**
+ * Status the review queue filters by. The backend always filters to exactly one
+ * status (it defaults to `pending` when none is sent — `AdmissionService::list`),
+ * so there is no "all" option; the queue defaults to `pending` and the user
+ * switches to see approved / rejected.
+ */
+export type AdmissionStatusFilter = AdmissionStatusValue
+
+/** Query params for the paginated `GET /admissions` queue. */
+export interface AdmissionListParams {
+  search?: string
+  status?: AdmissionStatusFilter
+  desired_class_id?: number | null
+  page?: number
+  per_page?: number
+}
+
+/** Relation a created parent account stands in (`ApproveAdmissionRequest`). */
+export type ParentRelation = "father" | "mother" | "guardian"
+
+/**
+ * `POST /admissions/{id}/approve` body — the office-use box that converts an
+ * application into a student (`ApproveAdmissionRequest`): the academic session,
+ * the class (may override the desired class) + its section, a roll number
+ * (unique within session+class+section), an optional admission number
+ * (auto-generated when blank), and whether to also create a linked parent
+ * account (and under which relation).
+ */
+export interface AdmissionApproveInput {
+  session_id: number
+  class_id: number
+  section_id: number
+  roll_no: number
+  admission_no?: string | null
+  create_parent_account: boolean
+  parent_relation?: ParentRelation | null
+}
+
+/** `POST /admissions/{id}/approve` → the created student + its enrollment. */
+export interface AdmissionApproveResponse {
+  student?: {
+    id?: number | string | null
+    admission_no?: string | null
+    name_en?: string | null
+    enrollment?: {
+      session?: string | null
+      class?: string | null
+      section?: string | null
+      roll_no?: number | string | null
+    } | null
+  } | null
+  /** Whether a linked parent login was also created. */
+  parent_created?: boolean | null
+}
+
+/** Best display name for an applicant — English, then Bangla, then the app no. */
+export function admissionApplicantName(a: Admission): string {
+  return a.name_en?.trim() || a.name_bn?.trim() || a.application_no
+}
+
+/** A document's display label, from whichever name key the API used. */
+export function documentLabel(doc: AdmissionDocument, index: number): string {
+  return (doc.name || doc.file_name || `Document ${index + 1}`).trim()
+}
+
+/** A document's URL, from whichever key the API used. */
+export function documentUrl(doc: AdmissionDocument): string | null {
+  return doc.url || doc.file_url || doc.path || null
+}
+
+/** Whether an application is still pending review (approve/reject allowed). */
+export function isPendingAdmission(status: string): boolean {
+  return status.trim().toLowerCase() === "pending"
+}
+
 /** `POST /invoices/{invoice_id}/payments/online` → SSLCommerz hosted-checkout URL. */
 export interface PaymentInitiateResponse {
   /** The gateway URL to redirect the browser to. Read defensively. */
