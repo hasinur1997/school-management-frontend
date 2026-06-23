@@ -37,7 +37,7 @@ export function useCreateTeacher() {
 export function useUpdateTeacher() {
   const invalidate = useInvalidateTeachers()
   return useMutation({
-    mutationFn: ({ id, ...input }: TeacherUpdateInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: TeacherUpdateInput & { id: string }) =>
       api.put<Teacher>(`/teachers/${id}`, input),
     onSuccess: invalidate,
   })
@@ -46,9 +46,7 @@ export function useUpdateTeacher() {
 export function useToggleTeacherStatus() {
   const invalidate = useInvalidateTeachers()
   return useMutation({
-    // Teacher ids are hash strings post-migration; accept either form so both
-    // the list (typed `number`) and the detail (`string` route param) call it.
-    mutationFn: ({ id, is_active }: { id: string | number; is_active: boolean }) =>
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
       api.patch<Teacher>(`/teachers/${id}/status`, { is_active }),
     onSuccess: invalidate,
   })
@@ -57,7 +55,7 @@ export function useToggleTeacherStatus() {
 export function useUploadTeacherPhoto() {
   const invalidate = useInvalidateTeachers()
   return useMutation({
-    mutationFn: ({ id, file }: { id: number; file: File }) => {
+    mutationFn: ({ id, file }: { id: string; file: File }) => {
       const body = new FormData()
       body.append("photo", file)
       return api.post<Teacher>(`/teachers/${id}/photo`, body)
@@ -69,14 +67,14 @@ export function useUploadTeacherPhoto() {
 export function useDeleteTeacherPhoto() {
   const invalidate = useInvalidateTeachers()
   return useMutation({
-    mutationFn: (id: number) => api.delete<Teacher>(`/teachers/${id}/photo`),
+    mutationFn: (id: string) => api.delete<Teacher>(`/teachers/${id}/photo`),
     onSuccess: invalidate,
   })
 }
 
 export function useResendTeacherCredentials() {
   return useMutation({
-    mutationFn: (id: string | number) =>
+    mutationFn: (id: string) =>
       api.post<null>(`/teachers/${id}/resend-credentials`),
   })
 }

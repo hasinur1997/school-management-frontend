@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 3 — Attendance |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.1, 2.7 |
 | Blocks | — |
 | Feature spec | `feature-specs/10-student-attendance.md` |
@@ -28,7 +28,7 @@ Daily roster entry screen for permitted teachers/staff to record/update attendan
 - Don't enforce once-per-day or TC-exclusion client-side; surface API results.
 
 ## Check When Done
-- [ ] Teacher loads a roster and records/updates daily attendance.
-- [ ] Re-entering an existing date edits rather than duplicates.
-- [ ] Loading/empty/error states present; responsive at 360/768/≥1280px.
-- [ ] `npm run build` passes.
+- [x] Teacher loads a roster and records/updates daily attendance.
+- [x] Re-entering an existing date edits rather than duplicates.
+- [x] Loading/empty/error states present; responsive at 360/768/≥1280px.
+- [x] `npm run build` passes.

@@ -57,7 +57,7 @@ export function AdmissionsList() {
 
   const [searchInput, setSearchInput] = React.useState("")
   const [status, setStatus] = React.useState<AdmissionStatusFilter>("all")
-  const [classId, setClassId] = React.useState<number | null>(null)
+  const [classId, setClassId] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(1)
 
   const search = useDebouncedValue(searchInput, 300)
@@ -72,7 +72,7 @@ export function AdmissionsList() {
     setStatus(value)
     setPage(1)
   }
-  function changeClass(value: number | null) {
+  function changeClass(value: string | null) {
     setClassId(value)
     setPage(1)
   }

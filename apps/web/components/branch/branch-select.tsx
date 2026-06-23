@@ -16,7 +16,7 @@ import {
 import { useBranches } from "@/hooks/branches/use-branches"
 
 type BranchSelectProps = Pick<
-  AcademicSelectProps,
+  AcademicSelectProps<string>,
   "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
 > & {
   placeholder?: string

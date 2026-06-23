@@ -10,15 +10,16 @@
  * logic; it is a registration point so `lib/api` stays decoupled from the shell.
  */
 
-let activeBranchId: number | null = null
+// Branch ids are opaque `public_id` hashes (strings), not numeric keys.
+let activeBranchId: string | null = null
 
 /** Set the active branch (super admin only); `null` = all branches / none. */
-export function setActiveBranchId(next: number | null): void {
+export function setActiveBranchId(next: string | null): void {
   activeBranchId = next
 }
 
 /** Current active branch id, or `null` when consolidated / not super admin. */
-export function getActiveBranchId(): number | null {
+export function getActiveBranchId(): string | null {
   return activeBranchId
 }
 

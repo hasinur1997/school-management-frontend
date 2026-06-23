@@ -154,9 +154,9 @@ export interface StudentUpdateInput {
 export interface StudentListParams {
   search?: string
   status?: StudentStatusFilter
-  class_id?: number | null
-  section_id?: number | null
-  session_id?: number | null
+  class_id?: string | null
+  section_id?: string | null
+  session_id?: string | null
   page?: number
   per_page?: number
 }

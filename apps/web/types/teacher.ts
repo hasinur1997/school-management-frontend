@@ -15,7 +15,8 @@
  * profile fields.
  */
 export interface TeacherOption {
-  id: number
+  // Ids are opaque `public_id` hashes (strings), not numeric primary keys.
+  id: string
   name?: string | null
   full_name?: string | null
   employee_id?: string | null
@@ -23,7 +24,7 @@ export interface TeacherOption {
 
 /** A `{ id, name }` reference as the API expands related records. */
 export interface NamedRef {
-  id: number
+  id: string
   name: string
 }
 
@@ -33,10 +34,10 @@ export interface NamedRef {
  * Labels are expanded by the API; ids are the fallback.
  */
 export interface TeacherAssignmentSummary {
-  id?: number
-  class_id?: number | null
-  section_id?: number | null
-  subject_id?: number | null
+  id?: string
+  class_id?: string | null
+  section_id?: string | null
+  subject_id?: string | null
   /** Flat expanded labels — present when the API resolves them inline. */
   class_name?: string | null
   section_name?: string | null
@@ -46,10 +47,10 @@ export interface TeacherAssignmentSummary {
    * the related models instead of the flat `*_name` labels. Read defensively via
    * `assignmentSummaryLabels`; `class` may arrive under either key.
    */
-  class?: { id: number; name?: string | null } | null
-  school_class?: { id: number; name?: string | null } | null
-  section?: { id: number; name?: string | null } | null
-  subject?: { id: number; name?: string | null } | null
+  class?: { id: string; name?: string | null } | null
+  school_class?: { id: string; name?: string | null } | null
+  section?: { id: string; name?: string | null } | null
+  subject?: { id: string; name?: string | null } | null
 }
 
 /**
@@ -75,7 +76,7 @@ export function assignmentSummaryLabels(a: TeacherAssignmentSummary) {
  * carry a subset, so everything beyond the identity fields is optional.
  */
 export interface Teacher {
-  id: number
+  id: string
   name?: string | null
   full_name?: string | null
   email?: string | null
@@ -89,7 +90,7 @@ export interface Teacher {
   /** Authoritative active flag; some payloads also send a `status` string. */
   is_active?: boolean | null
   status?: string | null
-  branch_id?: number | null
+  branch_id?: string | null
   branch_name?: string | null
   /** Subjects this teacher teaches — objects or bare name strings. */
   subjects?: Array<NamedRef | string> | null
@@ -103,9 +104,10 @@ export interface Teacher {
 
 /** One assignment row in the create/edit form payload. */
 export interface TeacherAssignmentInput {
-  class_id: number
-  section_id?: number | null
-  subject_id?: number | null
+  /** `public_id` of the class, or `null` for an unfilled row. */
+  class_id: string | null
+  section_id?: string | null
+  subject_id?: string | null
 }
 
 /**
@@ -123,7 +125,7 @@ export interface TeacherInput {
   address?: string | null
   is_active: boolean
   /** Required for super admin on create; omitted for branch-scoped users. */
-  branch_id?: number | null
+  branch_id?: string | null
   assignments: TeacherAssignmentInput[]
 }
 

@@ -28,7 +28,7 @@ import { RowActions } from "./row-actions"
 import { SectionFormDialog } from "./section-form-dialog"
 import { SubjectFormDialog } from "./subject-form-dialog"
 
-export function ClassChildren({ classId }: { classId: number }) {
+export function ClassChildren({ classId }: { classId: string }) {
   return (
     <div className="grid grid-cols-1 gap-6 border-t border-surface-border bg-subtle/30 p-4 lg:grid-cols-2">
       <SectionsGroup classId={classId} />
@@ -37,7 +37,7 @@ export function ClassChildren({ classId }: { classId: number }) {
   )
 }
 
-function SectionsGroup({ classId }: { classId: number }) {
+function SectionsGroup({ classId }: { classId: string }) {
   const { data, isLoading, isError, refetch } = useSections(classId)
   const deleteMutation = useDeleteSection()
 
@@ -109,7 +109,7 @@ function SectionsGroup({ classId }: { classId: number }) {
   )
 }
 
-function SubjectsGroup({ classId }: { classId: number }) {
+function SubjectsGroup({ classId }: { classId: string }) {
   const { data, isLoading, isError, refetch } = useSubjects(classId)
   const deleteMutation = useDeleteSubject()
 

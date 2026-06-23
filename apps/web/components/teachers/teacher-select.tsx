@@ -17,7 +17,7 @@ import {
 import { useTeacherOptions } from "@/hooks/teachers/use-teacher-options"
 
 type TeacherSelectProps = Pick<
-  AcademicSelectProps,
+  AcademicSelectProps<string>,
   "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
 > & {
   placeholder?: string
@@ -29,11 +29,8 @@ export function TeacherSelect({
 }: TeacherSelectProps) {
   const { data, isLoading, isError } = useTeacherOptions()
 
-  // Coerce ids to numbers: the select's `value` is numeric, so a string id from
-  // the API would never match the selected teacher (breaking the edit form's
-  // pre-fill and the filter's selected label).
   const options = (data ?? []).map((teacher) => ({
-    value: Number(teacher.id),
+    value: teacher.id,
     label: teacher.full_name || teacher.name || `Teacher #${teacher.id}`,
   }))
 

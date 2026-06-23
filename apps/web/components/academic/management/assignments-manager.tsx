@@ -48,9 +48,9 @@ function classLabel(a: TeacherAssignment) {
 }
 
 export function AssignmentsManager() {
-  const [teacherId, setTeacherId] = React.useState<number | null>(null)
-  const [classId, setClassId] = React.useState<number | null>(null)
-  const [sessionId, setSessionId] = React.useState<number | null>(null)
+  const [teacherId, setTeacherId] = React.useState<string | null>(null)
+  const [classId, setClassId] = React.useState<string | null>(null)
+  const [sessionId, setSessionId] = React.useState<string | null>(null)
 
   const { data, isLoading, isError, refetch } = useTeacherAssignments({
     teacher_id: teacherId,

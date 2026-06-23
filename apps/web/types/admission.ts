@@ -138,12 +138,12 @@ export interface AdmissionStatus {
   class_name?: string | null
   desired_class_name?: string | null
   session_name?: string | null
-  branch?: { id?: number; name?: string | null; code?: string | null } | null
-  class?: { id?: number; name?: string | null } | null
-  school_class?: { id?: number; name?: string | null } | null
-  desired_class?: { id?: number; name?: string | null } | null
-  session?: { id?: number; name?: string | null } | null
-  academic_session?: { id?: number; name?: string | null } | null
+  branch?: { id?: string; name?: string | null; code?: string | null } | null
+  class?: { id?: string; name?: string | null } | null
+  school_class?: { id?: string; name?: string | null } | null
+  desired_class?: { id?: string; name?: string | null } | null
+  session?: { id?: string; name?: string | null } | null
+  academic_session?: { id?: string; name?: string | null } | null
 
   /** Applicant photo; may be relative (prefix with the API base URL). */
   photo_url?: string | null
@@ -263,9 +263,10 @@ export interface Admission {
 
   // Desired class — the nested `{ id, name }` relation. The `class`/`school_class`
   // keys are kept only for the shared `statusClassName` resolver's fallbacks.
-  desired_class?: { id?: number; name?: string | null } | null
-  class?: { id?: number; name?: string | null } | null
-  school_class?: { id?: number; name?: string | null } | null
+  // `id` is the class `public_id` (a hash string).
+  desired_class?: { id?: string; name?: string | null } | null
+  class?: { id?: string; name?: string | null } | null
+  school_class?: { id?: string; name?: string | null } | null
   desired_class_name?: string | null
   class_name?: string | null
 
@@ -285,7 +286,7 @@ export type AdmissionStatusFilter = AdmissionStatusValue | "all"
 export interface AdmissionListParams {
   search?: string
   status?: AdmissionStatusFilter
-  desired_class_id?: number | null
+  desired_class_id?: string | null
   page?: number
   per_page?: number
 }
@@ -302,9 +303,11 @@ export type ParentRelation = "father" | "mother" | "guardian"
  * account (and under which relation).
  */
 export interface AdmissionApproveInput {
-  session_id: number
-  class_id: number
-  section_id: number
+  // Class/section/session are `public_id` hashes resolved server-side; roll_no
+  // is a real integer.
+  session_id: string
+  class_id: string
+  section_id: string
   roll_no: number
   admission_no?: string | null
   create_parent_account: boolean

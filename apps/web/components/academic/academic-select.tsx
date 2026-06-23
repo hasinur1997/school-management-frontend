@@ -17,29 +17,29 @@
  */
 
 import * as React from "react"
-import { Loader2 } from "lucide-react"
+import { ChevronDown, Loader2 } from "lucide-react"
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select"
 import { cn } from "@workspace/ui/lib/utils"
 
-export interface AcademicSelectOption {
-  value: number
+/**
+ * An option/selected id. Backend resources now expose opaque `public_id`
+ * hashes (e.g. `"a3Xk9"`) as their `id`, so ids are no longer guaranteed
+ * numeric — they may be either a number or a hash string.
+ */
+export type SelectId = number | string
+
+export interface AcademicSelectOption<T extends SelectId = SelectId> {
+  value: T
   label: string
 }
 
-export interface AcademicSelectProps {
+export interface AcademicSelectProps<T extends SelectId = SelectId> {
   /** Selected id, or `null` when nothing is chosen. Controlled by the parent. */
-  value: number | null
+  value: T | null
   /** Called with the newly selected id, or `null` when cleared. */
-  onValueChange: (value: number | null) => void
+  onValueChange: (value: T | null) => void
   /** The choices to render (already mapped from the read hook's data). */
-  options: AcademicSelectOption[]
+  options: AcademicSelectOption<T>[]
   /** Placeholder shown in the loaded-but-unselected state. */
   placeholder?: string
   /** The hook is fetching its first page of data. */
@@ -58,9 +58,11 @@ export interface AcademicSelectProps {
   id?: string
   className?: string
   "aria-label"?: string
+  "aria-describedby"?: string
+  "aria-invalid"?: boolean
 }
 
-export function AcademicSelect({
+export function AcademicSelect<T extends SelectId = SelectId>({
   value,
   onValueChange,
   options,
@@ -75,8 +77,11 @@ export function AcademicSelect({
   id,
   className,
   "aria-label": ariaLabel,
-}: AcademicSelectProps) {
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
+}: AcademicSelectProps<T>) {
   const isEmpty = !isLoading && !isError && options.length === 0
+  const selectedValue = value == null ? null : String(value)
 
   // Disable interaction whenever there's nothing useful to pick from.
   const effectiveDisabled =
@@ -94,34 +99,58 @@ export function AcademicSelect({
           ? emptyPlaceholder
           : placeholder
 
+  function handleValueChange(next: string) {
+    if (next == null || next === "") {
+      onValueChange(null)
+      return
+    }
+
+    // Match by string form so both numeric and hash (`public_id`) ids work,
+    // then emit the option's original value untouched — coercing to a number
+    // would turn a hash id into `NaN` and silently clear the selection.
+    const match = options.find((option) => String(option.value) === next)
+    onValueChange(match ? match.value : null)
+  }
+
   return (
-    <Select
-      value={value}
-      onValueChange={(next) => onValueChange((next as number | null) ?? null)}
-      disabled={effectiveDisabled}
-    >
-      <SelectTrigger
+    <div className={cn("relative w-full min-w-[10rem]", className)}>
+      {isLoading ? (
+        <Loader2
+          className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-4 -translate-y-1/2 animate-spin text-copy-muted"
+          aria-hidden
+        />
+      ) : null}
+      <select
         id={id}
         aria-label={ariaLabel}
-        className={cn("w-full min-w-[10rem]", className)}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
+        value={selectedValue ?? ""}
+        onChange={(event) => handleValueChange(event.target.value)}
+        disabled={effectiveDisabled}
+        className={cn(
+          "h-8 w-full appearance-none rounded-lg border border-input bg-transparent py-1 pr-8 pl-2.5 text-base text-foreground transition-colors outline-none md:text-sm",
+          "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+          "disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50",
+          "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+          "dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+          selectedValue == null && "text-muted-foreground",
+          isLoading && "pl-8"
+        )}
       >
-        {isLoading ? (
-          <Loader2 className="size-4 animate-spin text-copy-muted" aria-hidden />
-        ) : null}
-        <SelectValue placeholder={placeholderText}>
-          {(selected: number | null) => {
-            const match = options.find((option) => option.value === selected)
-            return match ? match.label : placeholderText
-          }}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
+        <option value="" disabled>
+          {placeholderText}
+        </option>
         {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
+          <option key={option.value} value={String(option.value)}>
             {option.label}
-          </SelectItem>
+          </option>
         ))}
-      </SelectContent>
-    </Select>
+      </select>
+      <ChevronDown
+        className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
+    </div>
   )
 }

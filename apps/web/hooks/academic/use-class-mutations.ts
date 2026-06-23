@@ -33,7 +33,7 @@ export function useCreateClass() {
 export function useUpdateClass() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: ClassInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: ClassInput & { id: string }) =>
       api.put<SchoolClass>(`/classes/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["classes"] })
@@ -44,7 +44,7 @@ export function useUpdateClass() {
 export function useDeleteClass() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.delete<null>(`/classes/${id}`),
+    mutationFn: (id: string) => api.delete<null>(`/classes/${id}`),
     onSuccess: () => {
       // A class delete also drops its nested sections/subjects server-side.
       void queryClient.invalidateQueries({ queryKey: ["classes"] })

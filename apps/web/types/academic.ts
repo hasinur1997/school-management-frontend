@@ -10,7 +10,8 @@
 
 /** `GET /sessions` — an academic session/year. */
 export interface AcademicSession {
-  id: number
+  // Ids are opaque `public_id` hashes (strings), not numeric primary keys.
+  id: string
   name: string
   /** Whether this is the active session (used to default selectors elsewhere). */
   is_current?: boolean
@@ -20,7 +21,7 @@ export interface AcademicSession {
 
 /** `GET /classes` — a class/grade. */
 export interface SchoolClass {
-  id: number
+  id: string
   name: string
   code?: string | null
   /** Ordinal used for promotion ordering; not needed for the selector. */
@@ -29,18 +30,18 @@ export interface SchoolClass {
 
 /** `GET /classes/{class}/sections` — a section within a class. */
 export interface Section {
-  id: number
+  id: string
   name: string
-  class_id?: number
+  class_id?: string
   capacity?: number | null
 }
 
 /** `GET /classes/{class}/subjects` — a subject taught in a class. */
 export interface Subject {
-  id: number
+  id: string
   name: string
   code?: string | null
-  class_id?: number
+  class_id?: string
 }
 
 /**
@@ -51,12 +52,12 @@ export interface Subject {
  * (falling back to `#id` when absent — see `assignments-manager.tsx`).
  */
 export interface TeacherAssignment {
-  id: number
-  teacher_id: number
-  class_id: number
-  section_id?: number | null
-  subject_id?: number | null
-  session_id?: number | null
+  id: string
+  teacher_id: string
+  class_id: string
+  section_id?: string | null
+  subject_id?: string | null
+  session_id?: string | null
   /** Flat expanded labels — present when the API resolves them inline. */
   teacher_name?: string | null
   class_name?: string | null
@@ -68,12 +69,12 @@ export interface TeacherAssignment {
    * the related models instead of (or alongside) the flat `*_name` labels. Read
    * defensively via `assignmentLabel`; `class` may arrive under either key.
    */
-  teacher?: { id: number; name?: string | null; full_name?: string | null } | null
-  class?: { id: number; name?: string | null } | null
-  school_class?: { id: number; name?: string | null } | null
-  section?: { id: number; name?: string | null } | null
-  subject?: { id: number; name?: string | null } | null
-  session?: { id: number; name?: string | null } | null
+  teacher?: { id: string; name?: string | null; full_name?: string | null } | null
+  class?: { id: string; name?: string | null } | null
+  school_class?: { id: string; name?: string | null } | null
+  section?: { id: string; name?: string | null } | null
+  subject?: { id: string; name?: string | null } | null
+  session?: { id: string; name?: string | null } | null
 }
 
 /**

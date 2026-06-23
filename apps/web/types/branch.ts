@@ -5,7 +5,8 @@
  */
 
 export interface Branch {
-  id: number
+  // Ids are opaque `public_id` hashes (strings), not numeric primary keys.
+  id: string
   name: string
   code?: string | null
   address?: string | null

@@ -14,16 +14,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import type { TeacherAssignment } from "@/types/academic"
 
-/** Create/edit payload for a teacher assignment. */
+/** Create/edit payload for a teacher assignment. Ids are `public_id` hashes. */
 export interface TeacherAssignmentInput {
-  teacher_id: number
-  class_id: number
+  teacher_id: string
+  class_id: string
   /** Required — assignments are scoped to an academic session. */
-  session_id: number
+  session_id: string
   /** Optional — a class-teacher assignment may have no section. */
-  section_id?: number | null
+  section_id?: string | null
   /** Optional — absent marks a class-teacher (vs subject-teacher) assignment. */
-  subject_id?: number | null
+  subject_id?: string | null
 }
 
 export function useCreateTeacherAssignment() {
@@ -40,7 +40,7 @@ export function useCreateTeacherAssignment() {
 export function useUpdateTeacherAssignment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: TeacherAssignmentInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: TeacherAssignmentInput & { id: string }) =>
       api.put<TeacherAssignment>(`/teacher-assignments/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] })
@@ -51,7 +51,7 @@ export function useUpdateTeacherAssignment() {
 export function useDeleteTeacherAssignment() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.delete<null>(`/teacher-assignments/${id}`),
+    mutationFn: (id: string) => api.delete<null>(`/teacher-assignments/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] })
     },

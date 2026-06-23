@@ -37,7 +37,7 @@ export function useCreateSession() {
 export function useUpdateSession() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: SessionInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: SessionInput & { id: string }) =>
       api.put<AcademicSession>(`/sessions/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["sessions"] })
@@ -48,7 +48,7 @@ export function useUpdateSession() {
 export function useDeleteSession() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.delete<null>(`/sessions/${id}`),
+    mutationFn: (id: string) => api.delete<null>(`/sessions/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["sessions"] })
     },

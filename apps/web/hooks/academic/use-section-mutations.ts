@@ -23,7 +23,7 @@ export interface SectionInput {
 export function useCreateSection() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ classId, ...input }: SectionInput & { classId: number }) =>
+    mutationFn: ({ classId, ...input }: SectionInput & { classId: string }) =>
       api.post<Section>(`/classes/${classId}/sections`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["sections"] })
@@ -34,7 +34,7 @@ export function useCreateSection() {
 export function useUpdateSection() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: SectionInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: SectionInput & { id: string }) =>
       api.put<Section>(`/sections/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["sections"] })
@@ -45,7 +45,7 @@ export function useUpdateSection() {
 export function useDeleteSection() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.delete<null>(`/sections/${id}`),
+    mutationFn: (id: string) => api.delete<null>(`/sections/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["sections"] })
     },

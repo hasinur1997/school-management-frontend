@@ -23,7 +23,7 @@ export interface SubjectInput {
 export function useCreateSubject() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ classId, ...input }: SubjectInput & { classId: number }) =>
+    mutationFn: ({ classId, ...input }: SubjectInput & { classId: string }) =>
       api.post<Subject>(`/classes/${classId}/subjects`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["subjects"] })
@@ -34,7 +34,7 @@ export function useCreateSubject() {
 export function useUpdateSubject() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: SubjectInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: SubjectInput & { id: string }) =>
       api.put<Subject>(`/subjects/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["subjects"] })
@@ -45,7 +45,7 @@ export function useUpdateSubject() {
 export function useDeleteSubject() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.delete<null>(`/subjects/${id}`),
+    mutationFn: (id: string) => api.delete<null>(`/subjects/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["subjects"] })
     },

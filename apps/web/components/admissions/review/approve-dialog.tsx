@@ -71,9 +71,10 @@ const RELATIONS: { value: ParentRelation; label: string }[] = [
 
 const schema = z
   .object({
-    session_id: z.number().int().positive().nullable(),
-    class_id: z.number().int().positive().nullable(),
-    section_id: z.number().int().positive().nullable(),
+    // Class/section/session are opaque `public_id` hashes; roll_no is numeric.
+    session_id: z.string().min(1).nullable(),
+    class_id: z.string().min(1).nullable(),
+    section_id: z.string().min(1).nullable(),
     roll_no: z.number().int().positive().nullable(),
     admission_no: z.string().trim().max(30).optional(),
     create_parent_account: z.boolean(),

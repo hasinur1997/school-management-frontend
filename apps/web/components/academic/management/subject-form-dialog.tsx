@@ -52,7 +52,7 @@ export interface SubjectFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** Class the subject belongs to (required to create). */
-  classId: number
+  classId: string
   /** Present → edit that subject; absent → create within the class. */
   subject?: Subject
 }

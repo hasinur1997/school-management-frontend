@@ -68,9 +68,10 @@ const GENDERS = [
 ]
 
 const assignmentSchema = z.object({
-  class_id: z.number().int(),
-  section_id: z.number().int().positive().nullable(),
-  subject_id: z.number().int().positive().nullable(),
+  // Ids are opaque `public_id` hashes; `null` marks an unfilled row.
+  class_id: z.string().min(1).nullable(),
+  section_id: z.string().min(1).nullable(),
+  subject_id: z.string().min(1).nullable(),
 })
 
 const schema = z
@@ -83,11 +84,11 @@ const schema = z
     gender: z.string().optional(),
     address: z.string().trim().optional(),
     is_active: z.boolean(),
-    branch_id: z.number().int().positive().nullable(),
+    branch_id: z.string().min(1).nullable(),
     assignments: z.array(assignmentSchema),
   })
   .superRefine((values, ctx) => {
-    if (values.assignments.some((row) => !row.class_id || row.class_id <= 0)) {
+    if (values.assignments.some((row) => !row.class_id)) {
       ctx.addIssue({
         path: ["assignments"],
         code: z.ZodIssueCode.custom,
@@ -113,7 +114,7 @@ const FIELD_NAMES = [
 
 function toDefaults(
   teacher: Teacher | undefined,
-  defaultBranchId: number | null
+  defaultBranchId: string | null
 ): TeacherFormValues {
   return {
     name: teacher ? teacherDisplayName(teacher).replace(/ #\d+$/, "") : "",
@@ -128,7 +129,7 @@ function toDefaults(
     // Resolve ids defensively: the API may expand relations as nested objects
     // (`class`/`section`/`subject`) rather than flat `*_id` fields.
     assignments: (teacher?.assignments ?? []).map((a) => ({
-      class_id: a.class_id ?? a.class?.id ?? a.school_class?.id ?? 0,
+      class_id: a.class_id ?? a.class?.id ?? a.school_class?.id ?? null,
       section_id: a.section_id ?? a.section?.id ?? null,
       subject_id: a.subject_id ?? a.subject?.id ?? null,
     })),
@@ -190,7 +191,7 @@ export function TeacherFormDialog({
       address: values.address || null,
       is_active: values.is_active,
       assignments: values.assignments
-        .filter((row) => row.class_id > 0)
+        .filter((row) => Boolean(row.class_id))
         .map((row) => ({
           class_id: row.class_id,
           section_id: row.section_id ?? null,

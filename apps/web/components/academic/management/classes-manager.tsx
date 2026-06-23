@@ -33,14 +33,14 @@ export function ClassesManager() {
   const [formOpen, setFormOpen] = React.useState(false)
   const [editing, setEditing] = React.useState<SchoolClass | undefined>()
   const [deleting, setDeleting] = React.useState<SchoolClass | null>(null)
-  const [expanded, setExpanded] = React.useState<number | null>(null)
+  const [expanded, setExpanded] = React.useState<string | null>(null)
 
   function openCreate() {
     setEditing(undefined)
     setFormOpen(true)
   }
 
-  function toggle(id: number) {
+  function toggle(id: string) {
     setExpanded((current) => (current === id ? null : id))
   }
 

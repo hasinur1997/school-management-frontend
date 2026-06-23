@@ -28,15 +28,15 @@ export interface BranchContextValue {
   /** Whether the current user may switch branch context. */
   isSuperAdmin: boolean
   /** Selected branch id; `null` = all branches (consolidated) / not super admin. */
-  activeBranchId: number | null
+  activeBranchId: string | null
   /** Switch branch (super admin only); `null` selects all branches. */
-  setActiveBranch: (id: number | null) => void
+  setActiveBranch: (id: string | null) => void
   /**
    * Value to fold into query keys so cache entries are scoped per branch
    * (`code-standards.md`, API Access). `undefined` for non-super-admin so their
    * keys carry no branch.
    */
-  branchParam: number | undefined
+  branchParam: string | undefined
 }
 
 const BranchContext = React.createContext<BranchContextValue | null>(null)
@@ -56,12 +56,11 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 
   // Restore the persisted branch (super admin only) during the first render so
   // the bridge is set before any branch-scoped query fires.
-  const [activeBranchId, setActiveBranchIdState] = React.useState<number | null>(
+  const [activeBranchId, setActiveBranchIdState] = React.useState<string | null>(
     () => {
       if (!isSuperAdmin || typeof window === "undefined") return null
       const stored = window.localStorage.getItem(STORAGE_KEY)
-      const parsed = stored ? Number(stored) : NaN
-      const initial = Number.isFinite(parsed) ? parsed : null
+      const initial = stored && stored.length > 0 ? stored : null
       setActiveBranchId(initial)
       return initial
     }
@@ -75,7 +74,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   }, [isSuperAdmin, activeBranchId])
 
   const setActiveBranch = React.useCallback(
-    (id: number | null) => {
+    (id: string | null) => {
       if (!isSuperAdmin || id === activeBranchId) return
 
       setActiveBranchId(id)

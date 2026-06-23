@@ -59,9 +59,9 @@ export function StudentsList() {
 
   const [searchInput, setSearchInput] = React.useState("")
   const [status, setStatus] = React.useState<StudentStatusFilter>("all")
-  const [classId, setClassId] = React.useState<number | null>(null)
-  const [sectionId, setSectionId] = React.useState<number | null>(null)
-  const [sessionId, setSessionId] = React.useState<number | null>(null)
+  const [classId, setClassId] = React.useState<string | null>(null)
+  const [sectionId, setSectionId] = React.useState<string | null>(null)
+  const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [page, setPage] = React.useState(1)
 
   const search = useDebouncedValue(searchInput, 300)
@@ -76,16 +76,16 @@ export function StudentsList() {
     setStatus(value)
     setPage(1)
   }
-  function changeClass(value: number | null) {
+  function changeClass(value: string | null) {
     setClassId(value)
     setSectionId(null) // section depends on class
     setPage(1)
   }
-  function changeSection(value: number | null) {
+  function changeSection(value: string | null) {
     setSectionId(value)
     setPage(1)
   }
-  function changeSession(value: number | null) {
+  function changeSession(value: string | null) {
     setSessionId(value)
     setPage(1)
   }

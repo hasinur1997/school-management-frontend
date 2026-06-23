@@ -15,7 +15,7 @@ import { api, queryKey, STALE_TIME } from "@/lib/api"
 import { useBranch } from "@/components/branch/branch-provider"
 import type { Subject } from "@/types/academic"
 
-export function useSubjects(classId: number | null | undefined) {
+export function useSubjects(classId: string | number | null | undefined) {
   const { branchParam } = useBranch()
 
   return useQuery({

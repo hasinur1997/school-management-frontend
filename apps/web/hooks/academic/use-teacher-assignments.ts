@@ -17,14 +17,14 @@ import { useBranch } from "@/components/branch/branch-provider"
 import type { TeacherAssignment } from "@/types/academic"
 
 export interface TeacherAssignmentFilters {
-  teacher_id?: number | null
-  class_id?: number | null
-  session_id?: number | null
+  teacher_id?: string | null
+  class_id?: string | null
+  session_id?: string | null
 }
 
 /** Drop null/undefined filters so the request only sends active ones. */
 function toParams(filters: TeacherAssignmentFilters) {
-  const params: Record<string, number> = {}
+  const params: Record<string, string> = {}
   if (filters.teacher_id != null) params.teacher_id = filters.teacher_id
   if (filters.class_id != null) params.class_id = filters.class_id
   if (filters.session_id != null) params.session_id = filters.session_id

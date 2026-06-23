@@ -10,14 +10,15 @@ import { useSubjects } from "@/hooks/academic"
 import {
   AcademicSelect,
   type AcademicSelectProps,
+  type SelectId,
 } from "./academic-select"
 
 type SubjectSelectProps = Pick<
-  AcademicSelectProps,
+  AcademicSelectProps<string>,
   "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
 > & {
   /** The selected class; subjects are scoped to it. */
-  classId: number | null | undefined
+  classId: SelectId | null | undefined
   placeholder?: string
 }
 

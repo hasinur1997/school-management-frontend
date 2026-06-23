@@ -9,4 +9,4 @@ export {
   formatMoney,
   isNumericValue,
 } from "./number"
-export { formatDate, formatDateRange } from "./date"
+export { formatDate, formatDateRange, formatTime } from "./date"

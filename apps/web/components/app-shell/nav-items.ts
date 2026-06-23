@@ -92,7 +92,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Attendance",
         href: "/attendance",
         icon: CalendarCheck,
-        permission: "attendance.view",
+        permission: "attendance.create",
       },
       {
         label: "Exams",

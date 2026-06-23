@@ -13,7 +13,7 @@ import {
 } from "./academic-select"
 
 type ClassSelectProps = Pick<
-  AcademicSelectProps,
+  AcademicSelectProps<string>,
   "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
 > & {
   placeholder?: string

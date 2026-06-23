@@ -23,7 +23,7 @@ export interface TeacherAssignmentsFieldProps {
 }
 
 const EMPTY_ROW: TeacherAssignmentInput = {
-  class_id: 0,
+  class_id: null,
   section_id: null,
   subject_id: null,
 }
@@ -54,7 +54,7 @@ export function TeacherAssignmentsField({
       ) : (
         <ul className="flex flex-col gap-3">
           {value.map((row, index) => {
-            const classId = row.class_id > 0 ? row.class_id : null
+            const classId = row.class_id ?? null
             return (
               <li
                 key={index}
@@ -69,7 +69,7 @@ export function TeacherAssignmentsField({
                       value={classId}
                       onValueChange={(next) =>
                         update(index, {
-                          class_id: next ?? 0,
+                          class_id: next,
                           // Section/subject are scoped to the class — reset them.
                           section_id: null,
                           subject_id: null,

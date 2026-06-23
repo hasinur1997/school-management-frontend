@@ -55,7 +55,7 @@ export interface SectionFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** Class the section belongs to (required to create). */
-  classId: number
+  classId: string
   /** Present → edit that section; absent → create within the class. */
   section?: Section
 }

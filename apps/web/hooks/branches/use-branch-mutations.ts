@@ -36,7 +36,7 @@ export function useCreateBranch() {
 export function useUpdateBranch() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...input }: BranchInput & { id: number }) =>
+    mutationFn: ({ id, ...input }: BranchInput & { id: string }) =>
       api.put<Branch>(`/branches/${id}`, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["branches"] })
@@ -47,7 +47,7 @@ export function useUpdateBranch() {
 export function useDeleteBranch() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.delete<null>(`/branches/${id}`),
+    mutationFn: (id: string) => api.delete<null>(`/branches/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["branches"] })
     },

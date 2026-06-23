@@ -24,6 +24,22 @@ export function formatDate(value: string | null | undefined): string {
   return DATE_FORMAT.format(date)
 }
 
+const TIME_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+})
+
+/** Format an ISO timestamp as a short clock time (`09:05 am`). */
+export function formatTime(value: string | null | undefined): string {
+  if (!value) return EMPTY_VALUE
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return EMPTY_VALUE
+
+  return TIME_FORMAT.format(date)
+}
+
 /**
  * Format an optional start/end pair as a range (`31 Jan 2025 – 20 Dec 2025`),
  * collapsing to a single bound when only one is present.
