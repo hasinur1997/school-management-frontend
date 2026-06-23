@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Academic & People |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.7 |
 | Blocks | — |
 | Feature spec | `feature-specs/09-students.md` |
@@ -26,7 +26,7 @@ Admin-managed parent accounts linked many-to-many to students, plus the parent's
 - Parents created by admins (no self-registration). Record-level access: a parent sees only linked students (API-enforced) → access/not-found state on `403/404`.
 
 ## Check When Done
-- [ ] Parents listed, created (with credential dispatch), and linked/unlinked to students.
-- [ ] Parent session sees only linked children via `/me/students`.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Parents listed, created (with credential dispatch), and linked/unlinked to students.
+- [x] Parent session sees only linked children via `/me/students`.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

@@ -66,6 +66,12 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: "student.view",
       },
       {
+        label: "Parents",
+        href: "/parents",
+        icon: Users,
+        permission: "parent.manage",
+      },
+      {
         label: "Teachers",
         href: "/teachers",
         icon: Users,
