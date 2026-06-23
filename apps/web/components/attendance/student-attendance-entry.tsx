@@ -761,6 +761,16 @@ function RosterPanel({
             ))}
           </TableBody>
         </Table>
+        <div className="border-t border-surface-border px-6 py-3.5">
+          <ListPager
+            meta={pagerMeta}
+            page={page}
+            lastPage={lastPage}
+            unit="student"
+            disabled={isFetching || isSaving}
+            onPage={setPage}
+          />
+        </div>
       </div>
 
       <ul className="flex flex-col gap-3 md:hidden">
@@ -791,18 +801,16 @@ function RosterPanel({
         ))}
       </ul>
 
-      {total > ROSTER_PAGE_SIZE ? (
-        <div className="rounded-xl border border-surface-border bg-surface px-4 py-3">
-          <ListPager
-            meta={pagerMeta}
-            page={page}
-            lastPage={lastPage}
-            unit="student"
-            disabled={isFetching || isSaving}
-            onPage={setPage}
-          />
-        </div>
-      ) : null}
+      <div className="md:hidden">
+        <ListPager
+          meta={pagerMeta}
+          page={page}
+          lastPage={lastPage}
+          unit="student"
+          disabled={isFetching || isSaving}
+          onPage={setPage}
+        />
+      </div>
     </div>
   )
 }
