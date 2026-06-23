@@ -274,12 +274,12 @@ export interface Admission {
 }
 
 /**
- * Status the review queue filters by. The backend always filters to exactly one
- * status (it defaults to `pending` when none is sent — `AdmissionService::list`),
- * so there is no "all" option; the queue defaults to `pending` and the user
- * switches to see approved / rejected.
+ * Status the review queue filters by. The queue defaults to `all` (no status
+ * param sent) so every application is listed; the user can narrow to a single
+ * lifecycle state. `all` is a UI-only sentinel — it is omitted from the request
+ * so the backend returns every status.
  */
-export type AdmissionStatusFilter = AdmissionStatusValue
+export type AdmissionStatusFilter = AdmissionStatusValue | "all"
 
 /** Query params for the paginated `GET /admissions` queue. */
 export interface AdmissionListParams {

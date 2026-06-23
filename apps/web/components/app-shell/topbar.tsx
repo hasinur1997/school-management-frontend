@@ -1,39 +1,26 @@
 "use client"
 
 /**
- * The fixed full-width topbar (task 1.5), three zones per `ui-context.md`:
- *   left   — sidebar hamburger (`< lg`) + logo/brand, aligned over the sidebar;
- *   center — the global search slot (placeholder until 1.6);
+ * The content-column topbar (task 1.5), three zones per `ui-context.md`:
+ *   left   — sidebar hamburger (`< lg`); the brand now lives in the sidebar;
+ *   center — the global command search;
  *   right  — theme switcher, branch switcher, notifications, user menu.
- * Stays fixed above the content; nothing renders under it.
+ * Sits at the top of the content column (right of the full-height sidebar).
  */
 
 import { Bell, Menu } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
-import { cn } from "@workspace/ui/lib/utils"
 import { ThemeSwitcher } from "@/components/theme-switcher"
-import { Brand } from "@/components/app-shell/brand"
 import { BranchSwitcher } from "@/components/app-shell/branch-switcher"
 import { GlobalSearch } from "@/components/app-shell/global-search"
 import { UserMenu } from "@/components/app-shell/user-menu"
 
-export function Topbar({
-  collapsed,
-  onOpenMobileNav,
-}: {
-  collapsed: boolean
-  onOpenMobileNav: () => void
-}) {
+export function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center gap-2 border-b border-surface-border bg-surface px-4 sm:gap-3">
-      {/* Left: hamburger (< lg) + brand, aligned over the sidebar width. */}
-      <div
-        className={cn(
-          "flex items-center gap-2 overflow-hidden transition-[width] duration-200 lg:shrink-0",
-          collapsed ? "lg:w-16" : "lg:w-56"
-        )}
-      >
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b border-surface-border bg-surface px-4 sm:gap-3 sm:px-6">
+      {/* Left: hamburger (< lg). Balances the right cluster so search centers. */}
+      <div className="flex flex-1 items-center">
         <Button
           variant="ghost"
           size="icon"
@@ -43,27 +30,31 @@ export function Topbar({
         >
           <Menu className="size-5" />
         </Button>
-        <Brand />
       </div>
 
-      {/* Center: global command search. */}
-      <div className="flex flex-1 justify-center">
+      {/* Center: global command search, capped and centered. */}
+      <div className="flex w-full max-w-110 justify-center">
         <GlobalSearch />
       </div>
 
       {/* Right: theme, branch, notifications, user. */}
-      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
+      <div className="flex flex-1 items-center justify-end gap-1 sm:gap-1.5">
         <ThemeSwitcher />
         <BranchSwitcher />
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="size-11 sm:size-9"
+          className="relative size-11 sm:size-9"
           aria-label="Notifications"
           disabled
         >
           <Bell className="size-5" />
+          <span
+            aria-hidden
+            className="absolute top-1.5 right-1.5 size-1.75 rounded-full bg-error ring-2 ring-surface"
+          />
         </Button>
+        <div className="mx-1 hidden h-6 w-px bg-surface-border sm:block" />
         <UserMenu />
       </div>
     </header>

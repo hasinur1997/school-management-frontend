@@ -3,6 +3,7 @@
 import * as React from "react"
 
 export const ACCENTS = [
+  { value: "indigo", label: "Indigo" },
   { value: "blue", label: "Blue" },
   { value: "purple", label: "Purple" },
   { value: "emerald", label: "Emerald" },
@@ -14,7 +15,7 @@ export const ACCENTS = [
 export type Accent = (typeof ACCENTS)[number]["value"]
 
 export const ACCENT_STORAGE_KEY = "accent"
-export const DEFAULT_ACCENT: Accent = "blue"
+export const DEFAULT_ACCENT: Accent = "indigo"
 
 interface AccentContextValue {
   accent: Accent

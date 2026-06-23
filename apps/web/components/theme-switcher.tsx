@@ -35,7 +35,7 @@ export function ThemeSwitcher() {
   if (!mounted) {
     return (
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
         aria-label="Theme"
         className="size-11 sm:size-9"
@@ -51,7 +51,7 @@ export function ThemeSwitcher() {
       <DropdownMenuTrigger
         render={
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             aria-label="Change theme"
             className="size-11 sm:size-9"

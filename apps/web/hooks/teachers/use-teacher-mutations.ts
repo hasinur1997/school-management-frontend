@@ -46,7 +46,9 @@ export function useUpdateTeacher() {
 export function useToggleTeacherStatus() {
   const invalidate = useInvalidateTeachers()
   return useMutation({
-    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
+    // Teacher ids are hash strings post-migration; accept either form so both
+    // the list (typed `number`) and the detail (`string` route param) call it.
+    mutationFn: ({ id, is_active }: { id: string | number; is_active: boolean }) =>
       api.patch<Teacher>(`/teachers/${id}/status`, { is_active }),
     onSuccess: invalidate,
   })
@@ -74,7 +76,7 @@ export function useDeleteTeacherPhoto() {
 
 export function useResendTeacherCredentials() {
   return useMutation({
-    mutationFn: (id: number) =>
+    mutationFn: (id: string | number) =>
       api.post<null>(`/teachers/${id}/resend-credentials`),
   })
 }

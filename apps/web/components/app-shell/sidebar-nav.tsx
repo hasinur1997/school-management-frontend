@@ -83,11 +83,11 @@ function SidebarLink({
       aria-current={active ? "page" : undefined}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex min-h-11 items-center gap-3 rounded-md px-2.5 text-sm font-medium transition-colors lg:min-h-9",
+        "flex min-h-11 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors lg:min-h-9",
         collapsed && "justify-center",
         active
-          ? "bg-accent-dim text-brand"
-          : "text-copy-secondary hover:bg-subtle hover:text-copy-primary"
+          ? "bg-accent-dim font-semibold text-brand"
+          : "font-medium text-copy-secondary hover:bg-subtle hover:text-copy-primary"
       )}
     >
       <Icon className="size-5 shrink-0" aria-hidden />

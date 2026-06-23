@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 2 — Academic & People |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.1, 2.6 |
 | Blocks | attendance, results, fees, documents surfaces |
 | Feature spec | `feature-specs/09-students.md` |
@@ -27,7 +27,7 @@ Student management and profile, including enrollment history and links into atte
 - Permission-gated; super admin sees all branches. admission_no/birth_reg_no immutable.
 
 ## Check When Done
-- [ ] Students listed, filtered, viewed, edited, photo-updated, status-toggled (not TC).
-- [ ] Enrollment history renders; TC flagged.
-- [ ] Student/parent session sees only permitted records; loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Students listed, filtered, viewed, edited, photo-updated, status-toggled (not TC).
+- [x] Enrollment history renders; TC flagged.
+- [x] Student/parent session sees only permitted records; loading/empty/error states present.
+- [x] `npm run build` passes.

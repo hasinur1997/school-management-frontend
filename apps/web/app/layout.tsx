@@ -21,7 +21,7 @@ const fontMono = Geist_Mono({
 
 // Applies the persisted accent to <html> before paint to avoid a flash,
 // mirroring how next-themes restores the color mode. Kept inline and tiny.
-const accentScript = `(function(){try{var a=localStorage.getItem("accent");if(a&&a!=="blue"){document.documentElement.setAttribute("data-accent",a);}}catch(e){}})();`
+const accentScript = `(function(){try{var a=localStorage.getItem("accent");if(a&&a!=="indigo"){document.documentElement.setAttribute("data-accent",a);}}catch(e){}})();`
 
 export default function RootLayout({
   children,

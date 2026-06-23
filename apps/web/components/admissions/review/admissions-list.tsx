@@ -6,9 +6,8 @@
  * actions. Reads `useAdmissions`; approve/reject invalidate the cache so a
  * processed application leaves the pending queue.
  *
- * The backend always filters by exactly one status (default `pending`), so the
- * queue defaults to Pending and the user switches to Approved / Rejected — there
- * is no "all". Implements all four states — loading / empty / error / loaded —
+ * The queue lists every application by default (`all`) and the user can narrow to
+ * Pending / Approved / Rejected. Implements all four states — loading / empty / error / loaded —
  * and is responsive (table ≥ md, cards below). Manage actions are gated by
  * `admissions.manage` and only shown while an application is still pending.
  */
@@ -33,6 +32,7 @@ import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { StatusBadge } from "@/components/status-badge"
 import { TableSkeleton } from "@/components/skeletons"
+import { ListPager } from "@/components/list-pager"
 import { ClassSelect } from "@/components/academic"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatDate } from "@/lib/format"
@@ -56,7 +56,7 @@ export function AdmissionsList() {
   const router = useRouter()
 
   const [searchInput, setSearchInput] = React.useState("")
-  const [status, setStatus] = React.useState<AdmissionStatusFilter>("pending")
+  const [status, setStatus] = React.useState<AdmissionStatusFilter>("all")
   const [classId, setClassId] = React.useState<number | null>(null)
   const [page, setPage] = React.useState(1)
 
@@ -90,13 +90,14 @@ export function AdmissionsList() {
   const admissions = data?.data ?? []
   const meta = data?.meta
   const lastPage = meta?.last_page ?? 1
-  const total = meta?.total
-  // The status filter always carries a value; only search/class count as
-  // narrowing the default pending queue for the empty-state copy.
-  const hasExtraFilters = search.trim().length > 0 || classId != null
+  // The queue defaults to listing everything (`all`); any of status / search /
+  // class narrows it, which drives the empty-state copy and the Clear button.
+  const hasExtraFilters =
+    status !== "all" || search.trim().length > 0 || classId != null
 
   function clearFilters() {
     setSearchInput("")
+    setStatus("all")
     setClassId(null)
     setPage(1)
   }
@@ -108,13 +109,18 @@ export function AdmissionsList() {
           <Button
             variant="outline"
             size="sm"
+            className="h-8.5 gap-1.5 px-3 text-[13px] font-semibold"
             onClick={() => setRejectTarget(admission)}
           >
-            <X className="size-4" aria-hidden />
+            <X className="size-3.75" aria-hidden />
             Reject
           </Button>
-          <Button size="sm" onClick={() => setApproveTarget(admission)}>
-            <Check className="size-4" aria-hidden />
+          <Button
+            size="sm"
+            className="h-8.5 gap-1.5 px-3.5 text-[13px] font-semibold"
+            onClick={() => setApproveTarget(admission)}
+          >
+            <Check className="size-3.75" aria-hidden />
             Approve
           </Button>
         </div>
@@ -176,19 +182,17 @@ export function AdmissionsList() {
       ) : admissions.length === 0 ? (
         <EmptyState
           icon={Inbox}
-          title={
-            hasExtraFilters ? "No matching applications" : `No ${status} applications`
-          }
+          title={hasExtraFilters ? "No matching applications" : "No applications"}
           description={
             hasExtraFilters
-              ? "No applications match the current search or class filter."
-              : `There are no ${status} applications right now.`
+              ? "No applications match the current filters."
+              : "There are no applications yet."
           }
         />
       ) : (
         <>
           <div
-            className="hidden rounded-xl border border-surface-border bg-surface md:block"
+            className="hidden overflow-hidden rounded-xl border border-surface-border bg-surface shadow-sm md:block"
             aria-busy={isFetching}
           >
             <Table>
@@ -242,6 +246,16 @@ export function AdmissionsList() {
                 ))}
               </TableBody>
             </Table>
+            <div className="border-t border-surface-border px-6 py-3.5">
+              <ListPager
+                meta={meta}
+                page={page}
+                lastPage={lastPage}
+                unit="application"
+                disabled={isFetching}
+                onPage={setPage}
+              />
+            </div>
           </div>
 
           {/* Card list < md */}
@@ -282,13 +296,16 @@ export function AdmissionsList() {
             ))}
           </ul>
 
-          <Pager
-            page={meta?.current_page ?? page}
-            lastPage={lastPage}
-            total={total}
-            disabled={isFetching}
-            onPage={setPage}
-          />
+          <div className="md:hidden">
+            <ListPager
+              meta={meta}
+              page={page}
+              lastPage={lastPage}
+              unit="application"
+              disabled={isFetching}
+              onPage={setPage}
+            />
+          </div>
         </>
       )}
 
@@ -327,48 +344,4 @@ function initials(name: string): string {
   if (parts.length === 0) return "?"
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
-}
-
-interface PagerProps {
-  page: number
-  lastPage: number
-  total?: number
-  disabled?: boolean
-  onPage: (page: number) => void
-}
-
-function Pager({ page, lastPage, total, disabled, onPage }: PagerProps) {
-  if (lastPage <= 1) {
-    return total != null ? (
-      <p className="text-center text-xs text-copy-muted">
-        {total} {total === 1 ? "application" : "applications"}
-      </p>
-    ) : null
-  }
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-xs text-copy-muted">
-        Page {page} of {lastPage}
-        {total != null ? ` · ${total} total` : ""}
-      </p>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || page <= 1}
-          onClick={() => onPage(page - 1)}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || page >= lastPage}
-          onClick={() => onPage(page + 1)}
-        >
-          Next
-        </Button>
-      </div>
-    </div>
-  )
 }

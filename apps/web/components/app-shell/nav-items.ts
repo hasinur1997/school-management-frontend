@@ -63,7 +63,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Students",
         href: "/students",
         icon: GraduationCap,
-        permission: "students.view",
+        permission: "student.view",
       },
       {
         label: "Teachers",

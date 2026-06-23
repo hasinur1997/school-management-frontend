@@ -138,7 +138,7 @@ function SessionList({ sessions, onEdit, onDelete }: SessionListProps) {
   return (
     <>
       {/* Table ≥ md */}
-      <div className="hidden rounded-xl border border-surface-border bg-surface md:block">
+      <div className="hidden overflow-hidden rounded-xl border border-surface-border bg-surface shadow-sm md:block">
         <Table>
           <TableHeader>
             <TableRow>

@@ -82,9 +82,9 @@
     --text-secondary: #4a4f59;
     --text-muted: #828896;
 
-    /* Brand accent — Blue (default). Re-pointed by [data-accent]. */
-    --accent-primary: #2563eb;
-    --accent-primary-dim: rgba(37, 99, 235, 0.1);
+    /* Brand accent — Indigo (default). Re-pointed by [data-accent]. */
+    --accent-primary: #4f46e5;
+    --accent-primary-dim: rgba(79, 70, 229, 0.1);
 
     /* State tokens — never change across accents */
     --state-success: #16a34a;
@@ -139,9 +139,9 @@
     --text-secondary: #c2c6cf;
     --text-muted: #828896;
 
-    /* Brand accent — Blue (default) dark. Re-pointed by .dark[data-accent]. */
-    --accent-primary: #3b82f6;
-    --accent-primary-dim: rgba(59, 130, 246, 0.14);
+    /* Brand accent — Indigo (default) dark. Re-pointed by .dark[data-accent]. */
+    --accent-primary: #6366f1;
+    --accent-primary-dim: rgba(99, 102, 241, 0.14);
 
     /* State tokens — dark */
     --state-success: #34d399;
@@ -151,9 +151,13 @@
 }
 
 /* Accent themes — re-point ONLY --accent-primary / --accent-primary-dim.
-   Blue is the baseline; its explicit blocks let a scoped data-accent="blue"
+   Indigo is the baseline; its explicit blocks let a scoped data-accent="indigo"
    (e.g. a swatch in the theme switcher) resolve correctly regardless of the
    ambient selection. */
+[data-accent="indigo"] {
+    --accent-primary: #4f46e5;
+    --accent-primary-dim: rgba(79, 70, 229, 0.1);
+}
 [data-accent="blue"] {
     --accent-primary: #2563eb;
     --accent-primary-dim: rgba(37, 99, 235, 0.1);
@@ -179,6 +183,10 @@
     --accent-primary-dim: rgba(8, 145, 178, 0.1);
 }
 
+.dark[data-accent="indigo"] {
+    --accent-primary: #6366f1;
+    --accent-primary-dim: rgba(99, 102, 241, 0.14);
+}
 .dark[data-accent="blue"] {
     --accent-primary: #3b82f6;
     --accent-primary-dim: rgba(59, 130, 246, 0.14);

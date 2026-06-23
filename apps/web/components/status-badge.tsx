@@ -78,9 +78,14 @@ export function StatusBadge({
     <Badge
       variant="outline"
       data-tone={resolved}
-      className={cn("capitalize", TONE_CLASSES[resolved], className)}
+      className={cn(
+        "gap-1.5 px-2.5 py-0.5 font-semibold capitalize",
+        TONE_CLASSES[resolved],
+        className
+      )}
       {...props}
     >
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current" />
       {label ?? status}
     </Badge>
   )

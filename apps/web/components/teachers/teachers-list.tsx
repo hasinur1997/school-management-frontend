@@ -29,6 +29,7 @@ import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { StatusBadge } from "@/components/status-badge"
 import { TableSkeleton } from "@/components/skeletons"
+import { ListPager } from "@/components/list-pager"
 import { useBranch } from "@/components/branch/branch-provider"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { toastError, toastSuccess } from "@/lib/toast"
@@ -94,7 +95,6 @@ export function TeachersList() {
   const teachers = data?.data ?? []
   const meta = data?.meta
   const lastPage = meta?.last_page ?? 1
-  const total = meta?.total
   const hasFilters = search.trim().length > 0 || status !== "all"
 
   function openCreate() {
@@ -221,7 +221,7 @@ export function TeachersList() {
       ) : (
         <>
           <div
-            className="hidden rounded-xl border border-surface-border bg-surface md:block"
+            className="hidden overflow-hidden rounded-xl border border-surface-border bg-surface shadow-sm md:block"
             aria-busy={isFetching}
           >
             <Table>
@@ -275,6 +275,16 @@ export function TeachersList() {
                 })}
               </TableBody>
             </Table>
+            <div className="border-t border-surface-border px-6 py-3.5">
+              <ListPager
+                meta={meta}
+                page={page}
+                lastPage={lastPage}
+                unit="teacher"
+                disabled={isFetching}
+                onPage={setPage}
+              />
+            </div>
           </div>
 
           {/* Card list < md */}
@@ -320,13 +330,16 @@ export function TeachersList() {
             })}
           </ul>
 
-          <Pager
-            page={meta?.current_page ?? page}
-            lastPage={lastPage}
-            total={total}
-            disabled={isFetching}
-            onPage={setPage}
-          />
+          <div className="md:hidden">
+            <ListPager
+              meta={meta}
+              page={page}
+              lastPage={lastPage}
+              unit="teacher"
+              disabled={isFetching}
+              onPage={setPage}
+            />
+          </div>
         </>
       )}
 
@@ -415,46 +428,3 @@ function TeacherIdentity({ teacher }: { teacher: Teacher }) {
   )
 }
 
-interface PagerProps {
-  page: number
-  lastPage: number
-  total?: number
-  disabled?: boolean
-  onPage: (page: number) => void
-}
-
-function Pager({ page, lastPage, total, disabled, onPage }: PagerProps) {
-  if (lastPage <= 1) {
-    return total != null ? (
-      <p className="text-center text-xs text-copy-muted">
-        {total} {total === 1 ? "teacher" : "teachers"}
-      </p>
-    ) : null
-  }
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-xs text-copy-muted">
-        Page {page} of {lastPage}
-        {total != null ? ` · ${total} total` : ""}
-      </p>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || page <= 1}
-          onClick={() => onPage(page - 1)}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || page >= lastPage}
-          onClick={() => onPage(page + 1)}
-        >
-          Next
-        </Button>
-      </div>
-    </div>
-  )
-}

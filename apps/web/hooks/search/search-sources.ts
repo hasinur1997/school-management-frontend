@@ -65,7 +65,7 @@ export const RECORD_SOURCES: RecordSource[] = [
   {
     module: "students",
     group: "Students",
-    permission: "students.view",
+    permission: "student.view",
     icon: GraduationCap,
     fetch: async (query) => {
       const rows = await fetchList("/students", query)

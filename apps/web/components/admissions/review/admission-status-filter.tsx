@@ -3,8 +3,8 @@
 /**
  * Status filter for the admissions review queue (task 2.6). Controlled string
  * select on the shared `Select` primitive; the parent owns the value and the
- * list folds it into the query params (`all` is sent as no filter — see
- * `useAdmissions`).
+ * list folds it into the query params. Defaults to `all` (sent as no filter — see
+ * `useAdmissions`) so the queue lists every application.
  */
 
 import {
@@ -16,9 +16,10 @@ import {
 } from "@workspace/ui/components/select"
 import type { AdmissionStatusFilter } from "@/types/admission"
 
-// The backend always filters by exactly one status (default `pending`), so the
-// queue offers the three real lifecycle states — no "all".
+// The queue lists every application by default (`all`), with the three real
+// lifecycle states to narrow to.
 const OPTIONS: { value: AdmissionStatusFilter; label: string }[] = [
+  { value: "all", label: "All statuses" },
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
@@ -39,13 +40,13 @@ export function AdmissionStatusFilter({
     <Select
       value={value}
       onValueChange={(next) =>
-        onValueChange((next as AdmissionStatusFilter) ?? "pending")
+        onValueChange((next as AdmissionStatusFilter) ?? "all")
       }
     >
       <SelectTrigger id={id} aria-label="Filter by status" className="w-full">
         <SelectValue>
           {(selected: AdmissionStatusFilter) =>
-            OPTIONS.find((o) => o.value === selected)?.label ?? "Pending"
+            OPTIONS.find((o) => o.value === selected)?.label ?? "All statuses"
           }
         </SelectValue>
       </SelectTrigger>
