@@ -19,6 +19,8 @@ export type AttendanceStatusValue = (typeof ATTENDANCE_STATUSES)[number]
 
 export interface AttendanceSheetStudent {
   enrollment_id: string
+  /** The student's public id, for linking to the student detail page. */
+  student_id?: string | null
   roll_no: string | number | null
   name_en: string | null
   photo_url: string | null
@@ -27,6 +29,10 @@ export interface AttendanceSheetStudent {
   recorded_at?: string | null
   /** Name of the user (teacher/admin) who recorded the mark, or null. */
   recorded_by?: string | null
+  /** Recorder's teacher public id when the recorder is a teacher, else null. */
+  recorded_by_teacher_id?: string | null
+  /** Recorder's user public id, for linking to the user profile, else null. */
+  recorded_by_user_id?: string | null
 }
 
 export interface AttendanceSheet {

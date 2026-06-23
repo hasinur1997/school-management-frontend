@@ -19,6 +19,7 @@
  */
 
 import * as React from "react"
+import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   useForm,
@@ -57,6 +58,10 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 import { ClassSelect, SectionSelect } from "@/components/academic"
 import { FormBanner } from "@/components/academic/management/form-helpers"
+import { usePermission } from "@/hooks/auth/use-permission"
+import { STUDENT_VIEW } from "@/components/students/permissions"
+import { TEACHER_VIEW } from "@/components/teachers/permissions"
+import { USER_VIEW } from "@/components/users"
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
@@ -675,6 +680,12 @@ function RosterPanel({
     last_page: lastPage,
   }
 
+  // Gate the row links so a viewer who can't reach the target page sees plain
+  // text instead of a dead click landing on an access-denied screen.
+  const canViewStudent = usePermission(STUDENT_VIEW)
+  const canViewTeacher = usePermission(TEACHER_VIEW)
+  const canViewUser = usePermission(USER_VIEW)
+
   return (
     <div className="flex flex-col gap-3" aria-busy={isFetching || isSaving}>
       <div className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-4 lg:flex-row lg:items-center lg:justify-between">
@@ -742,7 +753,7 @@ function RosterPanel({
                   {student.roll_no ?? EMPTY}
                 </TableCell>
                 <TableCell>
-                  <RosterStudent student={student} />
+                  <RosterStudent student={student} canView={canViewStudent} />
                 </TableCell>
                 <TableCell>
                   <StatusField
@@ -752,7 +763,11 @@ function RosterPanel({
                   />
                 </TableCell>
                 <TableCell className="text-sm text-copy-secondary">
-                  {student.recorded_by || EMPTY}
+                  <RecordedBy
+                    student={student}
+                    canViewTeacher={canViewTeacher}
+                    canViewUser={canViewUser}
+                  />
                 </TableCell>
                 <TableCell className="text-right font-mono text-sm whitespace-nowrap text-copy-muted">
                   {formatTime(student.recorded_at)}
@@ -780,7 +795,7 @@ function RosterPanel({
             className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-4"
           >
             <div className="flex items-start justify-between gap-3">
-              <RosterStudent student={student} />
+              <RosterStudent student={student} canView={canViewStudent} />
               <span className="shrink-0 rounded-md bg-subtle px-2 py-1 font-mono text-xs text-copy-secondary">
                 Roll {student.roll_no ?? EMPTY}
               </span>
@@ -790,9 +805,11 @@ function RosterPanel({
               <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-xs text-copy-muted">
                 <span>
                   Recorded by{" "}
-                  <span className="text-copy-secondary">
-                    {student.recorded_by || EMPTY}
-                  </span>
+                  <RecordedBy
+                    student={student}
+                    canViewTeacher={canViewTeacher}
+                    canViewUser={canViewUser}
+                  />
                 </span>
                 <span className="font-mono">{formatTime(student.recorded_at)}</span>
               </p>
@@ -878,7 +895,16 @@ function AutosaveStatus({
   )
 }
 
-function RosterStudent({ student }: { student: AttendanceSheetStudent }) {
+function RosterStudent({
+  student,
+  canView,
+}: {
+  student: AttendanceSheetStudent
+  canView: boolean
+}) {
+  const name = student.name_en || EMPTY
+  const linkable = canView && Boolean(student.student_id)
+
   return (
     <div className="flex min-w-0 items-center gap-3">
       <Avatar className="size-9 shrink-0">
@@ -886,14 +912,58 @@ function RosterStudent({ student }: { student: AttendanceSheetStudent }) {
         <AvatarFallback>{studentInitials(student)}</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <p className="truncate font-medium text-copy-primary">
-          {student.name_en || EMPTY}
-        </p>
+        {linkable ? (
+          <Link
+            href={`/students/${student.student_id}`}
+            className="truncate font-medium text-copy-primary hover:text-primary hover:underline"
+          >
+            {name}
+          </Link>
+        ) : (
+          <p className="truncate font-medium text-copy-primary">{name}</p>
+        )}
         <p className="truncate text-xs text-copy-muted">
           Enrollment {student.enrollment_id}
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * The "recorded by" name, linked to the recorder's profile when the viewer can
+ * reach it: a teacher recorder links to the teacher detail page, anyone else to
+ * the user profile page. Without the relevant permission (or no recorder yet) it
+ * renders as plain text.
+ */
+function RecordedBy({
+  student,
+  canViewTeacher,
+  canViewUser,
+}: {
+  student: AttendanceSheetStudent
+  canViewTeacher: boolean
+  canViewUser: boolean
+}) {
+  const name = student.recorded_by
+  if (!name) return <span className="text-copy-muted">{EMPTY}</span>
+
+  let href: string | null = null
+  if (student.recorded_by_teacher_id && canViewTeacher) {
+    href = `/teachers/${student.recorded_by_teacher_id}`
+  } else if (student.recorded_by_user_id && canViewUser) {
+    href = `/users/${student.recorded_by_user_id}`
+  }
+
+  if (!href) return <span className="text-copy-secondary">{name}</span>
+
+  return (
+    <Link
+      href={href}
+      className="text-copy-secondary hover:text-primary hover:underline"
+    >
+      {name}
+    </Link>
   )
 }
 
