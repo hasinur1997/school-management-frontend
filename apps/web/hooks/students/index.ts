@@ -9,6 +9,7 @@ export { useStudent } from "./use-student"
 export { useStudentEnrollments } from "./use-student-enrollments"
 export {
   useUpdateStudent,
+  useUpdateEnrollment,
   useUpdateStudentStatus,
   useUploadStudentPhoto,
 } from "./use-student-mutations"

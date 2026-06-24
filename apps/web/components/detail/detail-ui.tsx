@@ -292,10 +292,13 @@ export function DetailCardHeader({
   icon: Icon,
   title,
   className,
+  action,
 }: {
   icon: React.ElementType
   title: string
   className?: string
+  /** Optional control rendered at the far right of the header (e.g. Edit). */
+  action?: React.ReactNode
 }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
@@ -305,6 +308,7 @@ export function DetailCardHeader({
       <span className="text-[15px] font-bold tracking-tight text-copy-primary">
         {title}
       </span>
+      {action ? <div className="ml-auto shrink-0">{action}</div> : null}
     </div>
   )
 }
@@ -315,12 +319,15 @@ export function DetailCard({
   children,
   headerClassName,
   className,
+  action,
 }: {
   icon: React.ElementType
   title: string
   children: React.ReactNode
   headerClassName?: string
   className?: string
+  /** Optional control rendered at the far right of the card header. */
+  action?: React.ReactNode
 }) {
   return (
     <section
@@ -332,6 +339,7 @@ export function DetailCard({
       <DetailCardHeader
         icon={icon}
         title={title}
+        action={action}
         className={cn("mb-2", headerClassName)}
       />
       <div>{children}</div>

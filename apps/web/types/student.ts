@@ -52,17 +52,37 @@ export interface StudentEnrollmentSummary {
   status: string
 }
 
+/** Enrollment lifecycle status (`App\Enums\EnrollmentStatus`). */
+export type EnrollmentStatusValue = "active" | "promoted" | "failed" | "tc"
+
 /**
  * A single class-history row from the dedicated enrollments endpoint
- * (`EnrollmentResource`) — session / class / section flattened to names.
+ * (`EnrollmentResource`) — session / class / section flattened to names, each
+ * paired with its public id so the row can prefill the academic selects on edit.
  */
 export interface StudentEnrollment {
   id: string
   session: string | null
+  session_id: string | null
   class: string | null
+  class_id: string | null
   section: string | null
+  section_id: string | null
   roll_no: string | number | null
   status: string
+}
+
+/**
+ * Editable enrollment fields (`UpdateEnrollmentRequest`,
+ * `PUT /students/{id}/enrollments/{enrollmentId}`). Ids are sent as the related
+ * records' public ids; the backend resolves and validates them branch-scoped.
+ */
+export interface EnrollmentUpdateInput {
+  session_id: string
+  class_id: string
+  section_id: string
+  roll_no: number
+  status: EnrollmentStatusValue
 }
 
 /** The full student profile (`StudentResource`, `GET /students/{id}`). */
@@ -114,14 +134,16 @@ export interface Student {
 }
 
 /**
- * Editable profile fields (`UpdateStudentRequest`). admission_no and
- * birth_reg_no are immutable identity columns — the API prohibits changing them
- * (422), so they are never part of the payload. status moves through
- * `PATCH /status`, not here.
+ * Editable profile fields (`UpdateStudentRequest`). admission_no is an immutable
+ * identity column — the API prohibits changing it (422), so it's never part of
+ * the payload. birth_reg_no is editable (unique across students). status moves
+ * through `PATCH /status`, not here.
  */
 export interface StudentUpdateInput {
   name_bn: string
   name_en: string
+
+  birth_reg_no: string
 
   father_name_bn: string
   father_name_en: string

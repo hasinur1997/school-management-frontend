@@ -15,7 +15,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "@/lib/api"
-import type { Student, StudentStatusValue, StudentUpdateInput } from "@/types/student"
+import type {
+  EnrollmentUpdateInput,
+  Student,
+  StudentEnrollment,
+  StudentStatusValue,
+  StudentUpdateInput,
+} from "@/types/student"
 
 function useInvalidateStudents() {
   const queryClient = useQueryClient()
@@ -29,6 +35,22 @@ export function useUpdateStudent() {
   return useMutation({
     mutationFn: ({ id, ...input }: StudentUpdateInput & { id: string }) =>
       api.put<Student>(`/students/${id}`, input),
+    onSuccess: invalidate,
+  })
+}
+
+export function useUpdateEnrollment() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      enrollmentId,
+      ...input
+    }: EnrollmentUpdateInput & { studentId: string; enrollmentId: string }) =>
+      api.put<StudentEnrollment>(
+        `/students/${studentId}/enrollments/${enrollmentId}`,
+        input
+      ),
     onSuccess: invalidate,
   })
 }

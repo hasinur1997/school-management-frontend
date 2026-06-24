@@ -28,13 +28,10 @@ import {
   GraduationCap,
   IdCard,
   ImageUp,
-  MapPin,
-  Pencil,
   Power,
   PowerOff,
   ScrollText,
   User,
-  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react"
@@ -50,7 +47,6 @@ import {
   DetailCard,
   DetailHero,
   DetailLayout,
-  DetailRow,
   type DetailAction,
 } from "@/components/detail/detail-ui"
 import {
@@ -71,15 +67,19 @@ import {
   studentStatusLabel,
 } from "@/types/student"
 import { STUDENT_UPDATE } from "./permissions"
-import { StudentFormDialog } from "./student-form-dialog"
 import { StudentPhotoDialog } from "./student-photo-dialog"
 import { StudentEnrollments } from "./student-enrollments"
+import {
+  StudentGuardiansCard,
+  StudentIdentityCard,
+  StudentPermanentAddressCard,
+  StudentPresentAddressCard,
+} from "./student-profile-cards"
 
 export function StudentDetail({ id }: { id: string }) {
   const { data: student, isPending, isError, error, refetch } = useStudent(id)
   const updateStatus = useUpdateStudentStatus()
 
-  const [editOpen, setEditOpen] = React.useState(false)
   const [photoOpen, setPhotoOpen] = React.useState(false)
   const [statusOpen, setStatusOpen] = React.useState(false)
 
@@ -135,9 +135,10 @@ export function StudentDetail({ id }: { id: string }) {
     null
   const tone = tc ? "info" : active ? "success" : "error"
 
-  // Manage actions live in the hero (Change photo / Deactivate / Edit). The
-  // section-switching items (Attendance, Results, …) are tabs below the hero,
-  // not hero actions. TC students are retired — manage actions are hidden.
+  // Manage actions live in the hero `⋮` overflow menu (Change photo /
+  // Deactivate). Profile edits happen inline on each card, so there's no hero
+  // Edit button. The section-switching items (Attendance, Results, …) are tabs
+  // below the hero, not hero actions. TC students are retired — actions hidden.
   const actions: DetailAction[] = [
     ...(!tc && canManage
       ? [
@@ -154,13 +155,6 @@ export function StudentDetail({ id }: { id: string }) {
             onSelect: () => setStatusOpen(true),
             destructive: active,
             separatorBefore: true,
-          },
-          {
-            key: "edit",
-            label: "Edit",
-            icon: Pencil,
-            onSelect: () => setEditOpen(true),
-            primary: true,
           },
         ]
       : []),
@@ -253,7 +247,6 @@ export function StudentDetail({ id }: { id: string }) {
         <StudentDetailTabs tabs={tabs} student={student} />
       </React.Suspense>
 
-      <StudentFormDialog open={editOpen} onOpenChange={setEditOpen} student={student} />
       <StudentPhotoDialog open={photoOpen} onOpenChange={setPhotoOpen} student={student} />
       <ConfirmDialog
         open={statusOpen}
@@ -334,57 +327,18 @@ function StudentDetailTabs({
 
 /** The default "Profile" tab: identity, guardians, addresses, enrollments. */
 function StudentProfilePanel({ student }: { student: Student }) {
+  // Inline editing is gated the same way the hero manage actions are: needs
+  // `student.update` and a non-TC (live) student.
+  const canManage = usePermission(STUDENT_UPDATE)
+  const editable = canManage && !isTcStudent(student.status)
+
   return (
     <div>
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
-        {/* Identity */}
-        <DetailCard icon={User} title="Student">
-          <DetailRow label="Name (English)" value={student.name_en} />
-          <DetailRow label="Name (Bangla)" value={student.name_bn} />
-          <DetailRow label="Admission no" value={student.admission_no} mono />
-          <DetailRow label="Birth registration no" value={student.birth_reg_no} mono />
-          <DetailRow
-            label="Date of birth"
-            value={student.date_of_birth ? formatDate(student.date_of_birth) : null}
-          />
-          <DetailRow label="Religion" value={student.religion} />
-          <DetailRow label="Nationality" value={student.nationality} />
-          <DetailRow label="Caste" value={student.caste} />
-          <DetailRow
-            label="Admitted"
-            value={student.admitted_at ? formatDate(student.admitted_at) : null}
-          />
-        </DetailCard>
-
-        {/* Guardians */}
-        <DetailCard icon={Users} title="Guardians">
-          <DetailRow label="Father (English)" value={student.father_name_en} />
-          <DetailRow label="Father (Bangla)" value={student.father_name_bn} />
-          <DetailRow label="Father NID" value={student.father_nid} mono />
-          <DetailRow label="Father mobile" value={student.father_mobile} mono />
-          <DetailRow label="Mother (English)" value={student.mother_name_en} />
-          <DetailRow label="Mother (Bangla)" value={student.mother_name_bn} />
-          <DetailRow label="Mother NID" value={student.mother_nid} mono />
-          <DetailRow label="Mother mobile" value={student.mother_mobile} mono />
-        </DetailCard>
-
-        {/* Present address */}
-        <DetailCard icon={MapPin} title="Present address">
-          <DetailRow label="Village / street" value={student.present_village} />
-          <DetailRow label="Post office" value={student.present_post_office} />
-          <DetailRow label="Upazila" value={student.present_upazila} />
-          <DetailRow label="District" value={student.present_district} />
-          <DetailRow label="Division" value={student.present_division} />
-        </DetailCard>
-
-        {/* Permanent address */}
-        <DetailCard icon={MapPin} title="Permanent address">
-          <DetailRow label="Village / street" value={student.permanent_village} />
-          <DetailRow label="Post office" value={student.permanent_post_office} />
-          <DetailRow label="Upazila" value={student.permanent_upazila} />
-          <DetailRow label="District" value={student.permanent_district} />
-          <DetailRow label="Division" value={student.permanent_division} />
-        </DetailCard>
+        <StudentIdentityCard student={student} editable={editable} />
+        <StudentGuardiansCard student={student} editable={editable} />
+        <StudentPresentAddressCard student={student} editable={editable} />
+        <StudentPermanentAddressCard student={student} editable={editable} />
       </div>
 
       {/* Enrollment history */}
@@ -394,7 +348,7 @@ function StudentProfilePanel({ student }: { student: Student }) {
         headerClassName="mb-[18px]"
         className="mt-5"
       >
-        <StudentEnrollments id={student.id} />
+        <StudentEnrollments id={student.id} editable={editable} />
       </DetailCard>
     </div>
   )

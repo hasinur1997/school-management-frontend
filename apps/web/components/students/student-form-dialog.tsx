@@ -176,6 +176,9 @@ export function StudentFormDialog({
 
     const payload: StudentUpdateInput = {
       ...values,
+      // birth_reg_no stays read-only here (edited inline on the detail page); the
+      // current value is resent unchanged so the required field is satisfied.
+      birth_reg_no: student.birth_reg_no ?? "",
       father_nid: values.father_nid || null,
       mother_nid: values.mother_nid || null,
       mother_mobile: values.mother_mobile || null,
