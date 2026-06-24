@@ -35,8 +35,8 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useGlobalSearch } from "@/hooks/search/use-global-search"
 import type { SearchResult } from "@/types/search"
 
-/** A module hit carries the permission it is gated on, alongside the result. */
-type ModuleResult = SearchResult & { permission: string }
+/** A module hit carries the gating (permission + self-service roles) alongside the result. */
+type ModuleResult = SearchResult & { permission: string; roles?: string[] }
 
 /** All nav items flattened from the grouped sidebar model, as search results. */
 const MODULE_RESULTS: ModuleResult[] = NAV_GROUPS.flatMap((group) =>
@@ -48,12 +48,13 @@ const MODULE_RESULTS: ModuleResult[] = NAV_GROUPS.flatMap((group) =>
     icon: item.icon,
     value: `modules ${item.label}`,
     permission: item.permission,
+    roles: item.roles,
   }))
 )
 
 export function GlobalSearch() {
   const router = useRouter()
-  const { hasPermission } = useAuth()
+  const { hasPermission, roles } = useAuth()
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const debounced = useDebouncedValue(query, 250)
@@ -66,10 +67,11 @@ export function GlobalSearch() {
     const q = debounced.trim().toLowerCase()
     return MODULE_RESULTS.filter(
       (m) =>
-        hasPermission(m.permission) &&
+        (hasPermission(m.permission) ||
+          (m.roles?.some((role) => roles.includes(role)) ?? false)) &&
         (q === "" || m.label.toLowerCase().includes(q))
     )
-  }, [debounced, hasPermission])
+  }, [debounced, hasPermission, roles])
 
   // Open/close, clearing the query on close so the palette reopens clean.
   const setPaletteOpen = React.useCallback((next: boolean) => {

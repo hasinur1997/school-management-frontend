@@ -2,8 +2,9 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 import { TableSkeleton } from "@/components/skeletons"
 
 /**
- * Route-level loading fallback for attendance entry — mirrors the header,
- * selector panel, and roster table so navigation never shows a blank screen.
+ * Route-level loading fallback for the attendance surface — a header, a
+ * filter/selector panel, and a table block, generic enough for the entry,
+ * class-sheet, and monthly views the route resolves to.
  */
 export default function Loading() {
   return (

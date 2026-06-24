@@ -30,6 +30,13 @@ export interface NavItem {
   icon: LucideIcon
   /** Permission required to see this item; hidden when absent. */
   permission: string
+  /**
+   * Self-service exception: roles that may see this item even without the
+   * permission. Students and parents hold no permissions by design (their access
+   * comes from policies on their own records), so a route they must reach can
+   * only be surfaced by role. Used sparingly — staff gating stays permission-led.
+   */
+  roles?: string[]
 }
 
 export interface NavGroup {
@@ -93,6 +100,8 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/attendance",
         icon: CalendarCheck,
         permission: "attendance.create",
+        // Students/parents reach their own/children's sheets here too (task 3.2).
+        roles: ["student", "parent"],
       },
       {
         label: "Exams",

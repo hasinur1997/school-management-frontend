@@ -74,6 +74,75 @@ export interface AttendanceRecord {
   recorded_by?: string | null
 }
 
+/**
+ * Filters for the browse listing `GET /attendance` (task 3.2). All optional;
+ * the class monthly sheet pages through it scoped to a class/section.
+ */
+export interface AttendanceListParams {
+  class_id?: string | null
+  section_id?: string | null
+  date?: string | null
+  status?: AttendanceStatusValue | null
+  page?: number
+  per_page?: number
+}
+
+/**
+ * Monthly attendance contracts (task 3.2): `GET /students/{id}/attendance` and
+ * `GET /me/attendance` return the SQL-aggregated summary plus the ordered list
+ * of recorded days. Totals are computed by the API — never re-derived client
+ * side (`feature-specs/10`, Rules).
+ */
+export interface MonthlyAttendanceSummary {
+  present: number
+  absent: number
+  late: number
+  leave: number
+  working_days: number
+}
+
+export interface MonthlyAttendanceDay {
+  date: string
+  status: AttendanceStatusValue
+}
+
+export interface MonthlyAttendance {
+  month: number
+  year: number
+  summary: MonthlyAttendanceSummary
+  days: MonthlyAttendanceDay[]
+}
+
+/** Month/year query for the monthly endpoints; both default to the current. */
+export interface MonthlyAttendanceParams {
+  month: number
+  year: number
+}
+
+/**
+ * One row of the class monthly sheet: a student and their per-day statuses for
+ * the month, keyed by `YYYY-MM-DD`. Reshaped from `GET /attendance` records —
+ * no totals are computed.
+ */
+export interface ClassAttendanceRow {
+  enrollment_id: string
+  roll_no: string | number | null
+  name_en: string | null
+  /** date (`YYYY-MM-DD`) → status for the days a mark exists. */
+  marks: Record<string, AttendanceStatusValue>
+}
+
+/** The assembled class monthly sheet returned by `useClassAttendanceMonth`. */
+export interface ClassAttendanceMonth {
+  month: number
+  year: number
+  /** Calendar day numbers (1…N) of the month, the sheet's columns. */
+  days: number[]
+  rows: ClassAttendanceRow[]
+  /** True when paging hit the safety cap and older records were not scanned. */
+  truncated: boolean
+}
+
 export function attendanceStatusLabel(status: AttendanceStatusValue): string {
   switch (status) {
     case "present":

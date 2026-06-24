@@ -32,12 +32,21 @@ export function SidebarNav({
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
-  const { hasPermission } = useAuth()
+  const { hasPermission, roles } = useAuth()
+
+  // An item shows when the user holds its permission, or — for self-service
+  // items — when they hold one of its declared roles (`nav-items.ts`).
+  const canSee = React.useCallback(
+    (item: NavItem) =>
+      hasPermission(item.permission) ||
+      (item.roles?.some((role) => roles.includes(role)) ?? false),
+    [hasPermission, roles]
+  )
 
   // Filter items to what the user may see; drop groups left empty.
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => hasPermission(item.permission)),
+    items: group.items.filter(canSee),
   })).filter((group) => group.items.length > 0)
 
   return (
