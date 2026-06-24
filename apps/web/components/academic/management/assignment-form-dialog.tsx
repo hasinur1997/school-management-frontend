@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { ClipboardListIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -191,7 +192,7 @@ export function AssignmentFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icon={<ClipboardListIcon />}>
           <DialogTitle>
             {isEdit ? "Edit assignment" : "New assignment"}
           </DialogTitle>
@@ -203,7 +204,7 @@ export function AssignmentFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
             <FormField
@@ -268,7 +269,7 @@ export function AssignmentFormDialog({
               )}
             />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="section_id"

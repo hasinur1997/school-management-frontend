@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { CalendarIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -138,7 +139,7 @@ export function SessionFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icon={<CalendarIcon />}>
           <DialogTitle>{isEdit ? "Edit session" : "New session"}</DialogTitle>
           <DialogDescription>
             {isEdit
@@ -148,7 +149,7 @@ export function SessionFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
             <FormField
@@ -170,7 +171,7 @@ export function SessionFormDialog({
               )}
             />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="start_date"

@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { LayersIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -125,7 +126,7 @@ export function SectionFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icon={<LayersIcon />}>
           <DialogTitle>{isEdit ? "Edit section" : "New section"}</DialogTitle>
           <DialogDescription>
             {isEdit
@@ -135,7 +136,7 @@ export function SectionFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
             <FormField

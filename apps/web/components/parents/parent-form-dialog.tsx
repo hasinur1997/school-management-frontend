@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { UsersIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -114,7 +115,7 @@ export function ParentFormDialog({ open, onOpenChange }: ParentFormDialogProps) 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-2xl">
-        <DialogHeader>
+        <DialogHeader icon={<UsersIcon />}>
           <DialogTitle>Create parent</DialogTitle>
           <DialogDescription>
             Create a parent login and link it to one or more students.
@@ -125,7 +126,7 @@ export function ParentFormDialog({ open, onOpenChange }: ParentFormDialogProps) 
           <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <TextField form={form} name="name" label="Name" disabled={submitting} />
               <TextField form={form} name="phone" label="Phone" disabled={submitting} />
               <TextField

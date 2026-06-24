@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { BookOpenIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -122,7 +123,7 @@ export function SubjectFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icon={<BookOpenIcon />}>
           <DialogTitle>{isEdit ? "Edit subject" : "New subject"}</DialogTitle>
           <DialogDescription>
             {isEdit
@@ -132,7 +133,7 @@ export function SubjectFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
             <FormField

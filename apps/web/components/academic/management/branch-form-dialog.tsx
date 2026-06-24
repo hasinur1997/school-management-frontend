@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { Building2Icon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -127,7 +128,7 @@ export function BranchFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icon={<Building2Icon />}>
           <DialogTitle>{isEdit ? "Edit branch" : "New branch"}</DialogTitle>
           <DialogDescription>
             {isEdit
@@ -137,10 +138,10 @@ export function BranchFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"

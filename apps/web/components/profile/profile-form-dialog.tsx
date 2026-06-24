@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { UserIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -126,7 +127,7 @@ export function ProfileFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader icon={<UserIcon />}>
           <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription>
             Update your personal details.
@@ -134,7 +135,7 @@ export function ProfileFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
             <FormField

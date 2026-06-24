@@ -78,9 +78,18 @@ Tables, currency, GPA, and IDs use tabular figures so columns align. The base `b
 
 | Context              | Class         |
 | -------------------- | ------------- |
-| Inputs / badges / buttons | `rounded-md`  |
+| Badges / buttons          | `rounded-md` / `rounded-lg` |
+| Form fields (input, select, textarea) | `rounded-xl` |
 | Cards / panels / tables   | `rounded-xl`  |
 | Modals / overlays         | `rounded-2xl` |
+
+### Form-modal pattern
+
+Create/edit dialogs share one look, driven by the shared primitives (no per-form overrides):
+
+- **Fields**: `h-11`, `rounded-xl`, `px-4`, `text-base` inputs/selects/textareas with a default border; labels are `font-semibold text-foreground` above the field; `2.5`-unit gap label→field, `5`-unit gap between fields (two-column on `≥ sm`).
+- **Header**: pass an `icon` to `DialogHeader` to render the rounded `bg-primary/10` icon badge beside the bold title + muted description, with a full-width divider below. The close (X) sits top-right. No per-modal theme toggle — theming stays in the global topbar switcher.
+- **Footer**: `DialogFooter` is a clean top-bordered row (no muted bar), right-aligned, with `h-11` buttons — outline Cancel + primary submit (submit carries a check icon and the loading/disabled state).
 
 ## Layout Patterns
 

@@ -15,6 +15,7 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { CheckIcon, UserIcon } from "lucide-react"
 
 import {
   Dialog,
@@ -246,7 +247,7 @@ export function TeacherFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-2xl">
-        <DialogHeader>
+        <DialogHeader icon={<UserIcon />}>
           <DialogTitle>{isEdit ? "Edit teacher" : "New teacher"}</DialogTitle>
           <DialogDescription>
             {isEdit
@@ -256,10 +257,10 @@ export function TeacherFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -468,6 +469,7 @@ export function TeacherFormDialog({
                 Cancel
               </Button>
               <Button type="submit" loading={submitting}>
+                {!submitting ? <CheckIcon /> : null}
                 {submitting ? "Saving…" : isEdit ? "Save changes" : "Create teacher"}
               </Button>
             </DialogFooter>

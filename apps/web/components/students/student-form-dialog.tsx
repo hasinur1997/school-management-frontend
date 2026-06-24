@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog"
+import { GraduationCapIcon } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -206,7 +207,7 @@ export function StudentFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-2xl">
-        <DialogHeader>
+        <DialogHeader icon={<GraduationCapIcon />}>
           <DialogTitle>Edit student</DialogTitle>
           <DialogDescription>
             Update {studentDisplayName(student)}&rsquo;s profile. The admission
@@ -305,7 +306,7 @@ function Section({
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="text-sm font-semibold text-copy-primary">{title}</legend>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">{children}</div>
     </fieldset>
   )
 }
