@@ -41,6 +41,7 @@ import { isValidationError } from "@/lib/api"
 import { formatDate } from "@/lib/format"
 import { toastError, toastSuccess } from "@/lib/toast"
 import { useUpdateStudent } from "@/hooks/students"
+import { AddressFieldset } from "./address-fieldset"
 import type { Student, StudentUpdateInput } from "@/types/student"
 
 /**
@@ -155,9 +156,13 @@ function viewValue(student: Student, row: EditRow): string | null {
   return raw
 }
 
+/** The inline form's value map — every editable field as a (possibly empty) string. */
+type Values = Record<string, string | undefined>
+
 /**
  * A single `DetailCard` that toggles between read-only rows and an inline edit
- * form. Shared by every editable section; the `rows` prop drives both views.
+ * form. Shared by the identity / guardians sections; the `rows` prop drives both
+ * views.
  */
 function InlineEditCard({
   icon,
@@ -191,8 +196,6 @@ function InlineEditCard({
       ),
     [editRows]
   )
-
-  type Values = Record<string, string | undefined>
 
   const defaults = React.useMemo<Values>(() => {
     const input = studentToInput(student)
@@ -388,6 +391,153 @@ export function StudentGuardiansCard({
 }
 
 /** Present address card. */
+/**
+ * The present/permanent address rows, used for the read-only view of the
+ * combined address card. Field names match the mutable profile set.
+ */
+const PRESENT_ADDRESS_ROWS = [
+  { name: "present_village", label: "Village / street" },
+  { name: "present_post_office", label: "Post office" },
+  { name: "present_upazila", label: "Upazila" },
+  { name: "present_district", label: "District" },
+  { name: "present_division", label: "Division" },
+] as const
+
+const PERMANENT_ADDRESS_ROWS = [
+  { name: "permanent_village", label: "Village / street" },
+  { name: "permanent_post_office", label: "Post office" },
+  { name: "permanent_upazila", label: "Upazila" },
+  { name: "permanent_district", label: "District" },
+  { name: "permanent_division", label: "Division" },
+] as const
+
+/** True when every stored permanent address field equals its present counterpart. */
+function permanentMatchesPresent(student: Student): boolean {
+  return PERMANENT_ADDRESS_ROWS.every((r, i) => {
+    const present = studentToInput(student)[PRESENT_ADDRESS_ROWS[i]!.name]
+    const permanent = studentToInput(student)[r.name]
+    return present !== "" && present === permanent
+  })
+}
+
+/** Live present-address values shared between the present and permanent cards. */
+interface PresentAddress {
+  village: string
+  post_office: string
+  upazila: string
+  district: string
+  division: string
+}
+
+const AddressMirrorContext = React.createContext<{
+  present: PresentAddress
+  publishPresent: (value: PresentAddress) => void
+} | null>(null)
+
+function presentFromStudent(student: Student): PresentAddress {
+  const i = studentToInput(student)
+  return {
+    village: i.present_village,
+    post_office: i.present_post_office,
+    upazila: i.present_upazila,
+    district: i.present_district,
+    division: i.present_division,
+  }
+}
+
+/**
+ * Renders the present + permanent address cards as two separate cards, wrapped
+ * in a shared context that carries the *current* present address. The present
+ * card publishes its live values while it's being edited, so the permanent
+ * card's "same as present" checkbox mirrors the live present address (falling
+ * back to the last-saved one when the present card isn't open). Renders no DOM
+ * of its own, so both cards stay direct grid items on the detail page.
+ */
+export function StudentAddressCards({
+  student,
+  editable,
+}: {
+  student: Student
+  editable: boolean
+}) {
+  const [present, setPresent] = React.useState<PresentAddress>(() =>
+    presentFromStudent(student)
+  )
+
+  // Re-sync to the saved present address whenever it changes (e.g. after a save
+  // refetch). Keyed on the value so live edits aren't clobbered mid-typing.
+  const saved = presentFromStudent(student)
+  const savedKey = `${saved.division}|${saved.district}|${saved.upazila}|${saved.post_office}|${saved.village}`
+  React.useEffect(() => {
+    setPresent(presentFromStudent(student))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedKey])
+
+  const value = React.useMemo(
+    () => ({ present, publishPresent: setPresent }),
+    [present]
+  )
+
+  return (
+    <AddressMirrorContext.Provider value={value}>
+      <StudentPresentAddressCard student={student} editable={editable} />
+      <StudentPermanentAddressCard student={student} editable={editable} />
+    </AddressMirrorContext.Provider>
+  )
+}
+
+const PRESENT_FIELD_NAMES = PRESENT_ADDRESS_ROWS.map((r) => r.name)
+const PERMANENT_FIELD_NAMES = PERMANENT_ADDRESS_ROWS.map((r) => r.name)
+
+const presentSchema = z.object({
+  present_village: FIELD_SCHEMAS.present_village,
+  present_post_office: FIELD_SCHEMAS.present_post_office,
+  present_upazila: FIELD_SCHEMAS.present_upazila,
+  present_district: FIELD_SCHEMAS.present_district,
+  present_division: FIELD_SCHEMAS.present_division,
+})
+type PresentValues = z.infer<typeof presentSchema>
+
+const permanentSchema = z.object({
+  permanent_village: FIELD_SCHEMAS.permanent_village,
+  permanent_post_office: FIELD_SCHEMAS.permanent_post_office,
+  permanent_upazila: FIELD_SCHEMAS.permanent_upazila,
+  permanent_district: FIELD_SCHEMAS.permanent_district,
+  permanent_division: FIELD_SCHEMAS.permanent_division,
+})
+type PermanentValues = z.infer<typeof permanentSchema>
+
+/** Pencil action shown in an address card header when editing is allowed. */
+function CardEditButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      className="size-8 rounded-lg text-copy-muted hover:text-copy-primary"
+      aria-label={`Edit ${label}`}
+    >
+      <Pencil className="size-4" aria-hidden />
+    </Button>
+  )
+}
+
+/** Cancel / Save footer shared by the address cards. */
+function CardFooter({ submitting, onCancel }: { submitting: boolean; onCancel: () => void }) {
+  return (
+    <div className="flex justify-end gap-2">
+      <Button type="button" variant="outline" size="sm" disabled={submitting} onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button type="submit" size="sm" loading={submitting}>
+        {submitting ? "Saving…" : "Save"}
+      </Button>
+    </div>
+  )
+}
+
+/** Present address card — cascading dropdowns; publishes its live values. */
 export function StudentPresentAddressCard({
   student,
   editable,
@@ -395,25 +545,110 @@ export function StudentPresentAddressCard({
   student: Student
   editable: boolean
 }) {
-  const rows: CardRow[] = [
-    { kind: "edit", name: "present_village", label: "Village / street" },
-    { kind: "edit", name: "present_post_office", label: "Post office" },
-    { kind: "edit", name: "present_upazila", label: "Upazila" },
-    { kind: "edit", name: "present_district", label: "District" },
-    { kind: "edit", name: "present_division", label: "Division" },
-  ]
+  const mirror = React.useContext(AddressMirrorContext)
+  // The setter is stable (a useState setter), so depend on it directly — the
+  // whole `mirror` object's identity changes on every publish, which would loop.
+  const publishPresent = mirror?.publishPresent
+  const update = useUpdateStudent()
+  const [editing, setEditing] = React.useState(false)
+  const [banner, setBanner] = React.useState<string | null>(null)
+
+  const defaults = React.useMemo<PresentValues>(() => {
+    const i = studentToInput(student)
+    return {
+      present_village: i.present_village,
+      present_post_office: i.present_post_office,
+      present_upazila: i.present_upazila,
+      present_district: i.present_district,
+      present_division: i.present_division,
+    }
+  }, [student])
+
+  const form = useForm<PresentValues>({
+    resolver: zodResolver(presentSchema),
+    defaultValues: defaults,
+  })
+
+  // Publish the live present values while editing so the permanent card's
+  // "same as present" can mirror them; restore the saved values on exit.
+  const wDivision = form.watch("present_division")
+  const wDistrict = form.watch("present_district")
+  const wUpazila = form.watch("present_upazila")
+  const wPostOffice = form.watch("present_post_office")
+  const wVillage = form.watch("present_village")
+  React.useEffect(() => {
+    if (!publishPresent || !editing) return
+    publishPresent({
+      division: wDivision,
+      district: wDistrict,
+      upazila: wUpazila,
+      post_office: wPostOffice,
+      village: wVillage,
+    })
+  }, [publishPresent, editing, wDivision, wDistrict, wUpazila, wPostOffice, wVillage])
+
+  function startEdit() {
+    form.reset(defaults)
+    setBanner(null)
+    setEditing(true)
+  }
+
+  function cancel() {
+    if (form.formState.isSubmitting) return
+    setBanner(null)
+    setEditing(false)
+    mirror?.publishPresent(presentFromStudent(student))
+  }
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    setBanner(null)
+    try {
+      await update.mutateAsync({ id: student.id, ...buildPayload(student, values) })
+      toastSuccess("Present address updated.", { id: "student-present-address" })
+      setEditing(false)
+    } catch (error) {
+      if (isValidationError(error)) {
+        if (applyFieldErrors(form, error, PRESENT_FIELD_NAMES)) return
+        setBanner(error.message)
+        return
+      }
+      toastError(error, "Couldn't save changes.", { id: "student-present-address" })
+    }
+  })
+
+  const submitting = form.formState.isSubmitting
+  const input = studentToInput(student)
+
   return (
-    <InlineEditCard
+    <DetailCard
       icon={MapPin}
       title="Present address"
-      student={student}
-      editable={editable}
-      rows={rows}
-    />
+      action={editable && !editing ? <CardEditButton onClick={startEdit} label="present address" /> : null}
+    >
+      {editing ? (
+        <Form {...form}>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            <FormBanner message={banner} />
+            <AddressFieldset form={form} prefix="present" disabled={submitting} />
+            <CardFooter submitting={submitting} onCancel={cancel} />
+          </form>
+        </Form>
+      ) : (
+        <div>
+          {PRESENT_ADDRESS_ROWS.map((r) => (
+            <DetailRow key={r.name} label={r.label} value={input[r.name] || null} />
+          ))}
+        </div>
+      )}
+    </DetailCard>
   )
 }
 
-/** Permanent address card. */
+/**
+ * Permanent address card — cascading dropdowns plus a "Same as present" checkbox
+ * that live-mirrors the present address (from the shared context) into the
+ * permanent fields and locks them while ticked.
+ */
 export function StudentPermanentAddressCard({
   student,
   editable,
@@ -421,20 +656,117 @@ export function StudentPermanentAddressCard({
   student: Student
   editable: boolean
 }) {
-  const rows: CardRow[] = [
-    { kind: "edit", name: "permanent_village", label: "Village / street" },
-    { kind: "edit", name: "permanent_post_office", label: "Post office" },
-    { kind: "edit", name: "permanent_upazila", label: "Upazila" },
-    { kind: "edit", name: "permanent_district", label: "District" },
-    { kind: "edit", name: "permanent_division", label: "Division" },
-  ]
+  const mirror = React.useContext(AddressMirrorContext)
+  const update = useUpdateStudent()
+  const [editing, setEditing] = React.useState(false)
+  const [banner, setBanner] = React.useState<string | null>(null)
+  const [sameAsPresent, setSameAsPresent] = React.useState(false)
+
+  const defaults = React.useMemo<PermanentValues>(() => {
+    const i = studentToInput(student)
+    return {
+      permanent_village: i.permanent_village,
+      permanent_post_office: i.permanent_post_office,
+      permanent_upazila: i.permanent_upazila,
+      permanent_district: i.permanent_district,
+      permanent_division: i.permanent_division,
+    }
+  }, [student])
+
+  const form = useForm<PermanentValues>({
+    resolver: zodResolver(permanentSchema),
+    defaultValues: defaults,
+  })
+
+  // While ticked, mirror the present address (live, from context) → permanent.
+  const present = mirror?.present
+  React.useEffect(() => {
+    if (!editing || !sameAsPresent || !present) return
+    const opts = { shouldValidate: false, shouldDirty: true } as const
+    form.setValue("permanent_division", present.division, opts)
+    form.setValue("permanent_district", present.district, opts)
+    form.setValue("permanent_upazila", present.upazila, opts)
+    form.setValue("permanent_post_office", present.post_office, opts)
+    form.setValue("permanent_village", present.village, opts)
+  }, [
+    form,
+    editing,
+    sameAsPresent,
+    present?.division,
+    present?.district,
+    present?.upazila,
+    present?.post_office,
+    present?.village,
+  ])
+
+  function startEdit() {
+    form.reset(defaults)
+    setSameAsPresent(permanentMatchesPresent(student))
+    setBanner(null)
+    setEditing(true)
+  }
+
+  function cancel() {
+    if (form.formState.isSubmitting) return
+    setBanner(null)
+    setEditing(false)
+  }
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    setBanner(null)
+    try {
+      await update.mutateAsync({ id: student.id, ...buildPayload(student, values) })
+      toastSuccess("Permanent address updated.", { id: "student-permanent-address" })
+      setEditing(false)
+    } catch (error) {
+      if (isValidationError(error)) {
+        if (applyFieldErrors(form, error, PERMANENT_FIELD_NAMES)) return
+        setBanner(error.message)
+        return
+      }
+      toastError(error, "Couldn't save changes.", { id: "student-permanent-address" })
+    }
+  })
+
+  const submitting = form.formState.isSubmitting
+  const input = studentToInput(student)
+
   return (
-    <InlineEditCard
+    <DetailCard
       icon={MapPin}
       title="Permanent address"
-      student={student}
-      editable={editable}
-      rows={rows}
-    />
+      action={editable && !editing ? <CardEditButton onClick={startEdit} label="permanent address" /> : null}
+    >
+      {editing ? (
+        <Form {...form}>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            <FormBanner message={banner} />
+            <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-copy-secondary">
+              <input
+                type="checkbox"
+                checked={sameAsPresent}
+                onChange={(e) => setSameAsPresent(e.target.checked)}
+                disabled={submitting}
+                className="size-4 rounded border-surface-border accent-brand"
+              />
+              Same as present address
+            </label>
+            {sameAsPresent ? (
+              <p className="text-sm text-copy-muted">
+                Mirroring the present address. Untick to enter a different address.
+              </p>
+            ) : null}
+            <AddressFieldset form={form} prefix="permanent" disabled={submitting || sameAsPresent} />
+            <CardFooter submitting={submitting} onCancel={cancel} />
+          </form>
+        </Form>
+      ) : (
+        <div>
+          {PERMANENT_ADDRESS_ROWS.map((r) => (
+            <DetailRow key={r.name} label={r.label} value={input[r.name] || null} />
+          ))}
+        </div>
+      )}
+    </DetailCard>
   )
 }

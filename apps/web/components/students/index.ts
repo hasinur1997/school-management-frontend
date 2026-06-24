@@ -4,4 +4,5 @@
 
 export { StudentsList } from "./students-list"
 export { StudentDetail } from "./student-detail"
-export { STUDENT_VIEW, STUDENT_UPDATE } from "./permissions"
+export { StudentCreateDialog } from "./student-create-dialog"
+export { STUDENT_VIEW, STUDENT_CREATE, STUDENT_UPDATE } from "./permissions"

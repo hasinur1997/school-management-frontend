@@ -15,7 +15,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { GraduationCap, Search, X } from "lucide-react"
+import { GraduationCap, Plus, Search, X } from "lucide-react"
 
 import {
   Table,
@@ -47,10 +47,13 @@ import {
   type StudentStatusFilter,
 } from "@/types/student"
 import { useStudent } from "@/hooks/students/use-student"
+import { Can } from "@/components/auth/can"
 import { StudentStatusFilter as StatusFilterSelect } from "./student-status-filter"
 import { StudentRowActions } from "./student-row-actions"
 import { StudentFormDialog } from "./student-form-dialog"
+import { StudentCreateDialog } from "./student-create-dialog"
 import { StudentPhotoDialog } from "./student-photo-dialog"
+import { STUDENT_CREATE } from "./permissions"
 
 const EMPTY = "—"
 
@@ -105,6 +108,7 @@ export function StudentsList() {
   // so we open by id and fetch the profile inside the dialogs' loader below.
   const [editId, setEditId] = React.useState<string | null>(null)
   const [photoId, setPhotoId] = React.useState<string | null>(null)
+  const [createOpen, setCreateOpen] = React.useState(false)
   const [statusTarget, setStatusTarget] = React.useState<StudentListItem | null>(null)
 
   const students = data?.data ?? []
@@ -155,11 +159,19 @@ export function StudentsList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="min-w-0">
-        <h1 className="truncate text-xl font-semibold text-copy-primary">Students</h1>
-        <p className="truncate text-sm text-copy-muted">
-          View and manage student profiles, enrollment, and status.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold text-copy-primary">Students</h1>
+          <p className="truncate text-sm text-copy-muted">
+            View and manage student profiles, enrollment, and status.
+          </p>
+        </div>
+        <Can permission={STUDENT_CREATE}>
+          <Button onClick={() => setCreateOpen(true)} className="shrink-0">
+            <Plus className="size-4" aria-hidden />
+            New student
+          </Button>
+        </Can>
       </div>
 
       {/* Filters */}
@@ -318,6 +330,7 @@ export function StudentsList() {
         </>
       )}
 
+      <StudentCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
       <StudentEditLoader id={editId} onOpenChange={(open) => !open && setEditId(null)} />
       <StudentPhotoLoader id={photoId} onOpenChange={(open) => !open && setPhotoId(null)} />
       <ConfirmDialog

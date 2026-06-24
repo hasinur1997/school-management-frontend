@@ -43,6 +43,7 @@ import {
   FormBanner,
   applyFieldErrors,
 } from "@/components/academic/management/form-helpers"
+import { AddressFieldset } from "./address-fieldset"
 import { useUpdateStudent } from "@/hooks/students"
 import {
   studentDisplayName,
@@ -73,6 +74,9 @@ const schema = z.object({
   permanent_upazila: z.string().trim().min(1, "Required"),
   permanent_district: z.string().trim().min(1, "Required"),
   permanent_division: z.string().trim().min(1, "Required"),
+
+  // UI-only: mirror the present address into the permanent one. Not sent.
+  permanent_same_as_present: z.boolean(),
 
   father_mobile: z.string().trim().min(1, "Required"),
   mother_mobile: z.string().trim().optional(),
@@ -132,6 +136,8 @@ function toDefaults(student: Student): StudentFormValues {
     permanent_upazila: student.permanent_upazila ?? "",
     permanent_district: student.permanent_district ?? "",
     permanent_division: student.permanent_division ?? "",
+    // Pre-tick when the stored permanent address already equals the present one.
+    permanent_same_as_present: permanentMatchesPresent(student),
     father_mobile: student.father_mobile ?? "",
     mother_mobile: student.mother_mobile ?? "",
     date_of_birth: student.date_of_birth ?? "",
@@ -139,6 +145,22 @@ function toDefaults(student: Student): StudentFormValues {
     nationality: student.nationality ?? "",
     caste: student.caste ?? "",
   }
+}
+
+/** True when every stored permanent address field equals its present counterpart. */
+function permanentMatchesPresent(student: Student): boolean {
+  const parts = [
+    "village",
+    "post_office",
+    "upazila",
+    "district",
+    "division",
+  ] as const
+  return parts.every((p) => {
+    const present = student[`present_${p}` as keyof Student] ?? ""
+    const permanent = student[`permanent_${p}` as keyof Student] ?? ""
+    return present !== "" && present === permanent
+  })
 }
 
 export interface StudentFormDialogProps {
@@ -165,6 +187,33 @@ export function StudentFormDialog({
     form.reset(toDefaults(student))
   }, [open, student, form])
 
+  // While "same as present" is ticked, keep the permanent address mirrored to
+  // the present one (including later edits to the present fields).
+  const sameAsPresent = form.watch("permanent_same_as_present")
+  const presentDivision = form.watch("present_division")
+  const presentDistrict = form.watch("present_district")
+  const presentUpazila = form.watch("present_upazila")
+  const presentPostOffice = form.watch("present_post_office")
+  const presentVillage = form.watch("present_village")
+
+  React.useEffect(() => {
+    if (!sameAsPresent) return
+    const opts = { shouldValidate: false, shouldDirty: true } as const
+    form.setValue("permanent_division", presentDivision, opts)
+    form.setValue("permanent_district", presentDistrict, opts)
+    form.setValue("permanent_upazila", presentUpazila, opts)
+    form.setValue("permanent_post_office", presentPostOffice, opts)
+    form.setValue("permanent_village", presentVillage, opts)
+  }, [
+    form,
+    sameAsPresent,
+    presentDivision,
+    presentDistrict,
+    presentUpazila,
+    presentPostOffice,
+    presentVillage,
+  ])
+
   function handleOpenChange(next: boolean) {
     if (form.formState.isSubmitting) return
     if (!next) setBanner(null)
@@ -175,15 +224,18 @@ export function StudentFormDialog({
     if (!student) return
     setBanner(null)
 
+    // permanent_same_as_present is UI-only — drop it from the API payload.
+    const { permanent_same_as_present: _sameAsPresent, ...fields } = values
+
     const payload: StudentUpdateInput = {
-      ...values,
+      ...fields,
       // birth_reg_no stays read-only here (edited inline on the detail page); the
       // current value is resent unchanged so the required field is satisfied.
       birth_reg_no: student.birth_reg_no ?? "",
-      father_nid: values.father_nid || null,
-      mother_nid: values.mother_nid || null,
-      mother_mobile: values.mother_mobile || null,
-      caste: values.caste || null,
+      father_nid: fields.father_nid || null,
+      mother_nid: fields.mother_nid || null,
+      mother_mobile: fields.mother_mobile || null,
+      caste: fields.caste || null,
     }
 
     try {
@@ -260,21 +312,42 @@ export function StudentFormDialog({
               <TextField form={form} name="mother_mobile" label="Mobile (optional)" disabled={submitting} />
             </Section>
 
-            {/* Addresses */}
-            <Section title="Present address">
-              <TextField form={form} name="present_village" label="Village / street" disabled={submitting} />
-              <TextField form={form} name="present_post_office" label="Post office" disabled={submitting} />
-              <TextField form={form} name="present_upazila" label="Upazila" disabled={submitting} />
-              <TextField form={form} name="present_district" label="District" disabled={submitting} />
-              <TextField form={form} name="present_division" label="Division" disabled={submitting} />
-            </Section>
-            <Section title="Permanent address">
-              <TextField form={form} name="permanent_village" label="Village / street" disabled={submitting} />
-              <TextField form={form} name="permanent_post_office" label="Post office" disabled={submitting} />
-              <TextField form={form} name="permanent_upazila" label="Upazila" disabled={submitting} />
-              <TextField form={form} name="permanent_district" label="District" disabled={submitting} />
-              <TextField form={form} name="permanent_division" label="Division" disabled={submitting} />
-            </Section>
+            {/* Addresses — cascading Division → District → Upazila → Post office */}
+            <fieldset className="flex flex-col gap-3">
+              <legend className="text-sm font-semibold text-copy-primary">Present address</legend>
+              <AddressFieldset form={form} prefix="present" disabled={submitting} />
+            </fieldset>
+
+            <FormField
+              control={form.control}
+              name="permanent_same_as_present"
+              render={({ field }) => (
+                <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-copy-secondary">
+                  <input
+                    type="checkbox"
+                    checked={!!field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    disabled={submitting}
+                    className="size-4 rounded border-surface-border accent-brand"
+                  />
+                  Permanent address is the same as present
+                </label>
+              )}
+            />
+
+            <fieldset className="flex flex-col gap-3">
+              <legend className="text-sm font-semibold text-copy-primary">Permanent address</legend>
+              {sameAsPresent ? (
+                <p className="text-sm text-copy-muted">
+                  Same as present address. Untick the box above to enter a different address.
+                </p>
+              ) : null}
+              <AddressFieldset
+                form={form}
+                prefix="permanent"
+                disabled={submitting || sameAsPresent}
+              />
+            </fieldset>
 
             <DialogFooter>
               <Button
@@ -335,7 +408,12 @@ function TextField({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input {...field} disabled={disabled} autoComplete="off" />
+            <Input
+              {...field}
+              value={typeof field.value === "string" ? field.value : ""}
+              disabled={disabled}
+              autoComplete="off"
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

@@ -70,10 +70,9 @@ import { STUDENT_UPDATE } from "./permissions"
 import { StudentPhotoDialog } from "./student-photo-dialog"
 import { StudentEnrollments } from "./student-enrollments"
 import {
+  StudentAddressCards,
   StudentGuardiansCard,
   StudentIdentityCard,
-  StudentPermanentAddressCard,
-  StudentPresentAddressCard,
 } from "./student-profile-cards"
 
 export function StudentDetail({ id }: { id: string }) {
@@ -337,8 +336,7 @@ function StudentProfilePanel({ student }: { student: Student }) {
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         <StudentIdentityCard student={student} editable={editable} />
         <StudentGuardiansCard student={student} editable={editable} />
-        <StudentPresentAddressCard student={student} editable={editable} />
-        <StudentPermanentAddressCard student={student} editable={editable} />
+        <StudentAddressCards student={student} editable={editable} />
       </div>
 
       {/* Enrollment history */}

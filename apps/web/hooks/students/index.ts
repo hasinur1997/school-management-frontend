@@ -8,6 +8,7 @@ export { useStudents, STUDENTS_PER_PAGE } from "./use-students"
 export { useStudent } from "./use-student"
 export { useStudentEnrollments } from "./use-student-enrollments"
 export {
+  useCreateStudent,
   useUpdateStudent,
   useUpdateEnrollment,
   useUpdateStudentStatus,

@@ -174,6 +174,62 @@ export interface StudentUpdateInput {
   caste?: string | null
 }
 
+/**
+ * Direct student-creation payload (`StoreStudentRequest`, `POST /students`) —
+ * the office path that mints a student without an admission application. Carries
+ * the full mutable profile (birth_reg_no required here), the initial enrollment
+ * (academic ids sent as public-id hashes; roll numeric), an optional admission
+ * number (auto-generated when blank), the optional linked-parent box, and — for
+ * super admins only — the target branch (also a public-id hash). The API stamps
+ * the branch from the caller for everyone else.
+ */
+export interface StudentCreateInput {
+  name_bn: string
+  name_en: string
+
+  birth_reg_no: string
+
+  father_name_bn: string
+  father_name_en: string
+  father_nid?: string | null
+
+  mother_name_bn: string
+  mother_name_en: string
+  mother_nid?: string | null
+
+  present_village: string
+  present_post_office: string
+  present_upazila: string
+  present_district: string
+  present_division: string
+
+  permanent_village: string
+  permanent_post_office: string
+  permanent_upazila: string
+  permanent_district: string
+  permanent_division: string
+
+  father_mobile: string
+  mother_mobile?: string | null
+
+  date_of_birth: string
+  religion: string
+  nationality: string
+  caste?: string | null
+
+  session_id: string
+  class_id: string
+  section_id: string
+  roll_no: number
+
+  admission_no?: string | null
+
+  create_parent_account: boolean
+  parent_relation?: "father" | "mother" | "guardian" | null
+
+  branch_id?: string
+}
+
 /** List filters → query params. */
 export interface StudentListParams {
   search?: string

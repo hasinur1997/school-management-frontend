@@ -2,6 +2,7 @@
 
 /**
  * Student write mutations (task 2.7):
+ *   - `POST  /students`             — create a student directly (office path)
  *   - `PUT   /students/{id}`        — update mutable profile fields
  *   - `PATCH /students/{id}/status` — flip active/inactive (tc is rejected — 422)
  *   - `POST  /students/{id}/photo`  — upload/replace photo (multipart)
@@ -18,6 +19,7 @@ import { api } from "@/lib/api"
 import type {
   EnrollmentUpdateInput,
   Student,
+  StudentCreateInput,
   StudentEnrollment,
   StudentStatusValue,
   StudentUpdateInput,
@@ -28,6 +30,14 @@ function useInvalidateStudents() {
   return () => {
     void queryClient.invalidateQueries({ queryKey: ["students"] })
   }
+}
+
+export function useCreateStudent() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (input: StudentCreateInput) => api.post<Student>("/students", input),
+    onSuccess: invalidate,
+  })
 }
 
 export function useUpdateStudent() {
