@@ -71,6 +71,8 @@ export interface Student {
   user_id?: string | null
   application_id?: string | null
   admission_no: string | null
+  /** Owning branch (only present when the profile eager-loads it). */
+  branch?: NamedRef | null
 
   name_bn: string | null
   name_en: string | null

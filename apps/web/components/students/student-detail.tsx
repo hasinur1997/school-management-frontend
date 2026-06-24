@@ -12,7 +12,10 @@
  * flagged with an info badge; the status is reflected, never special-cased.
  *
  * Layout follows the shared "detail" design kit (status-accented hero +
- * icon-headed info cards), matching the admission/teacher detail screens.
+ * icon-headed info cards), matching the admission/teacher detail screens. Below
+ * the hero, a URL-persisted tab strip switches between Profile, Attendance,
+ * Results, ID card, and TC; manage actions (edit, photo, status) stay in the
+ * hero rather than the tab strip.
  */
 
 import * as React from "react"
@@ -20,6 +23,7 @@ import Link from "next/link"
 import {
   BadgeCheck,
   CalendarCheck,
+  CalendarOff,
   FileText,
   GraduationCap,
   IdCard,
@@ -28,14 +32,18 @@ import {
   Pencil,
   Power,
   PowerOff,
+  ScrollText,
   User,
   Users,
+  Wallet,
+  type LucideIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
+import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
 import {
   DetailActions,
   DetailBackLink,
@@ -45,6 +53,11 @@ import {
   DetailRow,
   type DetailAction,
 } from "@/components/detail/detail-ui"
+import {
+  DetailTabs,
+  useDetailTab,
+  type DetailTab,
+} from "@/components/detail/detail-tabs"
 import { usePermission } from "@/hooks/auth/use-permission"
 import { isNotFoundError } from "@/lib/api"
 import { formatDate } from "@/lib/format"
@@ -74,6 +87,7 @@ export function StudentDetail({ id }: { id: string }) {
   const canViewResults = usePermission("result.view")
   const canIdCard = usePermission("idcard.generate")
   const canViewTc = usePermission("tc.view")
+  const canViewFees = usePermission("invoice.view")
   const canManage = usePermission(STUDENT_UPDATE)
 
   if (isPending) {
@@ -112,50 +126,19 @@ export function StudentDetail({ id }: { id: string }) {
 
   const tc = isTcStudent(student.status)
   const active = student.status === "active"
+
+  // Class / section / roll come from the current enrollment (the active one, or
+  // the most recent the API returns first) — mirrors the attendance hero.
+  const currentEnrollment =
+    student.enrollments?.find((e) => e.status === "active") ??
+    student.enrollments?.[0] ??
+    null
   const tone = tc ? "info" : active ? "success" : "error"
 
+  // Manage actions live in the hero (Change photo / Deactivate / Edit). The
+  // section-switching items (Attendance, Results, …) are tabs below the hero,
+  // not hero actions. TC students are retired — manage actions are hidden.
   const actions: DetailAction[] = [
-    ...(canViewAttendance
-      ? [
-          {
-            key: "attendance",
-            label: "Attendance",
-            icon: CalendarCheck,
-            href: `/attendance?student=${student.id}`,
-          },
-        ]
-      : []),
-    ...(canViewResults
-      ? [
-          {
-            key: "results",
-            label: "Results",
-            icon: FileText,
-            href: `/results?student=${student.id}`,
-          },
-        ]
-      : []),
-    ...(canIdCard
-      ? [
-          {
-            key: "idcard",
-            label: "ID card",
-            icon: IdCard,
-            href: `/documents/id-cards?student=${student.id}`,
-          },
-        ]
-      : []),
-    ...(canViewTc
-      ? [
-          {
-            key: "tc",
-            label: "TC",
-            icon: FileText,
-            href: `/documents/transfer-certificates?student=${student.id}`,
-          },
-        ]
-      : []),
-    // TC students are retired — edit/photo/status are hidden for them.
     ...(!tc && canManage
       ? [
           {
@@ -163,8 +146,6 @@ export function StudentDetail({ id }: { id: string }) {
             label: "Change photo",
             icon: ImageUp,
             onSelect: () => setPhotoOpen(true),
-            separatorBefore:
-              canViewAttendance || canViewResults || canIdCard || canViewTc,
           },
           {
             key: "status",
@@ -183,6 +164,26 @@ export function StudentDetail({ id }: { id: string }) {
           },
         ]
       : []),
+  ]
+
+  // View tabs: Profile is always present and the default; the rest are gated by
+  // permission. The active tab is read from `?tab=` so a refresh keeps it.
+  const tabs: DetailTab[] = [
+    { key: "profile", label: "Profile", icon: User },
+    ...(canViewAttendance
+      ? [{ key: "attendance", label: "Attendance", icon: CalendarCheck }]
+      : []),
+    ...(canViewResults
+      ? [{ key: "results", label: "Results", icon: FileText }]
+      : []),
+    ...(canViewAttendance
+      ? [{ key: "leaves", label: "Leaves", icon: CalendarOff }]
+      : []),
+    ...(canViewFees
+      ? [{ key: "fees", label: "Tuition fees", icon: Wallet }]
+      : []),
+    ...(canIdCard ? [{ key: "idcard", label: "ID card", icon: IdCard }] : []),
+    ...(canViewTc ? [{ key: "tc", label: "TC", icon: ScrollText }] : []),
   ]
 
   async function confirmToggleStatus() {
@@ -225,18 +226,22 @@ export function StudentDetail({ id }: { id: string }) {
               <p className="text-[15px] text-copy-secondary">{student.name_bn}</p>
             ) : null}
             <p className="text-[13px] text-copy-muted">
-              {student.admission_no ? `Admission ${student.admission_no}` : "Student"}
+              {student.branch?.name ?? "Student"}
             </p>
           </>
         }
         actions={<DetailActions actions={actions} />}
         facts={[
-          { label: "Admission no", value: student.admission_no, mono: true },
+          { label: "Class", value: currentEnrollment?.class?.name },
+          { label: "Section", value: currentEnrollment?.section?.name },
           {
-            label: "Date of birth",
-            value: student.date_of_birth ? formatDate(student.date_of_birth) : null,
+            label: "Roll no",
+            value:
+              currentEnrollment?.roll_no != null
+                ? String(currentEnrollment.roll_no)
+                : null,
+            mono: true,
           },
-          { label: "Religion", value: student.religion },
           {
             label: "Admitted",
             value: student.admitted_at ? formatDate(student.admitted_at) : null,
@@ -244,6 +249,93 @@ export function StudentDetail({ id }: { id: string }) {
         ]}
       />
 
+      <React.Suspense fallback={<DetailSkeleton />}>
+        <StudentDetailTabs tabs={tabs} student={student} />
+      </React.Suspense>
+
+      <StudentFormDialog open={editOpen} onOpenChange={setEditOpen} student={student} />
+      <StudentPhotoDialog open={photoOpen} onOpenChange={setPhotoOpen} student={student} />
+      <ConfirmDialog
+        open={statusOpen}
+        onOpenChange={setStatusOpen}
+        title={active ? "Deactivate student" : "Activate student"}
+        description={
+          <>
+            {active ? "Deactivate " : "Activate "}
+            <span className="font-medium">{studentDisplayName(student)}</span>?
+          </>
+        }
+        confirmLabel={active ? "Deactivate" : "Activate"}
+        pendingLabel="Updating…"
+        onConfirm={confirmToggleStatus}
+      />
+    </DetailLayout>
+  )
+}
+
+type Student = NonNullable<ReturnType<typeof useStudent>["data"]>
+
+/**
+ * The tab strip + active panel below the hero. Split out so the `useDetailTab`
+ * (`useSearchParams`) read sits behind its own Suspense boundary, keeping the
+ * URL-driven active tab from opting the whole route out of static rendering.
+ */
+function StudentDetailTabs({
+  tabs,
+  student,
+}: {
+  tabs: DetailTab[]
+  student: Student
+}) {
+  const { active, setActive } = useDetailTab(tabs)
+
+  return (
+    <div>
+      <DetailTabs tabs={tabs} active={active} onChange={setActive} />
+
+      {active === "profile" ? (
+        <StudentProfilePanel student={student} />
+      ) : active === "attendance" ? (
+        <StudentAttendancePanel studentId={student.id} />
+      ) : active === "results" ? (
+        <ComingSoonPanel
+          icon={FileText}
+          title="Results aren't available yet"
+          description="This student's exam results will appear here once the results module is live."
+        />
+      ) : active === "leaves" ? (
+        <ComingSoonPanel
+          icon={CalendarOff}
+          title="Leaves aren't available yet"
+          description="This student's leave applications and approvals will appear here once the leaves module is live."
+        />
+      ) : active === "fees" ? (
+        <ComingSoonPanel
+          icon={Wallet}
+          title="Tuition fees aren't available yet"
+          description="This student's invoices and fee payments will appear here once the finance module is live."
+        />
+      ) : active === "idcard" ? (
+        <ComingSoonPanel
+          icon={IdCard}
+          title="ID cards aren't available yet"
+          description="Generate and download this student's ID card here once the documents module is live."
+        />
+      ) : active === "tc" ? (
+        <ComingSoonPanel
+          icon={ScrollText}
+          title="Transfer certificates aren't available yet"
+          description="Issue and view this student's transfer certificate here once the documents module is live."
+        />
+      ) : null}
+    </div>
+  )
+}
+
+/** The default "Profile" tab: identity, guardians, addresses, enrollments. */
+function StudentProfilePanel({ student }: { student: Student }) {
+  return (
+    <div>
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         {/* Identity */}
         <DetailCard icon={User} title="Student">
@@ -304,23 +396,23 @@ export function StudentDetail({ id }: { id: string }) {
       >
         <StudentEnrollments id={student.id} />
       </DetailCard>
-
-      <StudentFormDialog open={editOpen} onOpenChange={setEditOpen} student={student} />
-      <StudentPhotoDialog open={photoOpen} onOpenChange={setPhotoOpen} student={student} />
-      <ConfirmDialog
-        open={statusOpen}
-        onOpenChange={setStatusOpen}
-        title={active ? "Deactivate student" : "Activate student"}
-        description={
-          <>
-            {active ? "Deactivate " : "Activate "}
-            <span className="font-medium">{studentDisplayName(student)}</span>?
-          </>
-        }
-        confirmLabel={active ? "Deactivate" : "Activate"}
-        pendingLabel="Updating…"
-        onConfirm={confirmToggleStatus}
-      />
-    </DetailLayout>
+    </div>
   )
+}
+
+/**
+ * Placeholder for view tabs whose backing module (results, ID cards, TCs) isn't
+ * built yet — keeps the tabbed experience consistent instead of routing to a
+ * dead link, and is swapped for the real panel when each module lands.
+ */
+function ComingSoonPanel({
+  icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon
+  title: string
+  description: string
+}) {
+  return <EmptyState icon={icon} title={title} description={description} />
 }
