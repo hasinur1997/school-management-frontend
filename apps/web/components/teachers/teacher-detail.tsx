@@ -2,23 +2,23 @@
 
 /**
  * Teacher detail / profile (task 2.4): identity + contact, class/subject
- * assignments, an attendance-summary link, and the manage actions (edit, change
- * photo, toggle status, resend credentials). Reads `useTeacher`; writes
- * invalidate the cache so the view refreshes. Owns loading / not-found / error /
- * loaded states; an out-of-branch or missing record surfaces as not-found.
+ * assignments, an attendance link, and the manage actions (change photo, toggle
+ * status, resend credentials). Reads `useTeacher`; writes invalidate the cache
+ * so the view refreshes. Owns loading / not-found / error / loaded states; an
+ * out-of-branch or missing record surfaces as not-found.
  *
  * Layout follows the shared "detail" design kit (status-accented hero +
- * icon-headed info cards), matching the admission/student detail screens.
+ * icon-headed info cards), matching the admission/student detail screens. Below
+ * the hero, a URL-persisted tab strip switches between Profile and Attendance;
+ * profile edits happen inline on each card, so there's no hero Edit button.
  */
 
 import * as React from "react"
 import Link from "next/link"
 import {
-  BookOpen,
   CalendarCheck,
   ImageUp,
   Mail,
-  Pencil,
   Power,
   PowerOff,
   User,
@@ -27,17 +27,19 @@ import {
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
-import { StatusBadge } from "@/components/status-badge"
 import { DetailSkeleton } from "@/components/skeletons"
 import {
   DetailActions,
   DetailBackLink,
-  DetailCard,
   DetailHero,
   DetailLayout,
-  DetailRow,
   type DetailAction,
 } from "@/components/detail/detail-ui"
+import {
+  DetailTabs,
+  useDetailTab,
+  type DetailTab,
+} from "@/components/detail/detail-tabs"
 import { usePermission } from "@/hooks/auth/use-permission"
 import { isNotFoundError } from "@/lib/api"
 import { formatDate } from "@/lib/format"
@@ -48,22 +50,23 @@ import {
   useResendTeacherCredentials,
 } from "@/hooks/teachers"
 import {
-  assignmentSummaryLabels,
   isTeacherActive,
   teacherDisplayName,
   teacherInitials,
 } from "@/types/teacher"
 import { TEACHER_MANAGE } from "./permissions"
-import { TeacherFormDialog } from "./teacher-form-dialog"
 import { TeacherPhotoDialog } from "./teacher-photo-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
+import {
+  TeacherAssignmentsCard,
+  TeacherProfileCard,
+} from "./teacher-profile-cards"
 
 export function TeacherDetail({ id }: { id: string }) {
   const { data: teacher, isPending, isError, error, refetch } = useTeacher(id)
   const toggleStatus = useToggleTeacherStatus()
   const resendCredentials = useResendTeacherCredentials()
 
-  const [editOpen, setEditOpen] = React.useState(false)
   const [photoOpen, setPhotoOpen] = React.useState(false)
   const [statusOpen, setStatusOpen] = React.useState(false)
   const [resendOpen, setResendOpen] = React.useState(false)
@@ -109,19 +112,11 @@ export function TeacherDetail({ id }: { id: string }) {
   }
 
   const active = isTeacherActive(teacher)
-  const assignments = teacher.assignments ?? []
 
+  // Manage actions live in the hero `⋮` overflow menu (Change photo / Resend /
+  // Activate-Deactivate). Profile edits happen inline on each card, so there's no
+  // hero Edit button; Attendance moved to the tab strip below the hero.
   const actions: DetailAction[] = [
-    ...(canViewAttendance
-      ? [
-          {
-            key: "attendance",
-            label: "Attendance",
-            icon: CalendarCheck,
-            href: `/attendance?teacher=${teacher.id}`,
-          },
-        ]
-      : []),
     ...(canManage
       ? [
           {
@@ -129,7 +124,6 @@ export function TeacherDetail({ id }: { id: string }) {
             label: "Change photo",
             icon: ImageUp,
             onSelect: () => setPhotoOpen(true),
-            separatorBefore: canViewAttendance,
           },
           {
             key: "resend",
@@ -145,14 +139,16 @@ export function TeacherDetail({ id }: { id: string }) {
             destructive: active,
             separatorBefore: true,
           },
-          {
-            key: "edit",
-            label: "Edit",
-            icon: Pencil,
-            onSelect: () => setEditOpen(true),
-            primary: true,
-          },
         ]
+      : []),
+  ]
+
+  // View tabs: Profile is always present and the default; Attendance is gated by
+  // permission. The active tab is read from `?tab=` so a refresh keeps it.
+  const tabs: DetailTab[] = [
+    { key: "profile", label: "Profile", icon: User },
+    ...(canViewAttendance
+      ? [{ key: "attendance", label: "Attendance", icon: CalendarCheck }]
       : []),
   ]
 
@@ -208,75 +204,10 @@ export function TeacherDetail({ id }: { id: string }) {
         ]}
       />
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
-        {/* Profile */}
-        <DetailCard icon={User} title="Profile">
-          <DetailRow label="Email" value={teacher.email} />
-          <DetailRow label="Phone" value={teacher.phone} mono />
-          <DetailRow label="Employee ID" value={teacher.employee_id} mono />
-          <DetailRow label="Designation" value={teacher.designation} />
-          <DetailRow
-            label="Gender"
-            value={teacher.gender}
-            valueClassName="capitalize"
-          />
-          <DetailRow label="Address" value={teacher.address} />
-          <DetailRow
-            label="Joined"
-            value={teacher.joining_date ? formatDate(teacher.joining_date) : null}
-          />
-        </DetailCard>
+      <React.Suspense fallback={<DetailSkeleton />}>
+        <TeacherDetailTabs tabs={tabs} teacher={teacher} />
+      </React.Suspense>
 
-        {/* Assignments */}
-        <DetailCard icon={BookOpen} title="Assignments" headerClassName="mb-3">
-          {assignments.length === 0 ? (
-            <EmptyState
-              title="No assignments"
-              description="This teacher isn't assigned to any class yet."
-              className="border-0 bg-transparent py-6"
-            />
-          ) : (
-            <ul className="flex flex-col gap-2.5">
-              {assignments.map((a, i) => {
-                const labels = assignmentSummaryLabels(a)
-                return (
-                  <li
-                    key={a.id ?? i}
-                    className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-surface-border bg-base px-4 py-3 text-sm"
-                  >
-                    <span className="font-semibold text-copy-primary">
-                      {labels.class}
-                    </span>
-                    {labels.section ? (
-                      <span className="text-copy-muted">· {labels.section}</span>
-                    ) : null}
-                    {labels.subject ? (
-                      <StatusBadge
-                        status="Subject"
-                        tone="info"
-                        label={labels.subject}
-                        className="ml-auto"
-                      />
-                    ) : (
-                      <StatusBadge
-                        status="Class teacher"
-                        tone="neutral"
-                        className="ml-auto"
-                      />
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </DetailCard>
-      </div>
-
-      <TeacherFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        teacher={teacher}
-      />
       <TeacherPhotoDialog
         open={photoOpen}
         onOpenChange={setPhotoOpen}
@@ -315,5 +246,48 @@ export function TeacherDetail({ id }: { id: string }) {
         onConfirm={confirmResend}
       />
     </DetailLayout>
+  )
+}
+
+type Teacher = NonNullable<ReturnType<typeof useTeacher>["data"]>
+
+/**
+ * The tab strip + active panel below the hero. Split out so the `useDetailTab`
+ * (`useSearchParams`) read sits behind its own Suspense boundary, keeping the
+ * URL-driven active tab from opting the whole route out of static rendering —
+ * mirrors the student detail screen.
+ */
+function TeacherDetailTabs({
+  tabs,
+  teacher,
+}: {
+  tabs: DetailTab[]
+  teacher: Teacher
+}) {
+  const { active, setActive } = useDetailTab(tabs)
+  const canManage = usePermission(TEACHER_MANAGE)
+
+  return (
+    <div>
+      <DetailTabs tabs={tabs} active={active} onChange={setActive} fill={false} />
+
+      {active === "attendance" ? (
+        <EmptyState
+          icon={CalendarCheck}
+          title="Attendance"
+          description="View and manage this teacher's attendance from the attendance workspace."
+          action={
+            <Link href={`/attendance?teacher=${teacher.id}`}>
+              <Button>Open attendance</Button>
+            </Link>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+          <TeacherProfileCard teacher={teacher} editable={canManage} />
+          <TeacherAssignmentsCard teacher={teacher} editable={canManage} />
+        </div>
+      )}
+    </div>
   )
 }

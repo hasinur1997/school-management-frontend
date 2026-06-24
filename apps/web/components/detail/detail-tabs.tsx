@@ -76,11 +76,18 @@ export function DetailTabs({
   active,
   onChange,
   className,
+  fill = true,
 }: {
   tabs: DetailTab[]
   active: string
   onChange: (key: string) => void
   className?: string
+  /**
+   * When `true` (default) the visible tabs stretch to fill the bar — good for a
+   * many-tab strip. Set `false` to keep tabs at their natural width, left-aligned
+   * (better when there are only a couple of tabs).
+   */
+  fill?: boolean
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const measureRef = React.useRef<HTMLDivElement>(null)
@@ -147,6 +154,7 @@ export function DetailTabs({
           tab={tab}
           selected={tab.key === active}
           onClick={() => onChange(tab.key)}
+          fill={fill}
         />
       ))}
 
@@ -224,11 +232,13 @@ function TabButton({
   selected,
   onClick,
   measuring,
+  fill = true,
 }: {
   tab: DetailTab
   selected: boolean
   onClick?: () => void
   measuring?: boolean
+  fill?: boolean
 }) {
   const Icon = tab.icon
   return (
@@ -240,8 +250,9 @@ function TabButton({
       onClick={onClick}
       className={cn(
         "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors sm:min-h-10",
-        // Visible tabs spread to fill the bar; the measurer keeps natural width.
-        !measuring && "sm:flex-1",
+        // Visible tabs spread to fill the bar when `fill`; the measurer keeps
+        // natural width, as do left-aligned (non-fill) strips.
+        !measuring && fill && "sm:flex-1",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
         selected
           ? "bg-brand text-white shadow-sm"

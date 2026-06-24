@@ -284,7 +284,7 @@ function StudentDetailTabs({
 
   return (
     <div>
-      <DetailTabs tabs={tabs} active={active} onChange={setActive} />
+      <DetailTabs tabs={tabs} active={active} onChange={setActive} fill={false} />
 
       {active === "profile" ? (
         <StudentProfilePanel student={student} />
