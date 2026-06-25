@@ -29,18 +29,24 @@ import { Input } from "@workspace/ui/components/input"
 import { Button } from "@/components/button"
 import { loginAction } from "@/lib/auth/actions"
 
+/** A bare email shape, or a phone (digits with optional +, spaces, dashes). */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PHONE_PATTERN = /^\+?[\d\s()-]{6,}$/
+
 const schema = z.object({
-  email: z
+  identifier: z
     .string()
-    .min(1, "Email is required")
-    .email("Enter a valid email address"),
+    .min(1, "Email or phone is required")
+    .refine((v) => EMAIL_PATTERN.test(v) || PHONE_PATTERN.test(v), {
+      message: "Enter a valid email or phone number",
+    }),
   password: z.string().min(1, "Password is required"),
 })
 
 type LoginValues = z.infer<typeof schema>
 
 /** Form fields a `422` can map back onto; everything else goes to the banner. */
-const FIELD_NAMES: ReadonlySet<string> = new Set(["email", "password"])
+const FIELD_NAMES: ReadonlySet<string> = new Set(["identifier", "password"])
 
 export function LoginForm() {
   const router = useRouter()
@@ -48,7 +54,7 @@ export function LoginForm() {
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { identifier: "", password: "" },
   })
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -97,17 +103,16 @@ export function LoginForm() {
 
         <FormField
           control={form.control}
-          name="email"
+          name="identifier"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email or phone</FormLabel>
               <FormControl>
                 <Input
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
+                  type="text"
+                  autoComplete="username"
                   autoFocus
-                  placeholder="you@school.edu"
+                  placeholder="you@school.edu or 01712345678"
                   disabled={submitting}
                   {...field}
                 />

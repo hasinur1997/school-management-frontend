@@ -17,7 +17,8 @@ import { serverApiRequest } from "./server-api"
 import { clearSessionToken, getSessionToken, setSessionToken } from "./session"
 
 export interface LoginInput {
-  email: string
+  /** Email or phone — the API resolves either against the `login` field. */
+  identifier: string
   password: string
 }
 
@@ -51,20 +52,20 @@ export async function loginAction(
 ): Promise<LoginActionResult> {
   const result = await serverApiRequest<LoginResponse>("/auth/login", {
     method: "POST",
-    // The API takes a generic `login` identifier (email/username) plus a
+    // The API takes a generic `login` identifier (email or phone) plus a
     // `device_name` to label the issued token — not `email`/`password`.
     body: {
-      login: input.email,
+      login: input.identifier,
       password: input.password,
       device_name: "web",
     },
   })
 
   if (!result.ok) {
-    // The API validates the identifier as `login`; surface it on the email
-    // input the form actually renders.
+    // The API validates the identifier as `login`; surface it on the
+    // `identifier` input the form actually renders.
     const errors = result.errors
-      ? remapFieldErrors(result.errors, { login: "email" })
+      ? remapFieldErrors(result.errors, { login: "identifier" })
       : undefined
     return { ok: false, message: result.message, errors }
   }
