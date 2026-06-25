@@ -6,5 +6,6 @@ export {
   useCreateParent,
   useLinkParentStudent,
   useUnlinkParentStudent,
+  useResendParentCredentials,
 } from "./use-parent-mutations"
 export { useMyStudents } from "./use-my-students"

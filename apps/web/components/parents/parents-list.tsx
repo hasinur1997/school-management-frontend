@@ -20,12 +20,14 @@ import { ErrorPanel } from "@/components/error-state"
 import { ListPager } from "@/components/list-pager"
 import { TableSkeleton } from "@/components/skeletons"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
-import { useParents } from "@/hooks/parents"
+import { useParents, useResendParentCredentials } from "@/hooks/parents"
+import { toastError, toastSuccess } from "@/lib/toast"
 import {
   linkedStudentLabel,
   parentRelationLabel,
   type ParentProfile,
 } from "@/types/parent"
+import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
 import { LinkStudentsDialog } from "./link-students-dialog"
 import { ParentFormDialog } from "./parent-form-dialog"
 import { ParentRowActions } from "./parent-row-actions"
@@ -38,9 +40,23 @@ export function ParentsList() {
   const [page, setPage] = React.useState(1)
   const [createOpen, setCreateOpen] = React.useState(false)
   const [linkTarget, setLinkTarget] = React.useState<ParentProfile | null>(null)
+  const [resendTarget, setResendTarget] = React.useState<ParentProfile | null>(null)
+  const resendCredentials = useResendParentCredentials()
 
   const search = useDebouncedValue(searchInput, 300)
   const { data, isPending, isError, isFetching, refetch } = useParents({ search, page })
+
+  async function confirmResend() {
+    if (!resendTarget) return
+    try {
+      await resendCredentials.mutateAsync(resendTarget.id)
+      toastSuccess("Login credentials resent.", { id: "parent-resend" })
+      setResendTarget(null)
+    } catch (error) {
+      toastError(error, "Couldn't resend credentials.", { id: "parent-resend" })
+      throw error
+    }
+  }
 
   const parents = data?.data ?? []
   const meta = data?.meta
@@ -160,6 +176,7 @@ export function ParentsList() {
                         label={parent.name}
                         onView={() => router.push(`/parents/${parent.id}`)}
                         onLinkStudents={() => setLinkTarget(parent)}
+                        onResendCredentials={() => setResendTarget(parent)}
                       />
                     </TableCell>
                   </TableRow>
@@ -196,6 +213,7 @@ export function ParentsList() {
                     label={parent.name}
                     onView={() => router.push(`/parents/${parent.id}`)}
                     onLinkStudents={() => setLinkTarget(parent)}
+                    onResendCredentials={() => setResendTarget(parent)}
                   />
                 </div>
                 <div className="mt-3 grid gap-1 text-sm text-copy-secondary">
@@ -227,6 +245,24 @@ export function ParentsList() {
         open={linkTarget != null}
         onOpenChange={(open) => !open && setLinkTarget(null)}
         parent={linkTarget}
+      />
+      <ConfirmDialog
+        open={resendTarget != null}
+        onOpenChange={(open) => !open && setResendTarget(null)}
+        title="Resend credentials"
+        description={
+          resendTarget ? (
+            <>
+              Generate and email fresh login credentials to{" "}
+              <span className="font-medium">{resendTarget.name}</span>
+              {resendTarget.email ? ` (${resendTarget.email})` : ""}? The parent
+              needs an email address on file to receive them.
+            </>
+          ) : null
+        }
+        confirmLabel="Resend"
+        pendingLabel="Sending…"
+        onConfirm={confirmResend}
       />
     </div>
   )

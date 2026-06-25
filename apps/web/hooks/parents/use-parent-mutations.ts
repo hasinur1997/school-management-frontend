@@ -5,6 +5,7 @@
  *   - `POST   /parents`
  *   - `POST   /parents/{parent}/students`
  *   - `DELETE /parents/{parent}/students/{student}`
+ *   - `POST   /parents/{parent}/resend-credentials`
  *
  * All invalidate parent, linked-student, and student caches so list/detail/self
  * surfaces reconcile with the API after link changes.
@@ -50,5 +51,12 @@ export function useUnlinkParentStudent() {
     mutationFn: ({ parentId, studentId }: ParentLinkStudentInput) =>
       api.delete<null>(`/parents/${parentId}/students/${studentId}`),
     onSuccess: invalidate,
+  })
+}
+
+export function useResendParentCredentials() {
+  return useMutation({
+    mutationFn: (parentId: string) =>
+      api.post<null>(`/parents/${parentId}/resend-credentials`),
   })
 }

@@ -9,6 +9,7 @@ import {
   Link2,
   Link2Off,
   Lock,
+  Mail,
   Receipt,
   UserRound,
   Users,
@@ -36,7 +37,11 @@ import {
 } from "@/components/detail/detail-ui"
 import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
 import { usePermission } from "@/hooks/auth/use-permission"
-import { useParent, useUnlinkParentStudent } from "@/hooks/parents"
+import {
+  useParent,
+  useUnlinkParentStudent,
+  useResendParentCredentials,
+} from "@/hooks/parents"
 import { isForbiddenError, isNotFoundError } from "@/lib/api"
 import { toastError, toastSuccess } from "@/lib/toast"
 import {
@@ -52,9 +57,11 @@ export function ParentDetail({ id }: { id: string }) {
   const canManage = usePermission(PARENT_MANAGE)
   const { data: parent, isPending, isError, error, refetch } = useParent(id)
   const unlinkStudent = useUnlinkParentStudent()
+  const resendCredentials = useResendParentCredentials()
 
   const [linkOpen, setLinkOpen] = React.useState(false)
   const [unlinkTarget, setUnlinkTarget] = React.useState<LinkedStudent | null>(null)
+  const [resendOpen, setResendOpen] = React.useState(false)
 
   if (!canManage) {
     return (
@@ -129,6 +136,17 @@ export function ParentDetail({ id }: { id: string }) {
     }
   }
 
+  async function confirmResend() {
+    try {
+      await resendCredentials.mutateAsync(id)
+      toastSuccess("Login credentials resent.", { id: "parent-resend" })
+      setResendOpen(false)
+    } catch (err) {
+      toastError(err, "Couldn't resend credentials.", { id: "parent-resend" })
+      throw err
+    }
+  }
+
   return (
     <DetailLayout>
       <DetailBackLink href="/parents">Back to parents</DetailBackLink>
@@ -147,10 +165,20 @@ export function ParentDetail({ id }: { id: string }) {
           </>
         }
         actions={
-          <Button className="h-10 gap-[7px] rounded-[10px] px-4 text-sm font-semibold" onClick={() => setLinkOpen(true)}>
-            <Link2 className="size-4" aria-hidden />
-            Link student
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              className="h-10 gap-[7px] rounded-[10px] px-4 text-sm font-semibold"
+              onClick={() => setResendOpen(true)}
+            >
+              <Mail className="size-4" aria-hidden />
+              Resend credentials
+            </Button>
+            <Button className="h-10 gap-[7px] rounded-[10px] px-4 text-sm font-semibold" onClick={() => setLinkOpen(true)}>
+              <Link2 className="size-4" aria-hidden />
+              Link student
+            </Button>
+          </div>
         }
         facts={[
           { label: "Phone", value: parent.phone, mono: true },
@@ -212,6 +240,22 @@ export function ParentDetail({ id }: { id: string }) {
         confirmLabel="Unlink"
         pendingLabel="Unlinking…"
         onConfirm={confirmUnlink}
+      />
+      <ConfirmDialog
+        open={resendOpen}
+        onOpenChange={setResendOpen}
+        title="Resend credentials"
+        description={
+          <>
+            Generate and email fresh login credentials to{" "}
+            <span className="font-medium">{parent.name}</span>
+            {parent.email ? ` (${parent.email})` : ""}? The parent needs an email
+            address on file to receive them.
+          </>
+        }
+        confirmLabel="Resend"
+        pendingLabel="Sending…"
+        onConfirm={confirmResend}
       />
     </DetailLayout>
   )

@@ -1,11 +1,12 @@
 "use client"
 
-import { Eye, Link2, MoreHorizontal } from "lucide-react"
+import { Eye, Link2, Mail, MoreHorizontal } from "lucide-react"
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 import { Button } from "@/components/button"
@@ -14,9 +15,15 @@ export interface ParentRowActionsProps {
   label: string
   onView: () => void
   onLinkStudents: () => void
+  onResendCredentials: () => void
 }
 
-export function ParentRowActions({ label, onView, onLinkStudents }: ParentRowActionsProps) {
+export function ParentRowActions({
+  label,
+  onView,
+  onLinkStudents,
+  onResendCredentials,
+}: ParentRowActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -39,6 +46,11 @@ export function ParentRowActions({ label, onView, onLinkStudents }: ParentRowAct
         <DropdownMenuItem onClick={onLinkStudents}>
           <Link2 className="size-4" aria-hidden />
           Link students
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onResendCredentials}>
+          <Mail className="size-4" aria-hidden />
+          Resend credentials
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

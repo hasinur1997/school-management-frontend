@@ -6,6 +6,7 @@
  *   - `PUT   /students/{id}`        — update mutable profile fields
  *   - `PATCH /students/{id}/status` — flip active/inactive (tc is rejected — 422)
  *   - `POST  /students/{id}/photo`  — upload/replace photo (multipart)
+ *   - `POST  /students/{id}/resend-credentials` — re-dispatch login credentials
  *
  * Each invalidates the `["students"]` key so the list and detail refetch after a
  * write. The API stays authoritative on validation (`422` → field errors at the
@@ -84,5 +85,12 @@ export function useUploadStudentPhoto() {
       return api.post<Student>(`/students/${id}/photo`, body)
     },
     onSuccess: invalidate,
+  })
+}
+
+export function useResendStudentCredentials() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post<null>(`/students/${id}/resend-credentials`),
   })
 }

@@ -2,14 +2,15 @@
 
 /**
  * Kebab/overflow menu of per-student actions (task 2.7): View profile, plus the
- * update-gated Edit / Change photo / Toggle status. The manage items are hidden
- * when the user lacks `student.update`; View is always available to anyone who
- * can see the list. The status toggle confirms first via its dialog (owned by
- * the caller). A TC student can't be status-toggled here (issued via Documents
- * 6.2), so that item is hidden for them.
+ * update-gated Edit / Change photo / Toggle status and the create-gated Resend
+ * credentials. The manage items are hidden when the user lacks `student.update`;
+ * resend follows the backend route's `student.create` gate. View is always
+ * available to anyone who can see the list. The status toggle and resend confirm
+ * first via their dialogs (owned by the caller). A TC student can't be
+ * status-toggled here (issued via Documents 6.2), so that item is hidden for them.
  */
 
-import { Eye, ImageUp, MoreHorizontal, Pencil, Power, PowerOff } from "lucide-react"
+import { Eye, ImageUp, Mail, MoreHorizontal, Pencil, Power, PowerOff } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -20,7 +21,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu"
 import { Button } from "@/components/button"
 import { usePermission } from "@/hooks/auth/use-permission"
-import { STUDENT_UPDATE } from "./permissions"
+import { STUDENT_CREATE, STUDENT_UPDATE } from "./permissions"
 
 export interface StudentRowActionsProps {
   label: string
@@ -31,6 +32,7 @@ export interface StudentRowActionsProps {
   onEdit: () => void
   onChangePhoto: () => void
   onToggleStatus: () => void
+  onResendCredentials: () => void
 }
 
 export function StudentRowActions({
@@ -41,8 +43,10 @@ export function StudentRowActions({
   onEdit,
   onChangePhoto,
   onToggleStatus,
+  onResendCredentials,
 }: StudentRowActionsProps) {
   const canManage = usePermission(STUDENT_UPDATE)
+  const canResend = usePermission(STUDENT_CREATE)
 
   return (
     <DropdownMenu>
@@ -74,6 +78,12 @@ export function StudentRowActions({
               <ImageUp className="size-4" aria-hidden />
               Change photo
             </DropdownMenuItem>
+            {canResend ? (
+              <DropdownMenuItem onClick={onResendCredentials}>
+                <Mail className="size-4" aria-hidden />
+                Resend credentials
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onToggleStatus}>
               {isActive ? (

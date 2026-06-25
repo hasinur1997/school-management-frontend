@@ -28,6 +28,7 @@ import {
   GraduationCap,
   IdCard,
   ImageUp,
+  Mail,
   Power,
   PowerOff,
   ScrollText,
@@ -58,7 +59,11 @@ import { usePermission } from "@/hooks/auth/use-permission"
 import { isNotFoundError } from "@/lib/api"
 import { formatDate } from "@/lib/format"
 import { toastError, toastSuccess } from "@/lib/toast"
-import { useStudent, useUpdateStudentStatus } from "@/hooks/students"
+import {
+  useStudent,
+  useUpdateStudentStatus,
+  useResendStudentCredentials,
+} from "@/hooks/students"
 import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
 import {
   isTcStudent,
@@ -66,7 +71,7 @@ import {
   studentInitials,
   studentStatusLabel,
 } from "@/types/student"
-import { STUDENT_UPDATE } from "./permissions"
+import { STUDENT_CREATE, STUDENT_UPDATE } from "./permissions"
 import { StudentPhotoDialog } from "./student-photo-dialog"
 import { StudentEnrollments } from "./student-enrollments"
 import {
@@ -78,9 +83,11 @@ import {
 export function StudentDetail({ id }: { id: string }) {
   const { data: student, isPending, isError, error, refetch } = useStudent(id)
   const updateStatus = useUpdateStudentStatus()
+  const resendCredentials = useResendStudentCredentials()
 
   const [photoOpen, setPhotoOpen] = React.useState(false)
   const [statusOpen, setStatusOpen] = React.useState(false)
+  const [resendOpen, setResendOpen] = React.useState(false)
 
   const canViewAttendance = usePermission("attendance.view")
   const canViewResults = usePermission("result.view")
@@ -88,6 +95,7 @@ export function StudentDetail({ id }: { id: string }) {
   const canViewTc = usePermission("tc.view")
   const canViewFees = usePermission("invoice.view")
   const canManage = usePermission(STUDENT_UPDATE)
+  const canResend = usePermission(STUDENT_CREATE)
 
   if (isPending) {
     return (
@@ -147,6 +155,16 @@ export function StudentDetail({ id }: { id: string }) {
             icon: ImageUp,
             onSelect: () => setPhotoOpen(true),
           },
+          ...(canResend
+            ? [
+                {
+                  key: "resend",
+                  label: "Resend credentials",
+                  icon: Mail,
+                  onSelect: () => setResendOpen(true),
+                },
+              ]
+            : []),
           {
             key: "status",
             label: active ? "Deactivate" : "Activate",
@@ -188,6 +206,17 @@ export function StudentDetail({ id }: { id: string }) {
       setStatusOpen(false)
     } catch (err) {
       toastError(err, "Couldn't update the status.", { id: "student-status" })
+      throw err
+    }
+  }
+
+  async function confirmResend() {
+    try {
+      await resendCredentials.mutateAsync(id)
+      toastSuccess("Login credentials resent.", { id: "student-resend" })
+      setResendOpen(false)
+    } catch (err) {
+      toastError(err, "Couldn't resend credentials.", { id: "student-resend" })
       throw err
     }
   }
@@ -260,6 +289,21 @@ export function StudentDetail({ id }: { id: string }) {
         confirmLabel={active ? "Deactivate" : "Activate"}
         pendingLabel="Updating…"
         onConfirm={confirmToggleStatus}
+      />
+      <ConfirmDialog
+        open={resendOpen}
+        onOpenChange={setResendOpen}
+        title="Resend credentials"
+        description={
+          <>
+            Generate and email fresh login credentials to{" "}
+            <span className="font-medium">{studentDisplayName(student)}</span>?
+            The student needs an email address on file to receive them.
+          </>
+        }
+        confirmLabel="Resend"
+        pendingLabel="Sending…"
+        onConfirm={confirmResend}
       />
     </DetailLayout>
   )

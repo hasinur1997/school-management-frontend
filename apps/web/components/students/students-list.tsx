@@ -36,7 +36,11 @@ import { ListPager } from "@/components/list-pager"
 import { ClassSelect, SectionSelect, SessionSelect } from "@/components/academic"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { toastError, toastSuccess } from "@/lib/toast"
-import { useStudents, useUpdateStudentStatus } from "@/hooks/students"
+import {
+  useStudents,
+  useUpdateStudentStatus,
+  useResendStudentCredentials,
+} from "@/hooks/students"
 import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
 import {
   isTcStudent,
@@ -103,6 +107,7 @@ export function StudentsList() {
   })
 
   const updateStatus = useUpdateStudentStatus()
+  const resendCredentials = useResendStudentCredentials()
 
   // Dialog targets. Edit/photo need the full profile; the list rows are compact,
   // so we open by id and fetch the profile inside the dialogs' loader below.
@@ -110,6 +115,7 @@ export function StudentsList() {
   const [photoId, setPhotoId] = React.useState<string | null>(null)
   const [createOpen, setCreateOpen] = React.useState(false)
   const [statusTarget, setStatusTarget] = React.useState<StudentListItem | null>(null)
+  const [resendTarget, setResendTarget] = React.useState<StudentListItem | null>(null)
 
   const students = data?.data ?? []
   const meta = data?.meta
@@ -145,6 +151,18 @@ export function StudentsList() {
     }
   }
 
+  async function confirmResend() {
+    if (!resendTarget) return
+    try {
+      await resendCredentials.mutateAsync(resendTarget.id)
+      toastSuccess("Login credentials resent.", { id: "student-resend" })
+      setResendTarget(null)
+    } catch (error) {
+      toastError(error, "Couldn't resend credentials.", { id: "student-resend" })
+      throw error
+    }
+  }
+
   const rowActions = (student: StudentListItem) => (
     <StudentRowActions
       label={studentDisplayName(student)}
@@ -154,6 +172,7 @@ export function StudentsList() {
       onEdit={() => setEditId(student.id)}
       onChangePhoto={() => setPhotoId(student.id)}
       onToggleStatus={() => setStatusTarget(student)}
+      onResendCredentials={() => setResendTarget(student)}
     />
   )
 
@@ -352,6 +371,23 @@ export function StudentsList() {
         confirmLabel={statusTarget && statusTarget.status === "active" ? "Deactivate" : "Activate"}
         pendingLabel="Updating…"
         onConfirm={confirmToggleStatus}
+      />
+      <ConfirmDialog
+        open={resendTarget != null}
+        onOpenChange={(open) => !open && setResendTarget(null)}
+        title="Resend credentials"
+        description={
+          resendTarget ? (
+            <>
+              Generate and email fresh login credentials to{" "}
+              <span className="font-medium">{studentDisplayName(resendTarget)}</span>?
+              The student needs an email address on file to receive them.
+            </>
+          ) : null
+        }
+        confirmLabel="Resend"
+        pendingLabel="Sending…"
+        onConfirm={confirmResend}
       />
     </div>
   )

@@ -13,4 +13,5 @@ export {
   useUpdateEnrollment,
   useUpdateStudentStatus,
   useUploadStudentPhoto,
+  useResendStudentCredentials,
 } from "./use-student-mutations"
