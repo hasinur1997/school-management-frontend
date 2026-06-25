@@ -72,6 +72,9 @@ const schema = z
   .object({
     name_bn: z.string().trim().min(1, "Required"),
     name_en: z.string().trim().min(1, "Required"),
+    student_email: z
+      .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+      .optional(),
 
     birth_reg_no: z.string().trim().min(1, "Required"),
 
@@ -100,6 +103,12 @@ const schema = z
 
     father_mobile: z.string().trim().min(1, "Required"),
     mother_mobile: z.string().trim().optional(),
+    father_email: z
+      .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+      .optional(),
+    mother_email: z
+      .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+      .optional(),
 
     date_of_birth: z.string().trim().min(1, "Required"),
     religion: z.string().trim().min(1, "Required"),
@@ -115,6 +124,9 @@ const schema = z
 
     create_parent_account: z.boolean(),
     parent_relation: z.enum(["father", "mother", "guardian"]).nullable(),
+    parent_email: z
+      .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+      .optional(),
 
     branch_id: z.string().min(1).nullable(),
   })
@@ -134,6 +146,20 @@ const schema = z
     if (values.create_parent_account && values.parent_relation == null) {
       ctx.addIssue({ path: ["parent_relation"], code: z.ZodIssueCode.custom, message: "Select a relation" })
     }
+    const studentEmail = values.student_email?.trim()
+    const parentEmail = values.parent_email?.trim()
+    if (
+      values.create_parent_account &&
+      studentEmail &&
+      parentEmail &&
+      studentEmail.toLowerCase() === parentEmail.toLowerCase()
+    ) {
+      ctx.addIssue({
+        path: ["parent_email"],
+        code: z.ZodIssueCode.custom,
+        message: "Parent email must be different from student email",
+      })
+    }
   })
 
 type CreateFormValues = z.infer<typeof schema>
@@ -141,6 +167,7 @@ type CreateFormValues = z.infer<typeof schema>
 const FIELD_NAMES = [
   "name_bn",
   "name_en",
+  "student_email",
   "birth_reg_no",
   "father_name_bn",
   "father_name_en",
@@ -160,6 +187,8 @@ const FIELD_NAMES = [
   "permanent_division",
   "father_mobile",
   "mother_mobile",
+  "father_email",
+  "mother_email",
   "date_of_birth",
   "religion",
   "nationality",
@@ -171,6 +200,7 @@ const FIELD_NAMES = [
   "admission_no",
   "create_parent_account",
   "parent_relation",
+  "parent_email",
   "branch_id",
 ] as const
 
@@ -178,6 +208,7 @@ function emptyDefaults(branchId: string | null): CreateFormValues {
   return {
     name_bn: "",
     name_en: "",
+    student_email: "",
     birth_reg_no: "",
     father_name_bn: "",
     father_name_en: "",
@@ -198,6 +229,8 @@ function emptyDefaults(branchId: string | null): CreateFormValues {
     permanent_same_as_present: false,
     father_mobile: "",
     mother_mobile: "",
+    father_email: "",
+    mother_email: "",
     date_of_birth: "",
     religion: "",
     nationality: "Bangladeshi",
@@ -209,6 +242,7 @@ function emptyDefaults(branchId: string | null): CreateFormValues {
     admission_no: "",
     create_parent_account: false,
     parent_relation: null,
+    parent_email: "",
     branch_id: branchId,
   }
 }
@@ -283,6 +317,7 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
     const payload: StudentCreateInput = {
       name_bn: values.name_bn,
       name_en: values.name_en,
+      student_email: values.student_email?.trim() ? values.student_email.trim() : null,
       birth_reg_no: values.birth_reg_no,
       father_name_bn: values.father_name_bn,
       father_name_en: values.father_name_en,
@@ -302,6 +337,8 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
       permanent_division: values.permanent_division,
       father_mobile: values.father_mobile,
       mother_mobile: values.mother_mobile || null,
+      father_email: values.father_email?.trim() ? values.father_email.trim() : null,
+      mother_email: values.mother_email?.trim() ? values.mother_email.trim() : null,
       date_of_birth: values.date_of_birth,
       religion: values.religion,
       nationality: values.nationality,
@@ -313,6 +350,10 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
       admission_no: values.admission_no?.trim() ? values.admission_no.trim() : null,
       create_parent_account: values.create_parent_account,
       parent_relation: values.create_parent_account ? values.parent_relation : null,
+      parent_email:
+        values.create_parent_account && values.parent_email?.trim()
+          ? values.parent_email.trim()
+          : null,
       ...(isSuperAdmin && values.branch_id != null ? { branch_id: values.branch_id } : {}),
     }
 
@@ -373,6 +414,13 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
             <Section title="Student">
               <TextField form={form} name="name_en" label="Name (English)" disabled={submitting} />
               <TextField form={form} name="name_bn" label="Name (Bangla)" disabled={submitting} />
+              <TextField
+                form={form}
+                name="student_email"
+                label="Email (optional)"
+                type="email"
+                disabled={submitting}
+              />
               <TextField form={form} name="birth_reg_no" label="Birth registration no" disabled={submitting} />
               <FormField
                 control={form.control}
@@ -504,12 +552,14 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
               <TextField form={form} name="father_name_bn" label="Name (Bangla)" disabled={submitting} />
               <TextField form={form} name="father_nid" label="NID (optional)" disabled={submitting} />
               <TextField form={form} name="father_mobile" label="Mobile" disabled={submitting} />
+              <TextField form={form} name="father_email" label="Email (optional)" type="email" disabled={submitting} />
             </Section>
             <Section title="Mother">
               <TextField form={form} name="mother_name_en" label="Name (English)" disabled={submitting} />
               <TextField form={form} name="mother_name_bn" label="Name (Bangla)" disabled={submitting} />
               <TextField form={form} name="mother_nid" label="NID (optional)" disabled={submitting} />
               <TextField form={form} name="mother_mobile" label="Mobile (optional)" disabled={submitting} />
+              <TextField form={form} name="mother_email" label="Email (optional)" type="email" disabled={submitting} />
             </Section>
 
             {/* Addresses — cascading Division → District → Upazila → Post office */}
@@ -563,7 +613,10 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
                           checked={field.value}
                           onChange={(e) => {
                             field.onChange(e.target.checked)
-                            if (!e.target.checked) form.setValue("parent_relation", null)
+                            if (!e.target.checked) {
+                              form.setValue("parent_relation", null)
+                              form.setValue("parent_email", "")
+                            }
                           }}
                           disabled={submitting}
                           className="mt-0.5 size-4 shrink-0 rounded border-input accent-brand"
@@ -580,34 +633,43 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
                 )}
               />
               {createParent ? (
-                <FormField
-                  control={form.control}
-                  name="parent_relation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Parent relation</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          disabled={submitting}
-                        >
-                          <SelectTrigger aria-label="Parent relation" className="w-full">
-                            <SelectValue placeholder="Select relation" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {RELATIONS.map((r) => (
-                              <SelectItem key={r.value} value={r.value}>
-                                {r.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <>
+                  <FormField
+                    control={form.control}
+                    name="parent_relation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Parent relation</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            disabled={submitting}
+                          >
+                            <SelectTrigger aria-label="Parent relation" className="w-full">
+                              <SelectValue placeholder="Select relation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {RELATIONS.map((r) => (
+                                <SelectItem key={r.value} value={r.value}>
+                                  {r.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <TextField
+                    form={form}
+                    name="parent_email"
+                    label="Parent email (optional)"
+                    type="email"
+                    disabled={submitting}
+                  />
+                </>
               ) : null}
             </Section>
 
@@ -649,11 +711,13 @@ function TextField({
   form,
   name,
   label,
+  type = "text",
   disabled,
 }: {
   form: ReturnType<typeof useForm<CreateFormValues>>
   name: keyof CreateFormValues
   label: string
+  type?: React.HTMLInputTypeAttribute
   disabled?: boolean
 }) {
   return (
@@ -667,8 +731,10 @@ function TextField({
             <Input
               {...field}
               value={typeof field.value === "string" ? field.value : ""}
+              type={type}
+              inputMode={type === "email" ? "email" : undefined}
+              autoComplete={type === "email" ? "email" : "off"}
               disabled={disabled}
-              autoComplete="off"
             />
           </FormControl>
           <FormMessage />

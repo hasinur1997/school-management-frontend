@@ -181,10 +181,11 @@ export function TeacherFormDialog({
       return
     }
 
-    // Fields common to create and update. Email and branch are create-only — the
-    // API prohibits changing them on update.
+    // Fields common to create and update. Email belongs to the linked login user;
+    // branch is create-only.
     const base: TeacherUpdateInput = {
       name: values.name,
+      email: values.email,
       phone: values.phone || null,
       designation: values.designation || null,
       employee_id: values.employee_id || null,
@@ -207,7 +208,6 @@ export function TeacherFormDialog({
       } else {
         const payload: TeacherInput = {
           ...base,
-          email: values.email,
           ...(isSuperAdmin && values.branch_id != null
             ? { branch_id: values.branch_id }
             : {}),

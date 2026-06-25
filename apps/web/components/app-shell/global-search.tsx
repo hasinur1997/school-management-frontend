@@ -36,7 +36,11 @@ import { useGlobalSearch } from "@/hooks/search/use-global-search"
 import type { SearchResult } from "@/types/search"
 
 /** A module hit carries the gating (permission + self-service roles) alongside the result. */
-type ModuleResult = SearchResult & { permission: string; roles?: string[] }
+type ModuleResult = SearchResult & {
+  permission: string
+  permissions?: string[]
+  roles?: string[]
+}
 
 /** All nav items flattened from the grouped sidebar model, as search results. */
 const MODULE_RESULTS: ModuleResult[] = NAV_GROUPS.flatMap((group) =>
@@ -48,6 +52,7 @@ const MODULE_RESULTS: ModuleResult[] = NAV_GROUPS.flatMap((group) =>
     icon: item.icon,
     value: `modules ${item.label}`,
     permission: item.permission,
+    permissions: item.permissions,
     roles: item.roles,
   }))
 )
@@ -68,6 +73,8 @@ export function GlobalSearch() {
     return MODULE_RESULTS.filter(
       (m) =>
         (hasPermission(m.permission) ||
+          (m.permissions?.some((permission) => hasPermission(permission)) ??
+            false) ||
           (m.roles?.some((role) => roles.includes(role)) ?? false)) &&
         (q === "" || m.label.toLowerCase().includes(q))
     )

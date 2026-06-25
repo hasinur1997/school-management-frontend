@@ -13,8 +13,8 @@
  * back to the read view (`ui-context.md`, Forms / Feedback).
  *
  * Editing is gated on `teachers.manage` (the `editable` prop), the same rule the
- * hero manage actions use. `email` is immutable (set once at creation) and the
- * `joining_date` isn't in the update contract, so both render as static rows.
+ * hero manage actions use. `joining_date` isn't in the update contract, so it
+ * renders as a static row.
  */
 
 import * as React from "react"
@@ -71,12 +71,13 @@ const GENDERS = [
 /**
  * The teacher's current mutable fields as the base `PUT` payload. Each card
  * spreads this and overrides only its own portion, so a partial edit still sends
- * a complete, valid body (the API treats `PUT` as a full replace). Mirrors the
- * defaults the edit dialog builds; `email`/`branch_id` are create-only.
+   * a complete, valid body (the API treats `PUT` as a full replace). Mirrors the
+   * defaults the edit dialog builds; `branch_id` is create-only.
  */
 function teacherToPayload(teacher: Teacher): TeacherUpdateInput {
   return {
     name: teacherDisplayName(teacher).replace(/ #\d+$/, ""),
+    email: teacher.email ?? "",
     phone: teacher.phone || null,
     designation: teacher.designation || null,
     employee_id: teacher.employee_id || null,
@@ -114,6 +115,7 @@ function EditButton({ label, onClick }: { label: string; onClick: () => void }) 
 
 const profileSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
+  email: z.string().trim().min(1, "Email is required").email("Enter a valid email"),
   phone: z.string().trim().optional(),
   designation: z.string().trim().optional(),
   employee_id: z.string().trim().optional(),
@@ -125,6 +127,7 @@ type ProfileValues = z.infer<typeof profileSchema>
 
 const PROFILE_FIELD_NAMES = [
   "name",
+  "email",
   "phone",
   "designation",
   "employee_id",
@@ -135,6 +138,7 @@ const PROFILE_FIELD_NAMES = [
 function profileDefaults(teacher: Teacher): ProfileValues {
   return {
     name: teacherDisplayName(teacher).replace(/ #\d+$/, ""),
+    email: teacher.email ?? "",
     phone: teacher.phone ?? "",
     designation: teacher.designation ?? "",
     employee_id: teacher.employee_id ?? "",
@@ -179,6 +183,7 @@ export function TeacherProfileCard({
         id: teacher.id,
         ...teacherToPayload(teacher),
         name: values.name,
+        email: values.email,
         phone: values.phone || null,
         designation: values.designation || null,
         employee_id: values.employee_id || null,
@@ -227,8 +232,25 @@ export function TeacherProfileCard({
                   </FormItem>
                 )}
               />
-              {/* Email is immutable (set once at creation) — shown, never edited. */}
-              <DetailRow label="Email" value={teacher.email} />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        disabled={submitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="phone"

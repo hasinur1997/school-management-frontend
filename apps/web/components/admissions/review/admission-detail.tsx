@@ -304,10 +304,12 @@ export function AdmissionDetail({ id }: { id: string }) {
           <Row label="Name" value={guardianName(admission.father_name_en, admission.father_name_bn)} />
           <Row label="NID" value={admission.father_nid} mono />
           <Row label="Mobile" value={admission.father_mobile} mono />
+          <Row label="Email" value={admission.father_email} />
           <SubHeading>Mother</SubHeading>
           <Row label="Name" value={guardianName(admission.mother_name_en, admission.mother_name_bn)} />
           <Row label="NID" value={admission.mother_nid} mono />
           <Row label="Mobile" value={admission.mother_mobile} mono />
+          <Row label="Email" value={admission.mother_email} />
         </InfoCard>
 
         {/* Address */}

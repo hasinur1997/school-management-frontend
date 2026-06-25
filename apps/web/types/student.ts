@@ -96,6 +96,7 @@ export interface Student {
 
   name_bn: string | null
   name_en: string | null
+  student_email?: string | null
 
   father_name_bn: string | null
   father_name_en: string | null
@@ -119,6 +120,8 @@ export interface Student {
 
   father_mobile: string | null
   mother_mobile: string | null
+  father_email: string | null
+  mother_email: string | null
 
   birth_reg_no: string | null
   date_of_birth: string | null
@@ -142,6 +145,7 @@ export interface Student {
 export interface StudentUpdateInput {
   name_bn: string
   name_en: string
+  student_email?: string | null
 
   birth_reg_no: string
 
@@ -167,6 +171,8 @@ export interface StudentUpdateInput {
 
   father_mobile: string
   mother_mobile?: string | null
+  father_email?: string | null
+  mother_email?: string | null
 
   date_of_birth: string
   religion: string
@@ -179,13 +185,15 @@ export interface StudentUpdateInput {
  * the office path that mints a student without an admission application. Carries
  * the full mutable profile (birth_reg_no required here), the initial enrollment
  * (academic ids sent as public-id hashes; roll numeric), an optional admission
- * number (auto-generated when blank), the optional linked-parent box, and — for
- * super admins only — the target branch (also a public-id hash). The API stamps
- * the branch from the caller for everyone else.
+ * number (auto-generated when blank), optional login emails for credential
+ * delivery, the optional linked-parent box, and — for super admins only — the
+ * target branch (also a public-id hash). The API stamps the branch from the
+ * caller for everyone else.
  */
 export interface StudentCreateInput {
   name_bn: string
   name_en: string
+  student_email?: string | null
 
   birth_reg_no: string
 
@@ -211,6 +219,8 @@ export interface StudentCreateInput {
 
   father_mobile: string
   mother_mobile?: string | null
+  father_email?: string | null
+  mother_email?: string | null
 
   date_of_birth: string
   religion: string
@@ -226,6 +236,7 @@ export interface StudentCreateInput {
 
   create_parent_account: boolean
   parent_relation?: "father" | "mother" | "guardian" | null
+  parent_email?: string | null
 
   branch_id?: string
 }

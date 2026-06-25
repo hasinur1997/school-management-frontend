@@ -106,9 +106,11 @@ export function StepPreview({ form, settings }: StepPreviewProps) {
       rows: [
         { k: "Father (English)", v: val(v.father_name_en) },
         { k: "Father mobile", v: val(v.father_mobile) },
+        { k: "Father email", v: val(v.father_email) },
         { k: "Father NID", v: val(v.father_nid) },
         { k: "Mother (English)", v: val(v.mother_name_en) },
         { k: "Mother mobile", v: val(v.mother_mobile) },
+        { k: "Mother email", v: val(v.mother_email) },
         { k: "Mother NID", v: val(v.mother_nid) },
       ],
     },

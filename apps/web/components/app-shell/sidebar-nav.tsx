@@ -39,6 +39,8 @@ export function SidebarNav({
   const canSee = React.useCallback(
     (item: NavItem) =>
       hasPermission(item.permission) ||
+      (item.permissions?.some((permission) => hasPermission(permission)) ??
+        false) ||
       (item.roles?.some((role) => roles.includes(role)) ?? false),
     [hasPermission, roles]
   )

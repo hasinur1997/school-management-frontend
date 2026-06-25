@@ -21,6 +21,10 @@ const required = (max: number, label = "This field is required") =>
 const optional = (max: number) =>
   z.string().trim().max(max, `Keep this to ${max} characters or fewer.`)
 
+/** Optional email — blank is allowed, otherwise must be a valid address. */
+const optionalEmail = (max = 150) =>
+  z.union([z.literal(""), z.email("Enter a valid email.").max(max, `Keep this to ${max} characters or fewer.`)])
+
 /** A previous-education row: optional, but if any cell is filled the two name
  * fields become required and the numeric fields must be well-formed. */
 const previousEducationSchema = z
@@ -83,10 +87,12 @@ export const admissionSchema = z.object({
   father_name_en: required(150, "Father's name (English) is required."),
   father_nid: optional(20),
   father_mobile: required(20, "Father's mobile is required."),
+  father_email: optionalEmail(),
   mother_name_bn: required(150, "Mother's name (Bangla) is required."),
   mother_name_en: required(150, "Mother's name (English) is required."),
   mother_nid: optional(20),
   mother_mobile: optional(20),
+  mother_email: optionalEmail(),
 
   // Step 4 — present address (cascading division → district → upazila → post office)
   present_division: required(100, "Division is required."),
@@ -151,10 +157,12 @@ export const defaultValues: AdmissionFormValues = {
   father_name_en: "",
   father_nid: "",
   father_mobile: "",
+  father_email: "",
   mother_name_bn: "",
   mother_name_en: "",
   mother_nid: "",
   mother_mobile: "",
+  mother_email: "",
   present_division: "",
   present_district: "",
   present_upazila: "",
@@ -193,10 +201,12 @@ export const STEP_FIELDS: Array<Array<keyof AdmissionFormValues>> = [
     "father_name_en",
     "father_nid",
     "father_mobile",
+    "father_email",
     "mother_name_bn",
     "mother_name_en",
     "mother_nid",
     "mother_mobile",
+    "mother_email",
   ],
   [
     "present_division",

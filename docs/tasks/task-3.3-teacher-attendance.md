@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 3 — Attendance |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.4 |
 | Blocks | — |
 | Feature spec | `feature-specs/11-teacher-attendance.md` |
@@ -25,7 +25,7 @@ Teacher self check-in/out widget (API validates branch IP whitelist) and the adm
 - Permission-gated; super admin sees all branches.
 
 ## Check When Done
-- [ ] Teacher can check in/out and see today's status; IP-rejected check-in shows the API's reason.
-- [ ] Admin can list, filter, and correct teacher attendance.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Teacher can check in/out and see today's status; IP-rejected check-in shows the API's reason.
+- [x] Admin can list, filter, and correct teacher attendance.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

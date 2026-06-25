@@ -130,10 +130,10 @@ export interface TeacherInput {
 }
 
 /**
- * Update payload — the API prohibits changing the login `email` (set once at
- * creation) and the `branch_id`, so both are excluded from `PUT /teachers/{id}`.
+ * Update payload. Email is the linked user's login email and is mutable through
+ * `PUT /teachers/{id}`; branch remains create-only.
  */
-export type TeacherUpdateInput = Omit<TeacherInput, "email" | "branch_id">
+export type TeacherUpdateInput = Omit<TeacherInput, "branch_id">
 
 /** List filters → query params. */
 export interface TeacherListParams {

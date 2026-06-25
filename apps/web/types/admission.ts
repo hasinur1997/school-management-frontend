@@ -235,10 +235,12 @@ export interface Admission {
   father_name_en?: string | null
   father_nid?: string | null
   father_mobile?: string | null
+  father_email?: string | null
   mother_name_bn?: string | null
   mother_name_en?: string | null
   mother_nid?: string | null
   mother_mobile?: string | null
+  mother_email?: string | null
 
   // Address
   present_division?: string | null

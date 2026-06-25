@@ -28,6 +28,13 @@ export function StepGuardian({ form }: { form: UseFormReturn<AdmissionFormValues
             type="tel"
             inputMode="tel"
           />
+          <TextField
+            control={control}
+            name="father_email"
+            label="Email (optional)"
+            type="email"
+            inputMode="email"
+          />
         </div>
       </fieldset>
 
@@ -43,6 +50,13 @@ export function StepGuardian({ form }: { form: UseFormReturn<AdmissionFormValues
             label="Mobile (optional)"
             type="tel"
             inputMode="tel"
+          />
+          <TextField
+            control={control}
+            name="mother_email"
+            label="Email (optional)"
+            type="email"
+            inputMode="email"
           />
         </div>
       </fieldset>

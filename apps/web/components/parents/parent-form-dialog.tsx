@@ -44,7 +44,9 @@ import { StudentPicker } from "./student-picker"
 const schema = z.object({
   name: z.string().trim().min(1, "Required").max(150, "Maximum 150 characters"),
   phone: z.string().trim().min(1, "Required").max(20, "Maximum 20 characters"),
-  email: z.union([z.literal(""), z.email("Enter a valid email")]).optional(),
+  email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
   relation: z.enum(["father", "mother", "guardian"], "Select a relation"),
   student_ids: z.array(z.string()).min(1, "Select at least one student"),
 })
@@ -133,6 +135,7 @@ export function ParentFormDialog({ open, onOpenChange }: ParentFormDialogProps) 
                 form={form}
                 name="email"
                 label="Email (optional)"
+                type="email"
                 disabled={submitting}
               />
               <FormField
@@ -201,11 +204,13 @@ function TextField({
   form,
   name,
   label,
+  type = "text",
   disabled,
 }: {
   form: ReturnType<typeof useForm<ParentFormValues>>
   name: Exclude<keyof ParentFormValues, "relation" | "student_ids">
   label: string
+  type?: React.HTMLInputTypeAttribute
   disabled: boolean
 }) {
   return (
@@ -216,7 +221,13 @@ function TextField({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input {...field} disabled={disabled} />
+            <Input
+              {...field}
+              type={type}
+              inputMode={type === "email" ? "email" : undefined}
+              autoComplete={type === "email" ? "email" : "off"}
+              disabled={disabled}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

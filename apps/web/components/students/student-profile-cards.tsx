@@ -52,6 +52,9 @@ import type { Student, StudentUpdateInput } from "@/types/student"
 const FIELD_SCHEMAS = {
   name_en: z.string().trim().min(1, "Required"),
   name_bn: z.string().trim().min(1, "Required"),
+  student_email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
   birth_reg_no: z.string().trim().min(1, "Required").max(25, "Too long"),
   date_of_birth: z.string().trim().min(1, "Required"),
   religion: z.string().trim().min(1, "Required"),
@@ -66,6 +69,12 @@ const FIELD_SCHEMAS = {
   mother_name_bn: z.string().trim().min(1, "Required"),
   mother_nid: z.string().trim().optional(),
   mother_mobile: z.string().trim().optional(),
+  father_email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
+  mother_email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
 
   present_village: z.string().trim().min(1, "Required"),
   present_post_office: z.string().trim().min(1, "Required"),
@@ -88,7 +97,7 @@ interface EditRow {
   name: EditableName
   label: string
   /** `date` renders a date input and formats the read-only value. */
-  type?: "text" | "date"
+  type?: "text" | "date" | "email"
   mono?: boolean
 }
 
@@ -107,6 +116,7 @@ function studentToInput(student: Student): Record<EditableName, string> {
   return {
     name_en: student.name_en ?? "",
     name_bn: student.name_bn ?? "",
+    student_email: student.student_email ?? "",
     birth_reg_no: student.birth_reg_no ?? "",
     date_of_birth: student.date_of_birth ?? "",
     religion: student.religion ?? "",
@@ -120,6 +130,8 @@ function studentToInput(student: Student): Record<EditableName, string> {
     mother_name_bn: student.mother_name_bn ?? "",
     mother_nid: student.mother_nid ?? "",
     mother_mobile: student.mother_mobile ?? "",
+    father_email: student.father_email ?? "",
+    mother_email: student.mother_email ?? "",
     present_village: student.present_village ?? "",
     present_post_office: student.present_post_office ?? "",
     present_upazila: student.present_upazila ?? "",
@@ -141,9 +153,12 @@ function buildPayload(
   const merged = { ...studentToInput(student), ...values }
   return {
     ...merged,
+    student_email: merged.student_email || null,
     father_nid: merged.father_nid || null,
     mother_nid: merged.mother_nid || null,
     mother_mobile: merged.mother_mobile || null,
+    father_email: merged.father_email || null,
+    mother_email: merged.mother_email || null,
     caste: merged.caste || null,
   }
 }
@@ -285,9 +300,16 @@ function InlineEditCard({
                           <Input
                             {...field}
                             value={field.value ?? ""}
-                            type={row.type === "date" ? "date" : "text"}
+                            type={
+                              row.type === "date"
+                                ? "date"
+                                : row.type === "email"
+                                  ? "email"
+                                  : "text"
+                            }
+                            inputMode={row.type === "email" ? "email" : undefined}
+                            autoComplete={row.type === "email" ? "email" : "off"}
                             disabled={submitting}
-                            autoComplete="off"
                             className={row.mono ? "font-mono" : undefined}
                           />
                         </FormControl>
@@ -350,6 +372,7 @@ export function StudentIdentityCard({
   const rows: CardRow[] = [
     { kind: "edit", name: "name_en", label: "Name (English)" },
     { kind: "edit", name: "name_bn", label: "Name (Bangla)" },
+    { kind: "edit", name: "student_email", label: "Email", type: "email" },
     { kind: "static", label: "Admission no", value: student.admission_no, mono: true },
     { kind: "edit", name: "birth_reg_no", label: "Birth registration no", mono: true },
     { kind: "edit", name: "date_of_birth", label: "Date of birth", type: "date" },
@@ -380,10 +403,12 @@ export function StudentGuardiansCard({
     { kind: "edit", name: "father_name_bn", label: "Father (Bangla)" },
     { kind: "edit", name: "father_nid", label: "Father NID", mono: true },
     { kind: "edit", name: "father_mobile", label: "Father mobile", mono: true },
+    { kind: "edit", name: "father_email", label: "Father email", type: "email" },
     { kind: "edit", name: "mother_name_en", label: "Mother (English)" },
     { kind: "edit", name: "mother_name_bn", label: "Mother (Bangla)" },
     { kind: "edit", name: "mother_nid", label: "Mother NID", mono: true },
     { kind: "edit", name: "mother_mobile", label: "Mother mobile", mono: true },
+    { kind: "edit", name: "mother_email", label: "Mother email", type: "email" },
   ]
   return (
     <InlineEditCard icon={Users} title="Guardians" student={student} editable={editable} rows={rows} />

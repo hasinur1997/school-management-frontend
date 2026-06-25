@@ -54,6 +54,9 @@ import {
 const schema = z.object({
   name_bn: z.string().trim().min(1, "Required"),
   name_en: z.string().trim().min(1, "Required"),
+  student_email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
 
   father_name_bn: z.string().trim().min(1, "Required"),
   father_name_en: z.string().trim().min(1, "Required"),
@@ -80,6 +83,12 @@ const schema = z.object({
 
   father_mobile: z.string().trim().min(1, "Required"),
   mother_mobile: z.string().trim().optional(),
+  father_email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
+  mother_email: z
+    .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
+    .optional(),
 
   date_of_birth: z.string().trim().min(1, "Required"),
   religion: z.string().trim().min(1, "Required"),
@@ -92,6 +101,7 @@ type StudentFormValues = z.infer<typeof schema>
 const FIELD_NAMES = [
   "name_bn",
   "name_en",
+  "student_email",
   "father_name_bn",
   "father_name_en",
   "father_nid",
@@ -110,6 +120,8 @@ const FIELD_NAMES = [
   "permanent_division",
   "father_mobile",
   "mother_mobile",
+  "father_email",
+  "mother_email",
   "date_of_birth",
   "religion",
   "nationality",
@@ -120,6 +132,7 @@ function toDefaults(student: Student): StudentFormValues {
   return {
     name_bn: student.name_bn ?? "",
     name_en: student.name_en ?? "",
+    student_email: student.student_email ?? "",
     father_name_bn: student.father_name_bn ?? "",
     father_name_en: student.father_name_en ?? "",
     father_nid: student.father_nid ?? "",
@@ -140,6 +153,8 @@ function toDefaults(student: Student): StudentFormValues {
     permanent_same_as_present: permanentMatchesPresent(student),
     father_mobile: student.father_mobile ?? "",
     mother_mobile: student.mother_mobile ?? "",
+    father_email: student.father_email ?? "",
+    mother_email: student.mother_email ?? "",
     date_of_birth: student.date_of_birth ?? "",
     religion: student.religion ?? "",
     nationality: student.nationality ?? "",
@@ -229,12 +244,15 @@ export function StudentFormDialog({
 
     const payload: StudentUpdateInput = {
       ...fields,
+      student_email: fields.student_email?.trim() ? fields.student_email.trim() : null,
       // birth_reg_no stays read-only here (edited inline on the detail page); the
       // current value is resent unchanged so the required field is satisfied.
       birth_reg_no: student.birth_reg_no ?? "",
       father_nid: fields.father_nid || null,
       mother_nid: fields.mother_nid || null,
       mother_mobile: fields.mother_mobile || null,
+      father_email: fields.father_email?.trim() ? fields.father_email.trim() : null,
+      mother_email: fields.mother_email?.trim() ? fields.mother_email.trim() : null,
       caste: fields.caste || null,
     }
 
@@ -280,6 +298,13 @@ export function StudentFormDialog({
               />
               <TextField form={form} name="name_en" label="Name (English)" disabled={submitting} />
               <TextField form={form} name="name_bn" label="Name (Bangla)" disabled={submitting} />
+              <TextField
+                form={form}
+                name="student_email"
+                label="Email (optional)"
+                type="email"
+                disabled={submitting}
+              />
               <FormField
                 control={form.control}
                 name="date_of_birth"
@@ -304,12 +329,14 @@ export function StudentFormDialog({
               <TextField form={form} name="father_name_bn" label="Name (Bangla)" disabled={submitting} />
               <TextField form={form} name="father_nid" label="NID (optional)" disabled={submitting} />
               <TextField form={form} name="father_mobile" label="Mobile" disabled={submitting} />
+              <TextField form={form} name="father_email" label="Email (optional)" type="email" disabled={submitting} />
             </Section>
             <Section title="Mother">
               <TextField form={form} name="mother_name_en" label="Name (English)" disabled={submitting} />
               <TextField form={form} name="mother_name_bn" label="Name (Bangla)" disabled={submitting} />
               <TextField form={form} name="mother_nid" label="NID (optional)" disabled={submitting} />
               <TextField form={form} name="mother_mobile" label="Mobile (optional)" disabled={submitting} />
+              <TextField form={form} name="mother_email" label="Email (optional)" type="email" disabled={submitting} />
             </Section>
 
             {/* Addresses — cascading Division → District → Upazila → Post office */}
@@ -393,11 +420,13 @@ function TextField({
   form,
   name,
   label,
+  type = "text",
   disabled,
 }: {
   form: ReturnType<typeof useForm<StudentFormValues>>
   name: keyof StudentFormValues
   label: string
+  type?: React.HTMLInputTypeAttribute
   disabled?: boolean
 }) {
   return (
@@ -411,8 +440,10 @@ function TextField({
             <Input
               {...field}
               value={typeof field.value === "string" ? field.value : ""}
+              type={type}
+              inputMode={type === "email" ? "email" : undefined}
+              autoComplete={type === "email" ? "email" : "off"}
               disabled={disabled}
-              autoComplete="off"
             />
           </FormControl>
           <FormMessage />
