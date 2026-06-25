@@ -62,6 +62,11 @@ const PASSWORD_FIELD_NAMES: ReadonlySet<string> = new Set([
 const passwordInputClassName =
   "h-11 w-full min-w-0 rounded-xl border border-input bg-transparent px-4 py-2 text-base text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
 
+const EMPTY_PASSWORD_VALUES: PasswordValues = {
+  password: "",
+  password_confirmation: "",
+}
+
 export interface ResetPasswordFormProps {
   /** Identifier carried from the forgot-password step, prefilled when present. */
   defaultIdentifier?: string
@@ -73,9 +78,13 @@ export function ResetPasswordForm({
   const router = useRouter()
   const [formError, setFormError] = React.useState<string | null>(null)
   const [resetToken, setResetToken] = React.useState<string | null>(null)
+  const [resetting, setResetting] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
   const [showPasswordConfirmation, setShowPasswordConfirmation] =
     React.useState(false)
+  const [passwordValues, setPasswordValues] = React.useState<PasswordValues>(
+    EMPTY_PASSWORD_VALUES
+  )
 
   const codeForm = useForm<CodeValues>({
     resolver: zodResolver(codeSchema),
@@ -99,6 +108,8 @@ export function ResetPasswordForm({
     })
 
     if (result.ok) {
+      passwordForm.reset(EMPTY_PASSWORD_VALUES)
+      setPasswordValues(EMPTY_PASSWORD_VALUES)
       setResetToken(result.resetToken)
       return
     }
@@ -112,19 +123,40 @@ export function ResetPasswordForm({
     setFormError(result.message)
   })
 
-  const onResetPassword = passwordForm.handleSubmit(async (values) => {
+  const onResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (resetting) return
+
     setFormError(null)
+    passwordForm.clearErrors()
+
+    const parsed = passwordSchema.safeParse(passwordValues)
+    if (!parsed.success) {
+      let focused = false
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0]
+        if (field !== "password" && field !== "password_confirmation") continue
+        passwordForm.setError(
+          field,
+          { message: issue.message },
+          { shouldFocus: !focused }
+        )
+        focused = true
+      }
+      return
+    }
 
     if (!resetToken) {
       setFormError("Verify the reset code before setting a new password.")
       return
     }
 
+    setResetting(true)
     const result = await resetPasswordAction({
       resetToken,
-      password: values.password,
-      password_confirmation: values.password_confirmation,
-    })
+      password: parsed.data.password,
+      password_confirmation: parsed.data.password_confirmation,
+    }).finally(() => setResetting(false))
 
     if (result.ok) {
       toastSuccess(result.message || "Password reset. Please sign in.", {
@@ -153,10 +185,9 @@ export function ResetPasswordForm({
     if (!mappedAny) {
       setFormError(result.message)
     }
-  })
+  }
 
   const verifying = codeForm.formState.isSubmitting
-  const resetting = passwordForm.formState.isSubmitting
 
   if (!resetToken) {
     return (
@@ -240,10 +271,19 @@ export function ResetPasswordForm({
                     name={field.name}
                     ref={field.ref}
                     onBlur={field.onBlur}
-                    value={field.value ?? ""}
-                    onChange={(event) =>
-                      field.onChange(event.currentTarget.value)
-                    }
+                    value={passwordValues.password}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value
+                      setFormError(null)
+                      passwordForm.clearErrors([
+                        "password",
+                        "password_confirmation",
+                      ])
+                      setPasswordValues((current) => ({
+                        ...current,
+                        password: value,
+                      }))
+                    }}
                   />
                 </FormControl>
                 <button
@@ -281,10 +321,16 @@ export function ResetPasswordForm({
                     name={field.name}
                     ref={field.ref}
                     onBlur={field.onBlur}
-                    value={field.value ?? ""}
-                    onChange={(event) =>
-                      field.onChange(event.currentTarget.value)
-                    }
+                    value={passwordValues.password_confirmation}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value
+                      setFormError(null)
+                      passwordForm.clearErrors("password_confirmation")
+                      setPasswordValues((current) => ({
+                        ...current,
+                        password_confirmation: value,
+                      }))
+                    }}
                   />
                 </FormControl>
                 <button
