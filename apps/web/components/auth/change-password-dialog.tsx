@@ -134,7 +134,13 @@ export function ChangePasswordDialog({
                       type="password"
                       autoComplete="current-password"
                       disabled={submitting}
-                      {...field}
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(event.currentTarget.value)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -153,7 +159,13 @@ export function ChangePasswordDialog({
                       type="password"
                       autoComplete="new-password"
                       disabled={submitting}
-                      {...field}
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(event.currentTarget.value)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -172,7 +184,13 @@ export function ChangePasswordDialog({
                       type="password"
                       autoComplete="new-password"
                       disabled={submitting}
-                      {...field}
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(event.currentTarget.value)
+                      }
                     />
                   </FormControl>
                   <FormMessage />

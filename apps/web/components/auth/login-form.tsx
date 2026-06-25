@@ -12,6 +12,7 @@
  */
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -74,9 +75,13 @@ export function LoginForm() {
       const message = messages?.[0]
       if (!message) continue
       if (FIELD_NAMES.has(field)) {
-        form.setError(field as keyof LoginValues, { message }, {
-          shouldFocus: !mappedAny,
-        })
+        form.setError(
+          field as keyof LoginValues,
+          { message },
+          {
+            shouldFocus: !mappedAny,
+          }
+        )
         mappedAny = true
       }
     }
@@ -127,7 +132,15 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Password</FormLabel>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <FormControl>
                 <Input
                   type="password"
