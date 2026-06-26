@@ -412,16 +412,12 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                         <FormLabel>Parent relation</FormLabel>
                         <FormControl>
                           <Select
-                            value={field.value ?? undefined}
-                            onValueChange={field.onChange}
+                            value={field.value}
+                            onValueChange={(next) => field.onChange(next)}
                             disabled={submitting}
                           >
                             <SelectTrigger aria-label="Parent relation" className="w-full">
-                              <SelectValue placeholder="Select relation">
-                                {(v: ParentRelation) =>
-                                  RELATIONS.find((r) => r.value === v)?.label
-                                }
-                              </SelectValue>
+                              <SelectValue placeholder="Select relation" />
                             </SelectTrigger>
                             <SelectContent>
                               {RELATIONS.map((r) => (
