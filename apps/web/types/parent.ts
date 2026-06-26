@@ -7,6 +7,8 @@
  * the API resolves `student_id` request fields from public ids.
  */
 
+import type { StudentStatusValue } from "./student"
+
 export type ParentRelation = "father" | "mother" | "guardian"
 
 export interface LinkedStudent {
@@ -15,6 +17,15 @@ export interface LinkedStudent {
   class: string | null
   section: string | null
   photo_url: string | null
+  /**
+   * Present on the parent's linked-students listing (`/me/students`) so the
+   * "Students" table can mirror the admin students list columns. Older/compact
+   * payloads may omit these, so they're optional.
+   */
+  admission_no?: string | null
+  name_bn?: string | null
+  roll_no?: string | number | null
+  status?: StudentStatusValue
 }
 
 export interface ParentProfile {

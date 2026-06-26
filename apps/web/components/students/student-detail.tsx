@@ -56,6 +56,7 @@ import {
   type DetailTab,
 } from "@/components/detail/detail-tabs"
 import { usePermission } from "@/hooks/auth/use-permission"
+import { useAuth } from "@/components/auth/auth-provider"
 import { isNotFoundError } from "@/lib/api"
 import { formatDate } from "@/lib/format"
 import { toastError, toastSuccess } from "@/lib/toast"
@@ -80,7 +81,17 @@ import {
   StudentIdentityCard,
 } from "./student-profile-cards"
 
-export function StudentDetail({ id }: { id: string }) {
+export function StudentDetail({
+  id,
+  backHref = "/students",
+  backLabel = "Back to students",
+}: {
+  id: string
+  /** Where the back link points — parents return to `/my-students`. */
+  backHref?: string
+  backLabel?: string
+}) {
+  const { roles } = useAuth()
   const { data: student, isPending, isError, error, refetch } = useStudent(id)
   const updateStatus = useUpdateStudentStatus()
   const resendCredentials = useResendStudentCredentials()
@@ -89,18 +100,23 @@ export function StudentDetail({ id }: { id: string }) {
   const [statusOpen, setStatusOpen] = React.useState(false)
   const [resendOpen, setResendOpen] = React.useState(false)
 
-  const canViewAttendance = usePermission("attendance.view")
-  const canViewResults = usePermission("result.view")
-  const canIdCard = usePermission("idcard.generate")
-  const canViewTc = usePermission("tc.view")
-  const canViewFees = usePermission("invoice.view")
+  // Linked parents reach this detail via `/me/students`; they hold no staff
+  // permissions, so the section tabs are exposed by role instead (the API
+  // authorizes each child resource for the linked parent). Edit actions stay
+  // permission-led, so the profile remains read-only for them.
+  const isParent = roles.includes("parent")
+  const canViewAttendance = usePermission("attendance.view") || isParent
+  const canViewResults = usePermission("result.view") || isParent
+  const canIdCard = usePermission("idcard.generate") || isParent
+  const canViewTc = usePermission("tc.view") || isParent
+  const canViewFees = usePermission("invoice.view") || isParent
   const canManage = usePermission(STUDENT_UPDATE)
   const canResend = usePermission(STUDENT_CREATE)
 
   if (isPending) {
     return (
       <DetailLayout>
-        <DetailBackLink href="/students">Back to students</DetailBackLink>
+        <DetailBackLink href={backHref}>{backLabel}</DetailBackLink>
         <DetailSkeleton />
       </DetailLayout>
     )
@@ -110,13 +126,13 @@ export function StudentDetail({ id }: { id: string }) {
     if (isNotFoundError(error)) {
       return (
         <DetailLayout>
-          <DetailBackLink href="/students">Back to students</DetailBackLink>
+          <DetailBackLink href={backHref}>{backLabel}</DetailBackLink>
           <EmptyState
             title="Student not found"
             description="This student doesn't exist, isn't in your branch, or you don't have access."
             action={
-              <Link href="/students">
-                <Button>Back to students</Button>
+              <Link href={backHref}>
+                <Button>{backLabel}</Button>
               </Link>
             }
           />
@@ -125,7 +141,7 @@ export function StudentDetail({ id }: { id: string }) {
     }
     return (
       <DetailLayout>
-        <DetailBackLink href="/students">Back to students</DetailBackLink>
+        <DetailBackLink href={backHref}>{backLabel}</DetailBackLink>
         <ErrorPanel description="We couldn't load this student." onRetry={() => void refetch()} />
       </DetailLayout>
     )
@@ -223,7 +239,7 @@ export function StudentDetail({ id }: { id: string }) {
 
   return (
     <DetailLayout>
-      <DetailBackLink href="/students">Back to students</DetailBackLink>
+      <DetailBackLink href={backHref}>{backLabel}</DetailBackLink>
 
       {/* TC notice */}
       {tc ? (

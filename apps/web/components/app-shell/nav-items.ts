@@ -87,6 +87,18 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: "student.view",
       },
       {
+        // Parents reach their linked children here (`/me/students`); the route is
+        // role-gated since parents hold no `student.view` permission. The list
+        // links into the shared read-only student detail.
+        label: "Students",
+        href: "/my-students",
+        activePath: "/my-students",
+        icon: GraduationCap,
+        permission: "student.self",
+        roles: ["parent"],
+        roleOnly: true,
+      },
+      {
         label: "Parents",
         href: "/parents",
         icon: Users,
@@ -119,9 +131,10 @@ export const NAV_GROUPS: NavGroup[] = [
           "teacher_attendance.view",
           "teacher_attendance.manage",
         ],
-        // Students/parents reach their own/children's sheets here too (task 3.2);
-        // teachers reach their own check-in/out surface (task 3.3).
-        roles: ["parent", "teacher"],
+        // Teachers reach their own check-in/out surface here (task 3.3). Parents
+        // no longer get a top-level Attendance item — they reach each child's
+        // attendance from the student detail's Attendance tab (`/my-students`).
+        roles: ["teacher"],
       },
       {
         label: "Exams",

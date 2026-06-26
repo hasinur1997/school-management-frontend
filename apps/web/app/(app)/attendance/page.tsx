@@ -4,16 +4,18 @@
  * Attendance surface (tasks 3.1–3.3). One route serves every audience:
  *
  *   - `?student={id}` → that student's monthly sheet. Reached from the student
- *     detail page (staff) and the parent's linked-children list. The API
- *     authorizes per record (staff / self / linked parent) and hides denials as
- *     404, so the route doesn't hard-gate on a permission here.
+ *     detail page and the admin parent detail (staff). The API authorizes per
+ *     record (staff / self) and hides denials as 404, so the route doesn't
+ *     hard-gate on a permission here.
  *   - staff with `attendance.create`/`attendance.view` → the student entry +
  *     class-sheet hub.
  *   - teachers → their own check-in/out + history.
  *   - staff with teacher-attendance permissions → admin teacher records +
  *     correction.
- *   - a parent (no staff permissions) → child selector + per-child sheet.
  *   - a student (no staff permissions) → their own self sheet.
+ *   - a parent → no attendance route surface; they view each child's attendance
+ *     from the student detail's Attendance tab (`/my-students/{id}`), so the
+ *     route returns an access-denied state.
  *
  * Roles are used only to pick which self-service view to render — never to
  * grant access; the API stays the real boundary (`code-standards.md`). Students
@@ -30,7 +32,6 @@ import {
   ATTENDANCE_CREATE,
   ATTENDANCE_VIEW,
   AttendanceHub,
-  ParentAttendance,
   SelfAttendance,
   StudentAttendanceSheet,
 } from "@/components/attendance"
@@ -61,6 +62,20 @@ function AttendanceRouter() {
   const { roles } = useAuth()
   const isTeacher = roles.includes("teacher")
 
+  // Parents have no attendance route surface — they view each child's
+  // attendance inside the student detail's Attendance tab (`/my-students/{id}`),
+  // not here. Deny the route outright (even a hand-typed `?student=`) so the
+  // standalone attendance content never renders for them.
+  if (roles.includes("parent")) {
+    return (
+      <EmptyState
+        icon={Lock}
+        title="You don't have access"
+        description="View your child's attendance from their profile under Students."
+      />
+    )
+  }
+
   if (studentId) {
     return <StudentAttendanceSheet studentId={studentId} />
   }
@@ -80,10 +95,6 @@ function AttendanceRouter() {
         initialTeacherId={teacherId}
       />
     )
-  }
-
-  if (roles.includes("parent")) {
-    return <ParentAttendance />
   }
 
   if (roles.includes("student")) {
