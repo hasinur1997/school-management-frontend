@@ -9,14 +9,25 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 
 import { cn } from "@workspace/ui/lib/utils"
 import { useAuth } from "@/components/auth/auth-provider"
 import { NAV_GROUPS, type NavItem } from "@/components/app-shell/nav-items"
 
 /** A route is active when it matches exactly or is a parent of the current path. */
-function isActive(pathname: string, href: string): boolean {
+function isActive(
+  pathname: string,
+  searchParams: Pick<URLSearchParams, "get" | "has">,
+  item: NavItem
+): boolean {
+  const href = item.activePath ?? item.href
+  if (item.activeSearch) {
+    if (pathname !== href) return false
+    return Object.entries(item.activeSearch).every(([key, value]) =>
+      value == null ? !searchParams.has(key) : searchParams.get(key) === value
+    )
+  }
   // "/" is the dashboard root; it must match exactly so it doesn't light up as a
   // parent of every other route.
   if (href === "/") return pathname === "/"
@@ -32,16 +43,19 @@ export function SidebarNav({
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { hasPermission, roles } = useAuth()
 
   // An item shows when the user holds its permission, or — for self-service
   // items — when they hold one of its declared roles (`nav-items.ts`).
   const canSee = React.useCallback(
     (item: NavItem) =>
-      hasPermission(item.permission) ||
-      (item.permissions?.some((permission) => hasPermission(permission)) ??
-        false) ||
-      (item.roles?.some((role) => roles.includes(role)) ?? false),
+      item.roleOnly
+        ? (item.roles?.some((role) => roles.includes(role)) ?? false)
+        : hasPermission(item.permission) ||
+          (item.permissions?.some((permission) => hasPermission(permission)) ??
+            false) ||
+          (item.roles?.some((role) => roles.includes(role)) ?? false),
     [hasPermission, roles]
   )
 
@@ -64,7 +78,7 @@ export function SidebarNav({
             <SidebarLink
               key={item.href}
               item={item}
-              active={isActive(pathname, item.href)}
+              active={isActive(pathname, searchParams, item)}
               collapsed={collapsed}
               onNavigate={onNavigate}
             />

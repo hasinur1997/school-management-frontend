@@ -40,6 +40,7 @@ type ModuleResult = SearchResult & {
   permission: string
   permissions?: string[]
   roles?: string[]
+  roleOnly?: boolean
 }
 
 /** All nav items flattened from the grouped sidebar model, as search results. */
@@ -54,6 +55,7 @@ const MODULE_RESULTS: ModuleResult[] = NAV_GROUPS.flatMap((group) =>
     permission: item.permission,
     permissions: item.permissions,
     roles: item.roles,
+    roleOnly: item.roleOnly,
   }))
 )
 
@@ -72,10 +74,12 @@ export function GlobalSearch() {
     const q = debounced.trim().toLowerCase()
     return MODULE_RESULTS.filter(
       (m) =>
-        (hasPermission(m.permission) ||
-          (m.permissions?.some((permission) => hasPermission(permission)) ??
-            false) ||
-          (m.roles?.some((role) => roles.includes(role)) ?? false)) &&
+        (m.roleOnly
+          ? (m.roles?.some((role) => roles.includes(role)) ?? false)
+          : hasPermission(m.permission) ||
+            (m.permissions?.some((permission) => hasPermission(permission)) ??
+              false) ||
+            (m.roles?.some((role) => roles.includes(role)) ?? false)) &&
         (q === "" || m.label.toLowerCase().includes(q))
     )
   }, [debounced, hasPermission, roles])

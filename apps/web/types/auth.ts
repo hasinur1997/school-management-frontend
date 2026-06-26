@@ -9,13 +9,19 @@
 
 /** Branch a user belongs to; only super admin can switch context. */
 export interface AuthBranch {
-  id: number
+  id: number | string
   name: string
+}
+
+/** Minimal linked student reference optionally included by `/auth/me`. */
+export interface AuthStudentRef {
+  id: string
+  name?: string | null
 }
 
 /** The signed-in user as returned by `POST /auth/login` and `GET /auth/me`. */
 export interface AuthUser {
-  id: number
+  id: number | string
   name: string
   /** Login email; may be absent for ID-based accounts. */
   email: string | null
@@ -24,8 +30,15 @@ export interface AuthUser {
   /** Profile photo URL the API serves (`UserResource.photo_url`), when set. */
   photo_url?: string | null
   /** Owning branch (single-branch users); `null`/absent for super admin. */
-  branch_id?: number | null
+  branch_id?: number | string | null
   branch?: AuthBranch | null
+  /**
+   * Student self-service needs the linked student public id to open the full
+   * `GET /students/{id}` profile. Current backend builds may expose either a
+   * scalar `student_id` or a compact `student` object; both are supported.
+   */
+  student_id?: string | null
+  student?: AuthStudentRef | null
   /** Role names — surfaced for display only, never gated on. */
   roles: string[]
   /** Flat permission list the UI gates on. */
@@ -55,4 +68,9 @@ export function userInitials(name: string): string {
   if (parts.length === 0) return "?"
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
+}
+
+/** Resolve the current user's linked student public id, when the API provides it. */
+export function authStudentId(user: AuthUser): string | null {
+  return user.student?.id ?? user.student_id ?? null
 }

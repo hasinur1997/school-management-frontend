@@ -8,6 +8,7 @@
  * list scrolls; the brand header and toggle stay put.
  */
 
+import * as React from "react"
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
@@ -40,7 +41,9 @@ export function Sidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <SidebarNav collapsed={collapsed} />
+        <React.Suspense fallback={null}>
+          <SidebarNav collapsed={collapsed} />
+        </React.Suspense>
       </div>
 
       <div className="border-t border-surface-border p-2">

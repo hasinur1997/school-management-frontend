@@ -33,8 +33,11 @@ import { userInitials } from "@/types/auth"
 
 export function UserMenu() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, hasPermission, roles } = useAuth()
   const [changeOpen, setChangeOpen] = React.useState(false)
+  const isStudent = roles.includes("student")
+  const canViewSettings = hasPermission("settings.view")
+  const showAccountActions = !isStudent || canViewSettings
 
   return (
     <>
@@ -72,20 +75,26 @@ export function UserMenu() {
             </DropdownMenuLabel>
           </DropdownMenuGroup>
 
-          <DropdownMenuSeparator />
+          {showAccountActions ? <DropdownMenuSeparator /> : null}
 
-          <DropdownMenuItem onClick={() => router.push("/profile")}>
-            <User aria-hidden />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/settings")}>
-            <Settings aria-hidden />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setChangeOpen(true)}>
-            <KeyRound aria-hidden />
-            Change password
-          </DropdownMenuItem>
+          {!isStudent ? (
+            <DropdownMenuItem onClick={() => router.push("/profile")}>
+              <User aria-hidden />
+              Profile
+            </DropdownMenuItem>
+          ) : null}
+          {canViewSettings ? (
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings aria-hidden />
+              Settings
+            </DropdownMenuItem>
+          ) : null}
+          {!isStudent ? (
+            <DropdownMenuItem onClick={() => setChangeOpen(true)}>
+              <KeyRound aria-hidden />
+              Change password
+            </DropdownMenuItem>
+          ) : null}
 
           <DropdownMenuSeparator />
 

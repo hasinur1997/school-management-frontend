@@ -11,9 +11,11 @@
 
 import { useAuth } from "@/components/auth/auth-provider"
 import { DashboardSummary } from "@/components/dashboard/dashboard-summary"
+import { StudentAdvisoryGuidelines } from "@/components/dashboard/student-advisory-guidelines"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, roles } = useAuth()
+  const isStudent = roles.includes("student")
 
   return (
     <div className="flex flex-col gap-6">
@@ -22,11 +24,13 @@ export default function DashboardPage() {
           Welcome, {user.name}
         </h1>
         <p className="truncate text-sm text-copy-muted">
-          Here&apos;s a summary for your account.
+          {isStudent
+            ? "Guidance selected for your study day."
+            : "Here's a summary for your account."}
         </p>
       </header>
 
-      <DashboardSummary />
+      {isStudent ? <StudentAdvisoryGuidelines /> : <DashboardSummary />}
     </div>
   )
 }

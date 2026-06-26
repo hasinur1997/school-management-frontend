@@ -56,7 +56,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Brand />
           </SheetHeader>
           <div className="overflow-y-auto">
-            <SidebarNav onNavigate={() => setMobileOpen(false)} />
+            <React.Suspense fallback={null}>
+              <SidebarNav onNavigate={() => setMobileOpen(false)} />
+            </React.Suspense>
           </div>
         </SheetContent>
       </Sheet>
