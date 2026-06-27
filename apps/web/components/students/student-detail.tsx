@@ -20,6 +20,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
   CalendarCheck,
@@ -32,6 +33,7 @@ import {
   Power,
   PowerOff,
   ScrollText,
+  Trash2,
   User,
   Wallet,
   type LucideIcon,
@@ -42,6 +44,7 @@ import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
+import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import {
   DetailActions,
   DetailBackLink,
@@ -62,6 +65,7 @@ import { formatDate } from "@/lib/format"
 import { toastError, toastSuccess } from "@/lib/toast"
 import {
   useStudent,
+  useDeleteStudent,
   useUpdateStudentStatus,
   useResendStudentCredentials,
 } from "@/hooks/students"
@@ -72,7 +76,7 @@ import {
   studentInitials,
   studentStatusLabel,
 } from "@/types/student"
-import { STUDENT_CREATE, STUDENT_UPDATE } from "./permissions"
+import { STUDENT_CREATE, STUDENT_DELETE, STUDENT_UPDATE } from "./permissions"
 import { StudentPhotoDialog } from "./student-photo-dialog"
 import { StudentEnrollments } from "./student-enrollments"
 import {
@@ -91,14 +95,17 @@ export function StudentDetail({
   backHref?: string
   backLabel?: string
 }) {
+  const router = useRouter()
   const { roles } = useAuth()
   const { data: student, isPending, isError, error, refetch } = useStudent(id)
   const updateStatus = useUpdateStudentStatus()
   const resendCredentials = useResendStudentCredentials()
+  const deleteStudent = useDeleteStudent()
 
   const [photoOpen, setPhotoOpen] = React.useState(false)
   const [statusOpen, setStatusOpen] = React.useState(false)
   const [resendOpen, setResendOpen] = React.useState(false)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
 
   // Linked parents reach this detail via `/me/students`; they hold no staff
   // permissions, so the section tabs are exposed by role instead (the API
@@ -112,6 +119,7 @@ export function StudentDetail({
   const canViewFees = usePermission("invoice.view") || isParent
   const canManage = usePermission(STUDENT_UPDATE)
   const canResend = usePermission(STUDENT_CREATE)
+  const canDelete = usePermission(STUDENT_DELETE)
 
   if (isPending) {
     return (
@@ -142,7 +150,10 @@ export function StudentDetail({
     return (
       <DetailLayout>
         <DetailBackLink href={backHref}>{backLabel}</DetailBackLink>
-        <ErrorPanel description="We couldn't load this student." onRetry={() => void refetch()} />
+        <ErrorPanel
+          description="We couldn't load this student."
+          onRetry={() => void refetch()}
+        />
       </DetailLayout>
     )
   }
@@ -191,6 +202,18 @@ export function StudentDetail({
           },
         ]
       : []),
+    ...(canDelete
+      ? [
+          {
+            key: "delete",
+            label: "Move to trash",
+            icon: Trash2,
+            onSelect: () => setDeleteOpen(true),
+            destructive: true,
+            separatorBefore: actionsSeparator(!tc && canManage),
+          },
+        ]
+      : []),
   ]
 
   // View tabs: Profile is always present and the default; the rest are gated by
@@ -215,7 +238,10 @@ export function StudentDetail({
 
   async function confirmToggleStatus() {
     try {
-      await updateStatus.mutateAsync({ id, status: active ? "inactive" : "active" })
+      await updateStatus.mutateAsync({
+        id,
+        status: active ? "inactive" : "active",
+      })
       toastSuccess(active ? "Student deactivated." : "Student activated.", {
         id: "student-status",
       })
@@ -233,6 +259,19 @@ export function StudentDetail({
       setResendOpen(false)
     } catch (err) {
       toastError(err, "Couldn't resend credentials.", { id: "student-resend" })
+      throw err
+    }
+  }
+
+  async function confirmDelete() {
+    try {
+      await deleteStudent.mutateAsync(id)
+      toastSuccess("Student moved to trash.", { id: "student-delete" })
+      router.push(backHref)
+    } catch (err) {
+      toastError(err, "Couldn't move the student to trash.", {
+        id: "student-delete",
+      })
       throw err
     }
   }
@@ -261,7 +300,9 @@ export function StudentDetail({
         subtitle={
           <>
             {student.name_bn && student.name_en ? (
-              <p className="text-[15px] text-copy-secondary">{student.name_bn}</p>
+              <p className="text-[15px] text-copy-secondary">
+                {student.name_bn}
+              </p>
             ) : null}
             <p className="text-[13px] text-copy-muted">
               {student.branch?.name ?? "Student"}
@@ -291,7 +332,11 @@ export function StudentDetail({
         <StudentDetailTabs tabs={tabs} student={student} />
       </React.Suspense>
 
-      <StudentPhotoDialog open={photoOpen} onOpenChange={setPhotoOpen} student={student} />
+      <StudentPhotoDialog
+        open={photoOpen}
+        onOpenChange={setPhotoOpen}
+        student={student}
+      />
       <ConfirmDialog
         open={statusOpen}
         onOpenChange={setStatusOpen}
@@ -321,8 +366,26 @@ export function StudentDetail({
         pendingLabel="Sending…"
         onConfirm={confirmResend}
       />
+      <DeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Move student to trash"
+        description={
+          <>
+            Move{" "}
+            <span className="font-medium">{studentDisplayName(student)}</span>{" "}
+            to trash? The student can be restored later from the trash view.
+          </>
+        }
+        confirmLabel="Move to trash"
+        onConfirm={confirmDelete}
+      />
     </DetailLayout>
   )
+}
+
+function actionsSeparator(hasPriorActions: boolean): boolean {
+  return hasPriorActions
 }
 
 type Student = NonNullable<ReturnType<typeof useStudent>["data"]>
@@ -343,7 +406,12 @@ function StudentDetailTabs({
 
   return (
     <div>
-      <DetailTabs tabs={tabs} active={active} onChange={setActive} fill={false} />
+      <DetailTabs
+        tabs={tabs}
+        active={active}
+        onChange={setActive}
+        fill={false}
+      />
 
       {active === "profile" ? (
         <StudentProfilePanel student={student} />

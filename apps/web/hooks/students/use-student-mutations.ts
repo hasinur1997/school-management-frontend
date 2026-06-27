@@ -7,6 +7,7 @@
  *   - `PATCH /students/{id}/status` — flip active/inactive (tc is rejected — 422)
  *   - `POST  /students/{id}/photo`  — upload/replace photo (multipart)
  *   - `POST  /students/{id}/resend-credentials` — re-dispatch login credentials
+ *   - soft-delete trash lifecycle: delete / bulk delete / restore / force-delete
  *
  * Each invalidates the `["students"]` key so the list and detail refetch after a
  * write. The API stays authoritative on validation (`422` → field errors at the
@@ -36,7 +37,8 @@ function useInvalidateStudents() {
 export function useCreateStudent() {
   const invalidate = useInvalidateStudents()
   return useMutation({
-    mutationFn: (input: StudentCreateInput) => api.post<Student>("/students", input),
+    mutationFn: (input: StudentCreateInput) =>
+      api.post<Student>("/students", input),
     onSuccess: invalidate,
   })
 }
@@ -70,8 +72,13 @@ export function useUpdateStudentStatus() {
   const invalidate = useInvalidateStudents()
   return useMutation({
     // Only "active" | "inactive" are accepted here; tc is owned by the TC module.
-    mutationFn: ({ id, status }: { id: string; status: Extract<StudentStatusValue, "active" | "inactive"> }) =>
-      api.patch<Student>(`/students/${id}/status`, { status }),
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string
+      status: Extract<StudentStatusValue, "active" | "inactive">
+    }) => api.patch<Student>(`/students/${id}/status`, { status }),
     onSuccess: invalidate,
   })
 }
@@ -92,5 +99,56 @@ export function useResendStudentCredentials() {
   return useMutation({
     mutationFn: (id: string) =>
       api.post<null>(`/students/${id}/resend-credentials`),
+  })
+}
+
+export function useDeleteStudent() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<null>(`/students/${id}`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useBulkDeleteStudents() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.post<{ deleted: number }>("/students/bulk-delete", { ids }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRestoreStudent() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (id: string) => api.post<null>(`/students/${id}/restore`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useBulkRestoreStudents() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.post<{ restored: number }>("/students/bulk-restore", { ids }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useForceDeleteStudent() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<null>(`/students/${id}/force`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useBulkForceDeleteStudents() {
+  const invalidate = useInvalidateStudents()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.post<{ deleted: number }>("/students/bulk-force-delete", { ids }),
+    onSuccess: invalidate,
   })
 }

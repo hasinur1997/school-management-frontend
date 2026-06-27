@@ -3,6 +3,12 @@
  */
 
 export { StudentsList } from "./students-list"
+export { StudentsTrash } from "./students-trash"
 export { StudentDetail } from "./student-detail"
 export { StudentCreateDialog } from "./student-create-dialog"
-export { STUDENT_VIEW, STUDENT_CREATE, STUDENT_UPDATE } from "./permissions"
+export {
+  STUDENT_VIEW,
+  STUDENT_CREATE,
+  STUDENT_UPDATE,
+  STUDENT_DELETE,
+} from "./permissions"

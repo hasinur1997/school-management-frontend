@@ -5,6 +5,7 @@
  */
 
 export { useStudents, STUDENTS_PER_PAGE } from "./use-students"
+export { useTrashedStudents } from "./use-trashed-students"
 export { useStudent } from "./use-student"
 export { useStudentEnrollments } from "./use-student-enrollments"
 export {
@@ -14,4 +15,10 @@ export {
   useUpdateStudentStatus,
   useUploadStudentPhoto,
   useResendStudentCredentials,
+  useDeleteStudent,
+  useBulkDeleteStudents,
+  useRestoreStudent,
+  useBulkRestoreStudents,
+  useForceDeleteStudent,
+  useBulkForceDeleteStudents,
 } from "./use-student-mutations"

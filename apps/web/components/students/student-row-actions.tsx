@@ -10,7 +10,16 @@
  * status-toggled here (issued via Documents 6.2), so that item is hidden for them.
  */
 
-import { Eye, ImageUp, Mail, MoreHorizontal, Pencil, Power, PowerOff } from "lucide-react"
+import {
+  Eye,
+  ImageUp,
+  Mail,
+  MoreHorizontal,
+  Pencil,
+  Power,
+  PowerOff,
+  Trash2,
+} from "lucide-react"
 
 import {
   DropdownMenu,
@@ -21,7 +30,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu"
 import { Button } from "@/components/button"
 import { usePermission } from "@/hooks/auth/use-permission"
-import { STUDENT_CREATE, STUDENT_UPDATE } from "./permissions"
+import { STUDENT_CREATE, STUDENT_DELETE, STUDENT_UPDATE } from "./permissions"
 
 export interface StudentRowActionsProps {
   label: string
@@ -33,6 +42,7 @@ export interface StudentRowActionsProps {
   onChangePhoto: () => void
   onToggleStatus: () => void
   onResendCredentials: () => void
+  onDelete: () => void
 }
 
 export function StudentRowActions({
@@ -44,9 +54,11 @@ export function StudentRowActions({
   onChangePhoto,
   onToggleStatus,
   onResendCredentials,
+  onDelete,
 }: StudentRowActionsProps) {
   const canManage = usePermission(STUDENT_UPDATE)
   const canResend = usePermission(STUDENT_CREATE)
+  const canDelete = usePermission(STUDENT_DELETE)
 
   return (
     <DropdownMenu>
@@ -92,6 +104,18 @@ export function StudentRowActions({
                 <Power className="size-4" aria-hidden />
               )}
               {isActive ? "Deactivate" : "Activate"}
+            </DropdownMenuItem>
+          </>
+        ) : null}
+        {canDelete ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="size-4" aria-hidden />
+              Move to trash
             </DropdownMenuItem>
           </>
         ) : null}

@@ -20,7 +20,7 @@ import type { StudentListItem, StudentListParams } from "@/types/student"
 export const STUDENTS_PER_PAGE = 15
 
 /** Drop empty/`all` filters so the request only carries active ones. */
-function toParams(params: StudentListParams) {
+export function toStudentQuery(params: StudentListParams) {
   const query: Record<string, string | number> = {
     page: params.page ?? 1,
     per_page: params.per_page ?? STUDENTS_PER_PAGE,
@@ -36,11 +36,12 @@ function toParams(params: StudentListParams) {
 
 export function useStudents(params: StudentListParams) {
   const { branchParam } = useBranch()
-  const query = toParams(params)
+  const query = toStudentQuery(params)
 
   return useQuery({
     queryKey: queryKey("students", "list", { ...query, branch: branchParam }),
-    queryFn: () => requestPaginated<StudentListItem>("/students", { params: query }),
+    queryFn: () =>
+      requestPaginated<StudentListItem>("/students", { params: query }),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIME.STANDARD,
   })
