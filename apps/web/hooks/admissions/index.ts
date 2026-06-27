@@ -5,10 +5,18 @@
  */
 
 export { useAdmissions, ADMISSIONS_PER_PAGE } from "./use-admissions"
+export { useTrashedAdmissions } from "./use-trashed-admissions"
+export type { TrashedAdmissionParams } from "./use-trashed-admissions"
 export { useAdmission } from "./use-admission"
 export {
   useApproveAdmission,
   useRejectAdmission,
+  useDeleteAdmission,
+  useBulkDeleteAdmission,
+  useRestoreAdmission,
+  useBulkRestoreAdmission,
+  useForceDeleteAdmission,
+  useBulkForceDeleteAdmission,
 } from "./use-admission-mutations"
 
 export { usePublicSettings } from "./use-public-settings"

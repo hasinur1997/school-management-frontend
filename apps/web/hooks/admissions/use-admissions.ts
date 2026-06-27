@@ -27,7 +27,7 @@ export const ADMISSIONS_PER_PAGE = 15
  * sentinel (and an absent status) is omitted. The class filter is the
  * `desired_class_id` column.
  */
-function toParams(params: AdmissionListParams) {
+export function toAdmissionQuery(params: AdmissionListParams) {
   const query: Record<string, string | number> = {
     page: params.page ?? 1,
     per_page: params.per_page ?? ADMISSIONS_PER_PAGE,
@@ -45,7 +45,7 @@ function toParams(params: AdmissionListParams) {
 
 export function useAdmissions(params: AdmissionListParams) {
   const { branchParam } = useBranch()
-  const query = toParams(params)
+  const query = toAdmissionQuery(params)
 
   return useQuery({
     queryKey: queryKey("admissions", "list", { ...query, branch: branchParam }),

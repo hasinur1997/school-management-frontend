@@ -5,5 +5,6 @@
  */
 
 export { AdmissionsList } from "./admissions-list"
+export { AdmissionsTrash } from "./admissions-trash"
 export { AdmissionDetail } from "./admission-detail"
 export { ADMISSION_VIEW, ADMISSION_MANAGE } from "./permissions"

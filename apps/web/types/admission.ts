@@ -221,6 +221,13 @@ export interface Admission {
   status: string
   submitted_at?: string | null
 
+  /**
+   * Soft-delete timestamp. Present (non-null) only on records returned by the
+   * trash listing (`GET /admissions/trash`); the live queue never returns
+   * trashed rows. Drives the trash surface's "deleted" metadata.
+   */
+  deleted_at?: string | null
+
   // Student identity
   name_bn?: string | null
   name_en?: string | null
