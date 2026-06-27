@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   CalendarCheck,
   FileText,
@@ -11,6 +12,7 @@ import {
   Lock,
   Mail,
   Receipt,
+  Trash2,
   UserRound,
   Users,
 } from "lucide-react"
@@ -23,9 +25,14 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@/components/button"
+import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
@@ -39,6 +46,7 @@ import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
 import { usePermission } from "@/hooks/auth/use-permission"
 import {
   useParent,
+  useDeleteParent,
   useUnlinkParentStudent,
   useResendParentCredentials,
 } from "@/hooks/parents"
@@ -54,14 +62,19 @@ import { PARENT_MANAGE } from "./permissions"
 import { LinkStudentsDialog } from "./link-students-dialog"
 
 export function ParentDetail({ id }: { id: string }) {
+  const router = useRouter()
   const canManage = usePermission(PARENT_MANAGE)
   const { data: parent, isPending, isError, error, refetch } = useParent(id)
   const unlinkStudent = useUnlinkParentStudent()
   const resendCredentials = useResendParentCredentials()
+  const deleteParent = useDeleteParent()
 
   const [linkOpen, setLinkOpen] = React.useState(false)
-  const [unlinkTarget, setUnlinkTarget] = React.useState<LinkedStudent | null>(null)
+  const [unlinkTarget, setUnlinkTarget] = React.useState<LinkedStudent | null>(
+    null
+  )
   const [resendOpen, setResendOpen] = React.useState(false)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
 
   if (!canManage) {
     return (
@@ -101,7 +114,10 @@ export function ParentDetail({ id }: { id: string }) {
     return (
       <DetailLayout>
         <DetailBackLink href="/parents">Back to parents</DetailBackLink>
-        <ErrorPanel description="We couldn't load this parent." onRetry={() => void refetch()} />
+        <ErrorPanel
+          description="We couldn't load this parent."
+          onRetry={() => void refetch()}
+        />
       </DetailLayout>
     )
   }
@@ -147,6 +163,21 @@ export function ParentDetail({ id }: { id: string }) {
     }
   }
 
+  async function confirmDelete() {
+    if (!parent) return
+    try {
+      await deleteParent.mutateAsync(parent.id)
+      toastSuccess("Parent moved to trash.", { id: "parent-delete" })
+      setDeleteOpen(false)
+      router.push("/parents")
+    } catch (err) {
+      toastError(err, "Couldn't move the parent to trash.", {
+        id: "parent-delete",
+      })
+      throw err
+    }
+  }
+
   return (
     <DetailLayout>
       <DetailBackLink href="/parents">Back to parents</DetailBackLink>
@@ -174,7 +205,18 @@ export function ParentDetail({ id }: { id: string }) {
               <Mail className="size-4" aria-hidden />
               Resend credentials
             </Button>
-            <Button className="h-10 gap-[7px] rounded-[10px] px-4 text-sm font-semibold" onClick={() => setLinkOpen(true)}>
+            <Button
+              variant="outline"
+              className="h-10 gap-[7px] rounded-[10px] px-4 text-sm font-semibold text-error hover:text-error"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-4" aria-hidden />
+              Move to trash
+            </Button>
+            <Button
+              className="h-10 gap-[7px] rounded-[10px] px-4 text-sm font-semibold"
+              onClick={() => setLinkOpen(true)}
+            >
               <Link2 className="size-4" aria-hidden />
               Link student
             </Button>
@@ -192,7 +234,10 @@ export function ParentDetail({ id }: { id: string }) {
         <DetailCard icon={UserRound} title="Parent information">
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <InfoTile label="Name" value={parent.name} />
-            <InfoTile label="Relation" value={parentRelationLabel(parent.relation)} />
+            <InfoTile
+              label="Relation"
+              value={parentRelationLabel(parent.relation)}
+            />
             <InfoTile label="Phone" value={parent.phone} mono />
             <InfoTile label="Email" value={parent.email} />
           </div>
@@ -232,8 +277,12 @@ export function ParentDetail({ id }: { id: string }) {
         description={
           unlinkTarget ? (
             <>
-              Remove <span className="font-medium">{linkedStudentLabel(unlinkTarget)}</span>{" "}
-              from <span className="font-medium">{parent.name}</span>&rsquo;s linked students?
+              Remove{" "}
+              <span className="font-medium">
+                {linkedStudentLabel(unlinkTarget)}
+              </span>{" "}
+              from <span className="font-medium">{parent.name}</span>&rsquo;s
+              linked students?
             </>
           ) : null
         }
@@ -249,13 +298,26 @@ export function ParentDetail({ id }: { id: string }) {
           <>
             Generate and email fresh login credentials to{" "}
             <span className="font-medium">{parent.name}</span>
-            {parent.email ? ` (${parent.email})` : ""}? The parent needs an email
-            address on file to receive them.
+            {parent.email ? ` (${parent.email})` : ""}? The parent needs an
+            email address on file to receive them.
           </>
         }
         confirmLabel="Resend"
         pendingLabel="Sending…"
         onConfirm={confirmResend}
+      />
+      <DeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Move parent to trash"
+        description={
+          <>
+            Move <span className="font-medium">{parent.name}</span> to trash?
+            The parent can be restored later from the trash view.
+          </>
+        }
+        confirmLabel="Move to trash"
+        onConfirm={confirmDelete}
       />
     </DetailLayout>
   )
@@ -272,7 +334,7 @@ function InfoTile({
 }) {
   return (
     <div className="rounded-xl border border-surface-border bg-subtle/40 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-copy-muted">
+      <p className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
         {label}
       </p>
       <p
@@ -366,7 +428,9 @@ function LinkedStudentsTable({
                 <Link2Off className="size-4" aria-hidden />
               </Button>
             </div>
-            <p className="mt-2 text-sm text-copy-muted">{linkedStudentMeta(student)}</p>
+            <p className="mt-2 text-sm text-copy-muted">
+              {linkedStudentMeta(student)}
+            </p>
             <div className="mt-3">
               <StudentQuickLinks student={student} />
             </div>
@@ -379,16 +443,25 @@ function LinkedStudentsTable({
 
 function StudentIdentity({ student }: { student: LinkedStudent }) {
   return (
-    <Link href={`/students/${student.id}`} className="flex min-w-0 items-center gap-3">
+    <Link
+      href={`/students/${student.id}`}
+      className="flex min-w-0 items-center gap-3"
+    >
       <Avatar className="size-9 shrink-0">
-        {student.photo_url ? <AvatarImage src={student.photo_url} alt="" /> : null}
-        <AvatarFallback>{parentInitials(linkedStudentLabel(student))}</AvatarFallback>
+        {student.photo_url ? (
+          <AvatarImage src={student.photo_url} alt="" />
+        ) : null}
+        <AvatarFallback>
+          {parentInitials(linkedStudentLabel(student))}
+        </AvatarFallback>
       </Avatar>
       <span className="min-w-0">
         <span className="block truncate font-medium text-copy-primary">
           {linkedStudentLabel(student)}
         </span>
-        <span className="block truncate text-xs text-copy-muted">View student profile</span>
+        <span className="block truncate text-xs text-copy-muted">
+          View student profile
+        </span>
       </span>
     </Link>
   )

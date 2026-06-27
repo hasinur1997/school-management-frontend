@@ -1,6 +1,6 @@
 "use client"
 
-import { Eye, Link2, Mail, MoreHorizontal } from "lucide-react"
+import { Eye, Link2, Mail, MoreHorizontal, Trash2 } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ export interface ParentRowActionsProps {
   onView: () => void
   onLinkStudents: () => void
   onResendCredentials: () => void
+  onDelete: () => void
 }
 
 export function ParentRowActions({
@@ -23,6 +24,7 @@ export function ParentRowActions({
   onView,
   onLinkStudents,
   onResendCredentials,
+  onDelete,
 }: ParentRowActionsProps) {
   return (
     <DropdownMenu>
@@ -51,6 +53,14 @@ export function ParentRowActions({
         <DropdownMenuItem onClick={onResendCredentials}>
           <Mail className="size-4" aria-hidden />
           Resend credentials
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-error focus:text-error"
+          onClick={onDelete}
+        >
+          <Trash2 className="size-4" aria-hidden />
+          Move to trash
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

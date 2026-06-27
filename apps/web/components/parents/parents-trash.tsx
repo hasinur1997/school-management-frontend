@@ -1,10 +1,25 @@
 "use client"
 
+/**
+ * Parents trash: soft-deleted parent rows from `GET /parents/trash`, with
+ * restore and permanent-delete actions. The API remains authoritative for
+ * force-delete conflicts such as linked accounts or dependent records.
+ */
+
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Plus, Search, Trash2, UserRoundPlus, Users, X } from "lucide-react"
+import {
+  ArrowLeft,
+  RotateCcw,
+  Search,
+  Trash2,
+  UserRoundPlus,
+  Users,
+  X,
+} from "lucide-react"
 
+import { Badge } from "@workspace/ui/components/badge"
+import { Input } from "@workspace/ui/components/input"
 import {
   Table,
   TableBody,
@@ -13,70 +28,50 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
-import { Badge } from "@workspace/ui/components/badge"
-import { Input } from "@workspace/ui/components/input"
+import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { ListPager } from "@/components/list-pager"
 import { SelectCheckbox } from "@/components/select-checkbox"
 import { TableSkeleton } from "@/components/skeletons"
-import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import {
-  useBulkDeleteParents,
-  useDeleteParent,
-  useParents,
-  useResendParentCredentials,
+  useBulkForceDeleteParents,
+  useBulkRestoreParents,
+  useForceDeleteParent,
+  useRestoreParent,
+  useTrashedParents,
 } from "@/hooks/parents"
+import { formatDate } from "@/lib/format"
 import { toastError, toastSuccess } from "@/lib/toast"
 import {
   linkedStudentLabel,
   parentRelationLabel,
   type ParentProfile,
 } from "@/types/parent"
-import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
-import { LinkStudentsDialog } from "./link-students-dialog"
-import { ParentFormDialog } from "./parent-form-dialog"
-import { ParentRowActions } from "./parent-row-actions"
 
 const EMPTY = "—"
 
-export function ParentsList() {
-  const router = useRouter()
+export function ParentsTrash() {
   const [searchInput, setSearchInput] = React.useState("")
   const [page, setPage] = React.useState(1)
-  const [createOpen, setCreateOpen] = React.useState(false)
-  const [linkTarget, setLinkTarget] = React.useState<ParentProfile | null>(null)
-  const [resendTarget, setResendTarget] = React.useState<ParentProfile | null>(
+  const [forceTarget, setForceTarget] = React.useState<ParentProfile | null>(
     null
   )
-  const [deleteTarget, setDeleteTarget] = React.useState<ParentProfile | null>(
-    null
-  )
-  const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false)
+  const [bulkForceOpen, setBulkForceOpen] = React.useState(false)
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
-  const resendCredentials = useResendParentCredentials()
-  const deleteParent = useDeleteParent()
-  const bulkDelete = useBulkDeleteParents()
 
   const search = useDebouncedValue(searchInput, 300)
-  const { data, isPending, isError, isFetching, refetch } = useParents({
+  const { data, isPending, isError, isFetching, refetch } = useTrashedParents({
     search,
     page,
   })
 
-  async function confirmResend() {
-    if (!resendTarget) return
-    try {
-      await resendCredentials.mutateAsync(resendTarget.id)
-      toastSuccess("Login credentials resent.", { id: "parent-resend" })
-      setResendTarget(null)
-    } catch (error) {
-      toastError(error, "Couldn't resend credentials.", { id: "parent-resend" })
-      throw error
-    }
-  }
+  const restore = useRestoreParent()
+  const bulkRestore = useBulkRestoreParents()
+  const forceDelete = useForceDeleteParent()
+  const bulkForceDelete = useBulkForceDeleteParents()
 
   const parents = data?.data ?? []
   const meta = data?.meta
@@ -107,71 +102,123 @@ export function ParentsList() {
     )
   }
 
-  async function confirmDelete() {
-    if (!deleteTarget) return
+  async function restoreOne(parent: ParentProfile) {
     try {
-      await deleteParent.mutateAsync(deleteTarget.id)
-      toastSuccess("Parent moved to trash.", { id: "parent-delete" })
+      await restore.mutateAsync(parent.id)
+      toastSuccess("Parent restored.", { id: "parent-restore" })
       setSelected((prev) => {
         const next = new Set(prev)
-        next.delete(deleteTarget.id)
+        next.delete(parent.id)
         return next
       })
-      setDeleteTarget(null)
     } catch (error) {
-      toastError(error, "Couldn't move the parent to trash.", {
-        id: "parent-delete",
+      toastError(error, "Couldn't restore the parent.", {
+        id: "parent-restore",
       })
-      throw error
     }
   }
 
-  async function confirmBulkDelete() {
+  async function restoreSelected() {
     const ids = selectedParents.map((parent) => parent.id)
     if (ids.length === 0) return
     try {
-      await bulkDelete.mutateAsync(ids)
+      await bulkRestore.mutateAsync(ids)
       toastSuccess(
         ids.length === 1
-          ? "Parent moved to trash."
-          : `${ids.length} parents moved to trash.`,
-        { id: "parent-bulk-delete" }
+          ? "Parent restored."
+          : `${ids.length} parents restored.`,
+        { id: "parent-bulk-restore" }
       )
       setSelected(new Set())
-      setBulkDeleteOpen(false)
     } catch (error) {
-      toastError(error, "Couldn't move the parents to trash.", {
-        id: "parent-bulk-delete",
+      toastError(error, "Couldn't restore the parents.", {
+        id: "parent-bulk-restore",
+      })
+    }
+  }
+
+  async function confirmForceDelete() {
+    if (!forceTarget) return
+    try {
+      await forceDelete.mutateAsync(forceTarget.id)
+      toastSuccess("Parent permanently deleted.", {
+        id: "parent-force-delete",
+      })
+      setForceTarget(null)
+    } catch (error) {
+      toastError(error, "Couldn't delete the parent.", {
+        id: "parent-force-delete",
       })
       throw error
     }
   }
 
+  async function confirmBulkForceDelete() {
+    const ids = selectedParents.map((parent) => parent.id)
+    if (ids.length === 0) return
+    try {
+      await bulkForceDelete.mutateAsync(ids)
+      toastSuccess(
+        ids.length === 1
+          ? "Parent permanently deleted."
+          : `${ids.length} parents permanently deleted.`,
+        { id: "parent-bulk-force-delete" }
+      )
+      setSelected(new Set())
+      setBulkForceOpen(false)
+    } catch (error) {
+      toastError(error, "Couldn't delete the parents.", {
+        id: "parent-bulk-force-delete",
+      })
+      throw error
+    }
+  }
+
+  const rowActions = (parent: ParentProfile) => (
+    <div className="flex items-center justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        loading={restore.isPending}
+        onClick={() => void restoreOne(parent)}
+        title="Restore parent"
+      >
+        <RotateCcw className="size-4" aria-hidden />
+        <span className="sr-only">Restore {parent.name}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-destructive hover:text-destructive"
+        onClick={() => setForceTarget(parent)}
+        title="Delete permanently"
+      >
+        <Trash2 className="size-4" aria-hidden />
+        <span className="sr-only">Permanently delete {parent.name}</span>
+      </Button>
+    </div>
+  )
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/parents" />}
+          className="-ml-2 w-fit text-copy-muted"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          Back to parents
+        </Button>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold text-copy-primary">
-            Parents
+            Parent trash
           </h1>
           <p className="truncate text-sm text-copy-muted">
-            Create parent accounts and manage linked students.
+            Restore deleted parent accounts or delete them permanently.
           </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/parents/trash" />}
-            className="shrink-0"
-          >
-            <Trash2 className="size-4" aria-hidden />
-            Trash
-          </Button>
-          <Button onClick={() => setCreateOpen(true)} className="shrink-0">
-            <Plus className="size-4" aria-hidden />
-            Create parent
-          </Button>
         </div>
       </div>
 
@@ -184,8 +231,8 @@ export function ParentsList() {
           <Input
             value={searchInput}
             onChange={(event) => changeSearch(event.target.value)}
-            placeholder="Search by parent name or phone…"
-            aria-label="Search parents"
+            placeholder="Search by parent name or phone..."
+            aria-label="Search trashed parents"
             className="h-9 pl-8"
           />
         </div>
@@ -219,40 +266,41 @@ export function ParentsList() {
               Clear
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              loading={bulkRestore.isPending}
+              onClick={() => void restoreSelected()}
+            >
+              <RotateCcw className="size-4" aria-hidden />
+              Restore
+            </Button>
+            <Button
               variant="destructive"
               size="sm"
-              onClick={() => setBulkDeleteOpen(true)}
+              onClick={() => setBulkForceOpen(true)}
             >
               <Trash2 className="size-4" aria-hidden />
-              Move to trash
+              Delete permanently
             </Button>
           </div>
         </div>
       ) : null}
 
       {isPending ? (
-        <TableSkeleton rows={8} columns={5} />
+        <TableSkeleton rows={8} columns={6} />
       ) : isError ? (
         <ErrorPanel
-          description="We couldn't load the parents."
+          description="We couldn't load the parent trash."
           onRetry={() => void refetch()}
         />
       ) : parents.length === 0 ? (
         <EmptyState
           icon={UserRoundPlus}
-          title={hasSearch ? "No matching parents" : "No parents yet"}
+          title={hasSearch ? "No matching parents" : "Trash is empty"}
           description={
             hasSearch
-              ? "No parent accounts match the current search."
-              : "Create a parent account and link it to a student."
-          }
-          action={
-            hasSearch ? undefined : (
-              <Button onClick={() => setCreateOpen(true)}>
-                <Plus className="size-4" aria-hidden />
-                Create parent
-              </Button>
-            )
+              ? "No deleted parent accounts match the current search."
+              : "Deleted parent accounts will appear here."
           }
         />
       ) : (
@@ -275,6 +323,7 @@ export function ParentsList() {
                   <TableHead>Parent</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Linked students</TableHead>
+                  <TableHead>Deleted</TableHead>
                   <TableHead className="w-px text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -283,8 +332,6 @@ export function ParentsList() {
                   <TableRow
                     key={parent.id}
                     data-selected={selected.has(parent.id)}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/parents/${parent.id}`)}
                   >
                     <TableCell className="w-px">
                       <SelectCheckbox
@@ -309,17 +356,11 @@ export function ParentsList() {
                     <TableCell>
                       <LinkedStudentsSummary parent={parent} />
                     </TableCell>
-                    <TableCell
-                      className="text-right"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <ParentRowActions
-                        label={parent.name}
-                        onView={() => router.push(`/parents/${parent.id}`)}
-                        onLinkStudents={() => setLinkTarget(parent)}
-                        onResendCredentials={() => setResendTarget(parent)}
-                        onDelete={() => setDeleteTarget(parent)}
-                      />
+                    <TableCell className="text-copy-secondary">
+                      {deletedOn(parent)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {rowActions(parent)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -341,10 +382,10 @@ export function ParentsList() {
             {parents.map((parent) => (
               <li
                 key={parent.id}
-                className="rounded-xl border border-surface-border bg-surface p-4"
+                className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-4"
                 data-selected={selected.has(parent.id)}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
                   <span className="pt-1">
                     <SelectCheckbox
                       checked={selected.has(parent.id)}
@@ -352,30 +393,18 @@ export function ParentsList() {
                       label={`Select ${parent.name}`}
                     />
                   </span>
-                  <button
-                    type="button"
-                    className="min-w-0 flex-1 text-left"
-                    onClick={() => router.push(`/parents/${parent.id}`)}
-                  >
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <ParentIdentity parent={parent} />
-                  </button>
-                  <ParentRowActions
-                    label={parent.name}
-                    onView={() => router.push(`/parents/${parent.id}`)}
-                    onLinkStudents={() => setLinkTarget(parent)}
-                    onResendCredentials={() => setResendTarget(parent)}
-                    onDelete={() => setDeleteTarget(parent)}
-                  />
+                    <p className="truncate font-mono text-sm text-copy-secondary">
+                      {parent.phone || EMPTY}
+                    </p>
+                    <p className="truncate text-xs text-copy-muted">
+                      {parent.email || "No email"} · Deleted {deletedOn(parent)}
+                    </p>
+                    <LinkedStudentsSummary parent={parent} />
+                  </div>
                 </div>
-                <div className="mt-3 grid gap-1 text-sm text-copy-secondary">
-                  <p className="font-mono">{parent.phone || EMPTY}</p>
-                  <p className="truncate text-copy-muted">
-                    {parent.email || "No email"}
-                  </p>
-                </div>
-                <div className="mt-3">
-                  <LinkedStudentsSummary parent={parent} />
-                </div>
+                {rowActions(parent)}
               </li>
             ))}
           </ul>
@@ -393,59 +422,34 @@ export function ParentsList() {
         </>
       )}
 
-      <ParentFormDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <LinkStudentsDialog
-        open={linkTarget != null}
-        onOpenChange={(open) => !open && setLinkTarget(null)}
-        parent={linkTarget}
-      />
-      <ConfirmDialog
-        open={resendTarget != null}
-        onOpenChange={(open) => !open && setResendTarget(null)}
-        title="Resend credentials"
+      <DeleteDialog
+        open={forceTarget != null}
+        onOpenChange={(open) => !open && setForceTarget(null)}
+        title="Delete parent permanently"
         description={
-          resendTarget ? (
+          forceTarget ? (
             <>
-              Generate and email fresh login credentials to{" "}
-              <span className="font-medium">{resendTarget.name}</span>
-              {resendTarget.email ? ` (${resendTarget.email})` : ""}? The parent
-              needs an email address on file to receive them.
+              Permanently delete{" "}
+              <span className="font-medium">{forceTarget.name}</span>? This
+              can&apos;t be undone.
             </>
           ) : null
         }
-        confirmLabel="Resend"
-        pendingLabel="Sending…"
-        onConfirm={confirmResend}
+        confirmLabel="Delete permanently"
+        onConfirm={confirmForceDelete}
       />
       <DeleteDialog
-        open={deleteTarget != null}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Move parent to trash"
-        description={
-          deleteTarget ? (
-            <>
-              Move <span className="font-medium">{deleteTarget.name}</span> to
-              trash? The parent can be restored later from the trash view.
-            </>
-          ) : null
-        }
-        confirmLabel="Move to trash"
-        onConfirm={confirmDelete}
-      />
-      <DeleteDialog
-        open={bulkDeleteOpen}
-        onOpenChange={setBulkDeleteOpen}
-        title={`Move ${selectedCount} parent${selectedCount === 1 ? "" : "s"} to trash`}
+        open={bulkForceOpen}
+        onOpenChange={setBulkForceOpen}
+        title={`Delete ${selectedCount} parent${selectedCount === 1 ? "" : "s"} permanently`}
         description={
           <>
-            Move the {selectedCount} selected parent
-            {selectedCount === 1 ? "" : "s"} to trash?
-            {selectedCount === 1 ? " This parent" : " These parents"} can be
-            restored later from the trash view.
+            Permanently delete the {selectedCount} selected parent
+            {selectedCount === 1 ? "" : "s"}? This can&apos;t be undone.
           </>
         }
-        confirmLabel={`Move ${selectedCount}`}
-        onConfirm={confirmBulkDelete}
+        confirmLabel={`Delete ${selectedCount}`}
+        onConfirm={confirmBulkForceDelete}
       />
     </div>
   )
@@ -492,6 +496,10 @@ function LinkedStudentsSummary({ parent }: { parent: ParentProfile }) {
       </span>
     </div>
   )
+}
+
+function deletedOn(parent: ParentProfile): string {
+  return parent.deleted_at ? formatDate(parent.deleted_at) : EMPTY
 }
 
 function parentInitials(name: string): string {

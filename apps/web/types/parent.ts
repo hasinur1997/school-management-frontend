@@ -35,6 +35,7 @@ export interface ParentProfile {
   email: string | null
   relation: ParentRelation
   students?: LinkedStudent[]
+  deleted_at?: string | null
 }
 
 export interface ParentListParams {
@@ -67,5 +68,8 @@ export function linkedStudentLabel(student: LinkedStudent): string {
 }
 
 export function linkedStudentMeta(student: LinkedStudent): string {
-  return [student.class, student.section].filter(Boolean).join(" · ") || "No current class"
+  return (
+    [student.class, student.section].filter(Boolean).join(" · ") ||
+    "No current class"
+  )
 }

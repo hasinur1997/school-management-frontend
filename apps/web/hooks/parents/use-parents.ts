@@ -14,7 +14,7 @@ import type { ParentListParams, ParentProfile } from "@/types/parent"
 
 export const PARENTS_PER_PAGE = 15
 
-function toParams(params: ParentListParams) {
+export function toParentQuery(params: ParentListParams) {
   const query: Record<string, string | number> = {
     page: params.page ?? 1,
     per_page: params.per_page ?? PARENTS_PER_PAGE,
@@ -26,11 +26,12 @@ function toParams(params: ParentListParams) {
 
 export function useParents(params: ParentListParams) {
   const { branchParam } = useBranch()
-  const query = toParams(params)
+  const query = toParentQuery(params)
 
   return useQuery({
     queryKey: queryKey("parents", "list", { ...query, branch: branchParam }),
-    queryFn: () => requestPaginated<ParentProfile>("/parents", { params: query }),
+    queryFn: () =>
+      requestPaginated<ParentProfile>("/parents", { params: query }),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIME.STANDARD,
   })
