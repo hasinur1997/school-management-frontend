@@ -15,16 +15,19 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   CalendarCheck,
   ImageUp,
   Mail,
   Power,
   PowerOff,
+  Trash2,
   User,
 } from "lucide-react"
 
 import { Button } from "@/components/button"
+import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
@@ -48,13 +51,14 @@ import {
   useTeacher,
   useToggleTeacherStatus,
   useResendTeacherCredentials,
+  useDeleteTeacher,
 } from "@/hooks/teachers"
 import {
   isTeacherActive,
   teacherDisplayName,
   teacherInitials,
 } from "@/types/teacher"
-import { TEACHER_MANAGE } from "./permissions"
+import { TEACHER_DELETE, TEACHER_MANAGE } from "./permissions"
 import { TeacherPhotoDialog } from "./teacher-photo-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
 import {
@@ -63,16 +67,20 @@ import {
 } from "./teacher-profile-cards"
 
 export function TeacherDetail({ id }: { id: string }) {
+  const router = useRouter()
   const { data: teacher, isPending, isError, error, refetch } = useTeacher(id)
   const toggleStatus = useToggleTeacherStatus()
   const resendCredentials = useResendTeacherCredentials()
+  const deleteTeacher = useDeleteTeacher()
 
   const [photoOpen, setPhotoOpen] = React.useState(false)
   const [statusOpen, setStatusOpen] = React.useState(false)
   const [resendOpen, setResendOpen] = React.useState(false)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
 
   const canViewAttendance = usePermission("attendance.view")
   const canManage = usePermission(TEACHER_MANAGE)
+  const canDelete = usePermission(TEACHER_DELETE)
 
   if (isPending) {
     return (
@@ -141,6 +149,18 @@ export function TeacherDetail({ id }: { id: string }) {
           },
         ]
       : []),
+    ...(canDelete
+      ? [
+          {
+            key: "delete",
+            label: "Move to trash",
+            icon: Trash2,
+            onSelect: () => setDeleteOpen(true),
+            destructive: true,
+            separatorBefore: true,
+          },
+        ]
+      : []),
   ]
 
   // View tabs: Profile is always present and the default; Attendance is gated by
@@ -172,6 +192,20 @@ export function TeacherDetail({ id }: { id: string }) {
       setResendOpen(false)
     } catch (err) {
       toastError(err, "Couldn't resend credentials.", { id: "teacher-resend" })
+      throw err
+    }
+  }
+
+  async function confirmDelete() {
+    try {
+      await deleteTeacher.mutateAsync(id)
+      toastSuccess("Teacher moved to trash.", { id: "teacher-delete" })
+      setDeleteOpen(false)
+      router.push("/teachers")
+    } catch (err) {
+      toastError(err, "Couldn't move the teacher to trash.", {
+        id: "teacher-delete",
+      })
       throw err
     }
   }
@@ -244,6 +278,20 @@ export function TeacherDetail({ id }: { id: string }) {
         confirmLabel="Resend"
         pendingLabel="Sending…"
         onConfirm={confirmResend}
+      />
+      <DeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Move teacher to trash"
+        description={
+          <>
+            Move{" "}
+            <span className="font-medium">{teacherDisplayName(teacher)}</span> to
+            trash? The teacher can be restored later from the trash view.
+          </>
+        }
+        confirmLabel="Move to trash"
+        onConfirm={confirmDelete}
       />
     </DetailLayout>
   )

@@ -20,7 +20,7 @@ import type { Teacher, TeacherListParams } from "@/types/teacher"
 export const TEACHERS_PER_PAGE = 15
 
 /** Drop empty/`all` filters so the request only carries active ones. */
-function toParams(params: TeacherListParams) {
+export function toTeacherQuery(params: TeacherListParams) {
   const query: Record<string, string | number> = {
     page: params.page ?? 1,
     per_page: params.per_page ?? TEACHERS_PER_PAGE,
@@ -33,7 +33,7 @@ function toParams(params: TeacherListParams) {
 
 export function useTeachers(params: TeacherListParams) {
   const { branchParam } = useBranch()
-  const query = toParams(params)
+  const query = toTeacherQuery(params)
 
   return useQuery({
     queryKey: queryKey("teachers", "list", { ...query, branch: branchParam }),

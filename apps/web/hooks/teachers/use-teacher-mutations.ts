@@ -7,6 +7,7 @@
  *   - `PATCH /teachers/{id}/status`           — toggle active/inactive
  *   - `POST  /teachers/{id}/photo`            — upload photo (multipart)
  *   - `POST  /teachers/{id}/resend-credentials` — re-dispatch login credentials
+ *   - soft-delete trash lifecycle: delete / bulk delete / restore / force-delete
  *
  * Each invalidates the `["teachers"]` key so the list, detail, and selector
  * options refetch after a write. The API stays authoritative on validation
@@ -76,5 +77,56 @@ export function useResendTeacherCredentials() {
   return useMutation({
     mutationFn: (id: string) =>
       api.post<null>(`/teachers/${id}/resend-credentials`),
+  })
+}
+
+export function useDeleteTeacher() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<null>(`/teachers/${id}`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useBulkDeleteTeachers() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.post<{ deleted: number }>("/teachers/bulk-delete", { ids }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRestoreTeacher() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (id: string) => api.post<null>(`/teachers/${id}/restore`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useBulkRestoreTeachers() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.post<{ restored: number }>("/teachers/bulk-restore", { ids }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useForceDeleteTeacher() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<null>(`/teachers/${id}/force`),
+    onSuccess: invalidate,
+  })
+}
+
+export function useBulkForceDeleteTeachers() {
+  const invalidate = useInvalidateTeachers()
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      api.post<{ deleted: number }>("/teachers/bulk-force-delete", { ids }),
+    onSuccess: invalidate,
   })
 }

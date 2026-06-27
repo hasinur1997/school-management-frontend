@@ -100,6 +100,7 @@ export interface Teacher {
   assignments?: TeacherAssignmentSummary[] | null
   created_at?: string | null
   updated_at?: string | null
+  deleted_at?: string | null
 }
 
 /** One assignment row in the create/edit form payload. */

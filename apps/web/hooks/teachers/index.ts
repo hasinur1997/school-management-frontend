@@ -4,6 +4,7 @@
  */
 
 export { useTeachers, TEACHERS_PER_PAGE } from "./use-teachers"
+export { useTrashedTeachers } from "./use-trashed-teachers"
 export { useTeacher } from "./use-teacher"
 export { useTeacherOptions } from "./use-teacher-options"
 export {
@@ -13,4 +14,10 @@ export {
   useUploadTeacherPhoto,
   useDeleteTeacherPhoto,
   useResendTeacherCredentials,
+  useDeleteTeacher,
+  useBulkDeleteTeachers,
+  useRestoreTeacher,
+  useBulkRestoreTeachers,
+  useForceDeleteTeacher,
+  useBulkForceDeleteTeachers,
 } from "./use-teacher-mutations"

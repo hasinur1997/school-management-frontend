@@ -10,8 +10,9 @@
  */
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Search, Users, X } from "lucide-react"
+import { Plus, Search, Trash2, Users, X } from "lucide-react"
 
 import {
   Table,
@@ -25,18 +26,23 @@ import { Input } from "@workspace/ui/components/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
 import { Button } from "@/components/button"
 import { Can } from "@/components/auth/can"
+import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
+import { SelectCheckbox } from "@/components/select-checkbox"
 import { StatusBadge } from "@/components/status-badge"
 import { TableSkeleton } from "@/components/skeletons"
 import { ListPager } from "@/components/list-pager"
 import { useBranch } from "@/components/branch/branch-provider"
+import { usePermission } from "@/hooks/auth/use-permission"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { toastError, toastSuccess } from "@/lib/toast"
 import {
   useTeachers,
   useToggleTeacherStatus,
   useResendTeacherCredentials,
+  useDeleteTeacher,
+  useBulkDeleteTeachers,
 } from "@/hooks/teachers"
 import {
   isTeacherActive,
@@ -45,7 +51,7 @@ import {
   type Teacher,
   type TeacherStatusFilter,
 } from "@/types/teacher"
-import { TEACHER_MANAGE } from "./permissions"
+import { TEACHER_DELETE, TEACHER_MANAGE } from "./permissions"
 import { TeacherStatusFilter as StatusFilterSelect } from "./teacher-status-filter"
 import { TeacherRowActions } from "./teacher-row-actions"
 import { TeacherFormDialog } from "./teacher-form-dialog"
@@ -58,6 +64,7 @@ const EMPTY = "—"
 export function TeachersList() {
   const router = useRouter()
   const { isSuperAdmin } = useBranch()
+  const canDelete = usePermission(TEACHER_DELETE)
 
   const [searchInput, setSearchInput] = React.useState("")
   const [status, setStatus] = React.useState<TeacherStatusFilter>("all")
@@ -84,6 +91,8 @@ export function TeachersList() {
 
   const toggleStatus = useToggleTeacherStatus()
   const resendCredentials = useResendTeacherCredentials()
+  const deleteTeacher = useDeleteTeacher()
+  const bulkDelete = useBulkDeleteTeachers()
 
   // Dialog state.
   const [formOpen, setFormOpen] = React.useState(false)
@@ -91,11 +100,22 @@ export function TeachersList() {
   const [photoTarget, setPhotoTarget] = React.useState<Teacher | null>(null)
   const [statusTarget, setStatusTarget] = React.useState<Teacher | null>(null)
   const [resendTarget, setResendTarget] = React.useState<Teacher | null>(null)
+  const [deleteTarget, setDeleteTarget] = React.useState<Teacher | null>(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false)
+  const [selected, setSelected] = React.useState<Set<string>>(new Set())
 
   const teachers = data?.data ?? []
   const meta = data?.meta
   const lastPage = meta?.last_page ?? 1
   const hasFilters = search.trim().length > 0 || status !== "all"
+  const selectable = canDelete
+  const selectedTeachers = teachers.filter((teacher) => selected.has(teacher.id))
+  const selectedCount = selectedTeachers.length
+  const allOnPageSelected =
+    teachers.length > 0 && selectedCount === teachers.length
+  // Identity column + status + actions, plus the optional branch and checkbox.
+  const columnCount =
+    (isSuperAdmin ? 6 : 5) + (selectable ? 1 : 0)
 
   function openCreate() {
     setEditing(undefined)
@@ -109,6 +129,61 @@ export function TeachersList() {
     setSearchInput("")
     setStatus("all")
     setPage(1)
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  function toggleAll(checked: boolean) {
+    setSelected(
+      checked ? new Set(teachers.map((teacher) => teacher.id)) : new Set()
+    )
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    try {
+      await deleteTeacher.mutateAsync(deleteTarget.id)
+      toastSuccess("Teacher moved to trash.", { id: "teacher-delete" })
+      setSelected((prev) => {
+        const next = new Set(prev)
+        next.delete(deleteTarget.id)
+        return next
+      })
+      setDeleteTarget(null)
+    } catch (error) {
+      toastError(error, "Couldn't move the teacher to trash.", {
+        id: "teacher-delete",
+      })
+      throw error
+    }
+  }
+
+  async function confirmBulkDelete() {
+    const ids = selectedTeachers.map((teacher) => teacher.id)
+    if (ids.length === 0) return
+    try {
+      await bulkDelete.mutateAsync(ids)
+      toastSuccess(
+        ids.length === 1
+          ? "Teacher moved to trash."
+          : `${ids.length} teachers moved to trash.`,
+        { id: "teacher-bulk-delete" }
+      )
+      setSelected(new Set())
+      setBulkDeleteOpen(false)
+    } catch (error) {
+      toastError(error, "Couldn't move the teachers to trash.", {
+        id: "teacher-bulk-delete",
+      })
+      throw error
+    }
   }
 
   async function confirmToggleStatus() {
@@ -152,11 +227,13 @@ export function TeachersList() {
     <TeacherRowActions
       label={teacherDisplayName(teacher)}
       isActive={isTeacherActive(teacher)}
+      canDelete={canDelete}
       onView={() => router.push(`/teachers/${teacher.id}`)}
       onEdit={() => openEdit(teacher)}
       onChangePhoto={() => setPhotoTarget(teacher)}
       onToggleStatus={() => setStatusTarget(teacher)}
       onResendCredentials={() => setResendTarget(teacher)}
+      onDelete={() => setDeleteTarget(teacher)}
     />
   )
 
@@ -171,7 +248,20 @@ export function TeachersList() {
             Manage teacher profiles, assignments, and access.
           </p>
         </div>
-        {createButton}
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <Can permission={TEACHER_DELETE}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/teachers/trash" />}
+              className="shrink-0"
+            >
+              <Trash2 className="size-4" aria-hidden />
+              Trash
+            </Button>
+          </Can>
+          {createButton}
+        </div>
       </div>
 
       {/* Filters */}
@@ -200,8 +290,33 @@ export function TeachersList() {
         ) : null}
       </div>
 
+      {selectable && selectedCount > 0 ? (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-subtle px-4 py-2.5">
+          <p className="text-sm font-medium text-copy-secondary">
+            {selectedCount} selected
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelected(new Set())}
+            >
+              Clear
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setBulkDeleteOpen(true)}
+            >
+              <Trash2 className="size-4" aria-hidden />
+              Move to trash
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {isPending ? (
-        <TableSkeleton rows={8} columns={isSuperAdmin ? 6 : 5} />
+        <TableSkeleton rows={8} columns={columnCount} />
       ) : isError ? (
         <ErrorPanel
           description="We couldn't load the teachers."
@@ -227,6 +342,16 @@ export function TeachersList() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  {selectable ? (
+                    <TableHead className="w-px">
+                      <SelectCheckbox
+                        checked={allOnPageSelected}
+                        indeterminate={selectedCount > 0}
+                        onChange={toggleAll}
+                        label="Select all teachers on this page"
+                      />
+                    </TableHead>
+                  ) : null}
                   <TableHead>Teacher</TableHead>
                   <TableHead>Subjects</TableHead>
                   <TableHead>Classes</TableHead>
@@ -242,9 +367,24 @@ export function TeachersList() {
                   return (
                     <TableRow
                       key={teacher.id}
+                      data-selected={selected.has(teacher.id)}
                       className="cursor-pointer"
                       onClick={() => router.push(`/teachers/${teacher.id}`)}
                     >
+                      {selectable ? (
+                        <TableCell
+                          className="w-px"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <SelectCheckbox
+                            checked={selected.has(teacher.id)}
+                            onChange={(checked) =>
+                              toggleOne(teacher.id, checked)
+                            }
+                            label={`Select ${teacherDisplayName(teacher)}`}
+                          />
+                        </TableCell>
+                      ) : null}
                       <TableCell>
                         <TeacherIdentity teacher={teacher} />
                       </TableCell>
@@ -295,8 +435,18 @@ export function TeachersList() {
               return (
                 <li
                   key={teacher.id}
+                  data-selected={selected.has(teacher.id)}
                   className="flex items-start justify-between gap-3 rounded-xl border border-surface-border bg-surface p-4"
                 >
+                  {selectable ? (
+                    <span className="pt-1">
+                      <SelectCheckbox
+                        checked={selected.has(teacher.id)}
+                        onChange={(checked) => toggleOne(teacher.id, checked)}
+                        label={`Select ${teacherDisplayName(teacher)}`}
+                      />
+                    </span>
+                  ) : null}
                   <button
                     type="button"
                     className="flex min-w-0 flex-1 flex-col gap-2 text-left"
@@ -402,6 +552,39 @@ export function TeachersList() {
         confirmLabel="Resend"
         pendingLabel="Sending…"
         onConfirm={confirmResend}
+      />
+      <DeleteDialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Move teacher to trash"
+        description={
+          deleteTarget ? (
+            <>
+              Move{" "}
+              <span className="font-medium">
+                {teacherDisplayName(deleteTarget)}
+              </span>{" "}
+              to trash? The teacher can be restored later from the trash view.
+            </>
+          ) : null
+        }
+        confirmLabel="Move to trash"
+        onConfirm={confirmDelete}
+      />
+      <DeleteDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title={`Move ${selectedCount} teacher${selectedCount === 1 ? "" : "s"} to trash`}
+        description={
+          <>
+            Move the {selectedCount} selected teacher
+            {selectedCount === 1 ? "" : "s"} to trash?
+            {selectedCount === 1 ? " This teacher" : " These teachers"} can be
+            restored later from the trash view.
+          </>
+        }
+        confirmLabel={`Move ${selectedCount}`}
+        onConfirm={confirmBulkDelete}
       />
     </div>
   )

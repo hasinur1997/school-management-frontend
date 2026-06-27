@@ -10,3 +10,9 @@
  */
 export const TEACHER_VIEW = "teachers.view"
 export const TEACHER_MANAGE = "teachers.manage"
+/**
+ * Gates the soft-delete trash lifecycle (move to trash, restore, permanent
+ * delete). Matches the real backend slug `teacher.delete` (singular) seeded in
+ * `~/Herd/app-api` `PermissionSeeder` and enforced on `routes/api/v1/teachers.php`.
+ */
+export const TEACHER_DELETE = "teacher.delete"
