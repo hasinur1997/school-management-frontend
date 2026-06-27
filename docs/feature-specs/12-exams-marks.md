@@ -2,6 +2,8 @@
 
 Exam selection and subject-wise mark entry per student per exam. Contract: `docs/api/exams-marks.md`.
 
+> **Exam scope (updated):** an exam is no longer bound to a single class. Each exam targets either an explicit **set of classes** (the `exam_class` pivot, sent/returned as `class_ids` / `classes`) or **all classes** in its branch (`all_classes`). Session and type stay single; sections are never bound. Marks and results operate per class within the exam's set: the marks sheet validates the chosen section/subject against the exam's classes, and result generation grades each enrollment against the subjects of its own class. Branch is derived from the targeted classes (or, for an all-classes exam, the active branch).
+
 ## Endpoints consumed
 
 - `GET /exams/{id}/marks/sheet` → the mark-entry grid for an exam/class/subject.

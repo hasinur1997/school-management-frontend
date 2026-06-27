@@ -140,7 +140,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Exams",
         href: "/exams",
         icon: ClipboardList,
-        permission: "exams.view",
+        permission: "exam.view",
       },
       {
         label: "Results",
