@@ -169,9 +169,13 @@ function AttendanceWorkspace({
 
   return (
     <Tabs key={defaultValue} defaultValue={defaultValue} className="gap-6">
-      <TabsList className="flex h-auto flex-wrap justify-start">
+      <TabsList className="inline-flex h-auto w-fit max-w-full flex-wrap justify-start gap-1 rounded-xl bg-subtle p-1">
         {surfaces.map((surface) => (
-          <TabsTrigger key={surface.key} value={surface.key}>
+          <TabsTrigger
+            key={surface.key}
+            value={surface.key}
+            className="h-9 flex-none rounded-lg px-4 text-sm font-medium text-copy-muted data-active:bg-surface data-active:text-copy-primary data-active:shadow-sm"
+          >
             {surface.label}
           </TabsTrigger>
         ))}

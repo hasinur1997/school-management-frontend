@@ -34,9 +34,19 @@ export function AttendanceHub({
 
   return (
     <Tabs defaultValue={defaultTab} className="gap-6">
-      <TabsList>
-        <TabsTrigger value="entry">Entry</TabsTrigger>
-        <TabsTrigger value="class-sheet">Class sheet</TabsTrigger>
+      <TabsList className="inline-flex h-auto w-fit gap-1 rounded-xl bg-subtle p-1">
+        <TabsTrigger
+          value="entry"
+          className="h-9 flex-none rounded-lg px-4 text-sm font-medium text-copy-muted data-active:bg-surface data-active:text-copy-primary data-active:shadow-sm"
+        >
+          Entry
+        </TabsTrigger>
+        <TabsTrigger
+          value="class-sheet"
+          className="h-9 flex-none rounded-lg px-4 text-sm font-medium text-copy-muted data-active:bg-surface data-active:text-copy-primary data-active:shadow-sm"
+        >
+          Class sheet
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="entry">
         <StudentAttendanceEntry />
