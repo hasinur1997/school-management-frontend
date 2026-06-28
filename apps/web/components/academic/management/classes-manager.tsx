@@ -172,9 +172,9 @@ function ClassRow({
             <span className="block truncate font-medium text-copy-primary">
               {schoolClass.name}
             </span>
-            {schoolClass.code ? (
-              <span className="block truncate font-mono text-xs text-copy-muted">
-                {schoolClass.code}
+            {schoolClass.numeric_level != null ? (
+              <span className="block truncate text-xs text-copy-muted">
+                Level {schoolClass.numeric_level}
               </span>
             ) : null}
           </span>

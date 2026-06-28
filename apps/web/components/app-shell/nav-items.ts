@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   CalendarOff,
   ClipboardList,
+  ClipboardPen,
   FileText,
   GraduationCap,
   IdCard,
@@ -141,6 +142,15 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/exams",
         icon: ClipboardList,
         permission: "exam.view",
+      },
+      {
+        // Teachers enter marks for their assigned subjects here; the
+        // teacher-assignment rule is enforced by the API. Staff gating stays
+        // permission-led — teachers hold `marks.entry`.
+        label: "Mark Entry",
+        href: "/marks",
+        icon: ClipboardPen,
+        permission: "marks.entry",
       },
       {
         label: "Results",

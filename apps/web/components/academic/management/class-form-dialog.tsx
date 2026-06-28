@@ -3,8 +3,9 @@
 /**
  * Create/edit dialog for a class (task 2.2). Mirrors the session dialog: RHF +
  * Zod, `422` → field errors + banner, success toast + close, no double submit.
- * `numeric_value` is the ordinal promotion order (optional); it's held as a
- * string in the form and coerced to a number/`null` on submit.
+ * `numeric_level` is the grade level 1–12 (required, unique per branch — it
+ * doubles as the promotion order); it's held as a string in the form and
+ * coerced to a number on submit.
  */
 
 import * as React from "react"
@@ -44,19 +45,20 @@ import { FormBanner, applyFieldErrors } from "./form-helpers"
 
 const schema = z.object({
   name: z.string().trim().min(1, "Enter a class name"),
-  code: z.string().optional(),
-  numeric_value: z
+  numeric_level: z
     .string()
-    .optional()
-    .refine(
-      (v) => !v || /^\d+$/.test(v.trim()),
-      "Enter a whole number"
-    ),
+    .trim()
+    .min(1, "Enter a grade level")
+    .refine((v) => /^\d+$/.test(v), "Enter a whole number")
+    .refine((v) => {
+      const n = Number(v)
+      return n >= 1 && n <= 12
+    }, "Level must be between 1 and 12"),
 })
 
 type ClassFormValues = z.infer<typeof schema>
 
-const FIELD_NAMES = ["name", "code", "numeric_value"] as const
+const FIELD_NAMES = ["name", "numeric_level"] as const
 
 export interface ClassFormDialogProps {
   open: boolean
@@ -76,7 +78,7 @@ export function ClassFormDialog({
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", code: "", numeric_value: "" },
+    defaultValues: { name: "", numeric_level: "" },
   })
   const [banner, setBanner] = React.useState<string | null>(null)
 
@@ -84,10 +86,9 @@ export function ClassFormDialog({
     if (!open) return
     form.reset({
       name: schoolClass?.name ?? "",
-      code: schoolClass?.code ?? "",
-      numeric_value:
-        schoolClass?.numeric_value != null
-          ? String(schoolClass.numeric_value)
+      numeric_level:
+        schoolClass?.numeric_level != null
+          ? String(schoolClass.numeric_level)
           : "",
     })
   }, [open, schoolClass, form])
@@ -104,10 +105,7 @@ export function ClassFormDialog({
     setBanner(null)
     const payload: ClassInput = {
       name: values.name.trim(),
-      code: values.code?.trim() || null,
-      numeric_value: values.numeric_value?.trim()
-        ? Number(values.numeric_value)
-        : null,
+      numeric_level: Number(values.numeric_level),
     }
 
     try {
@@ -168,47 +166,31 @@ export function ClassFormDialog({
               )}
             />
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Optional"
-                        disabled={submitting}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="numeric_value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Order</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        placeholder="Optional"
-                        disabled={submitting}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>Promotion order.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="numeric_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Level</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={12}
+                      placeholder="e.g. 6"
+                      disabled={submitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Grade level 1–12 · doubles as the promotion order, unique per
+                    branch.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <DialogFooter>
               <Button

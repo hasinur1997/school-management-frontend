@@ -23,9 +23,8 @@ export interface AcademicSession {
 export interface SchoolClass {
   id: string
   name: string
-  code?: string | null
-  /** Ordinal used for promotion ordering; not needed for the selector. */
-  numeric_value?: number | null
+  /** Grade level 1–12; the ordinal used for promotion ordering, unique per branch. */
+  numeric_level?: number | null
 }
 
 /** `GET /classes/{class}/sections` — a section within a class. */

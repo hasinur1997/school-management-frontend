@@ -16,8 +16,8 @@ import type { SchoolClass } from "@/types/academic"
 /** Create/edit payload for a class. */
 export interface ClassInput {
   name: string
-  code?: string | null
-  numeric_value?: number | null
+  /** Grade level 1–12 (required by the API, unique per branch). */
+  numeric_level: number
 }
 
 export function useCreateClass() {
