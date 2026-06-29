@@ -1,9 +1,17 @@
 "use client"
 
 /**
- * Step 6 — Photo & Documents. Photo is required (JPG/PNG ≤2MB) and previewed;
- * documents are optional (PDF/JPG/PNG ≤5MB each, up to 5). Type/size problems
+ * Step 6 — Photo & Documents. Photo is required (JPG/PNG ≤2MB); once picked it
+ * opens a circular crop editor (the same `ImageCropper` the teacher photo dialog
+ * uses). The visitor pans/zooms, then "Crop & use photo" bakes the circular crop
+ * into `photo` and shows it as a finished round preview with "Remove image" /
+ * "Recrop" — mirroring the teacher dialog's picked → cropper → image states.
+ * Documents are optional (PDF/JPG/PNG ≤5MB each, up to 5). Type/size problems
  * show inline on this step; the schema re-checks on submit. Task 2.5.
+ *
+ * `photo` is set the moment a file is picked (so the step validates), but holds
+ * the *cropped* circle once applied. `rawFile` is the in-editor original; if the
+ * visitor leaves mid-edit the wizard calls `commitCrop()` to finalize first.
  */
 
 import * as React from "react"
@@ -19,6 +27,7 @@ import {
 } from "@workspace/ui/components/form"
 import { Button } from "@/components/button"
 import { ImageDropzone } from "@/components/image-dropzone"
+import { ImageCropper, type ImageCropperHandle } from "@/components/image-cropper"
 import { Req } from "../fields"
 import type { AdmissionFormValues } from "../schema"
 
@@ -32,17 +41,27 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function StepPhotoDocuments({ form }: { form: UseFormReturn<AdmissionFormValues> }) {
+/** Lets the wizard bake the current crop into `photo` before this step unmounts. */
+export interface PhotoStepHandle {
+  commitCrop: () => Promise<void>
+}
+
+export const StepPhotoDocuments = React.forwardRef<
+  PhotoStepHandle,
+  { form: UseFormReturn<AdmissionFormValues> }
+>(function StepPhotoDocuments({ form }, ref) {
   const [photoError, setPhotoError] = React.useState<string | null>(null)
   const [docError, setDocError] = React.useState<string | null>(null)
   const docInputRef = React.useRef<HTMLInputElement>(null)
+  const cropperRef = React.useRef<ImageCropperHandle>(null)
+  // The original file currently open in the cropper; null once cropped/applied.
+  const [rawFile, setRawFile] = React.useState<File | null>(null)
 
   const photo = form.watch("photo")
   const documents = form.watch("documents")
 
-  // Object URL for the photo preview. Created and revoked inside one effect so
-  // the exact URL is the one revoked — StrictMode-safe (a useMemo URL would be
-  // revoked on cleanup but not recreated, breaking the preview).
+  // Circular preview of the applied (cropped) photo. One effect owns the object
+  // URL so the exact URL created is the one revoked (StrictMode-safe).
   const [photoUrl, setPhotoUrl] = React.useState<string | null>(null)
   React.useEffect(() => {
     if (!photo) {
@@ -53,6 +72,39 @@ export function StepPhotoDocuments({ form }: { form: UseFormReturn<AdmissionForm
     setPhotoUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [photo])
+
+  // Render the visible circle to a file and set it on the form, then close the
+  // editor so the finished round preview shows.
+  async function applyCrop() {
+    if (!rawFile) return
+    setPhotoError(null)
+    try {
+      const cropped = (await cropperRef.current?.getCroppedFile()) ?? rawFile
+      form.setValue("photo", cropped, { shouldValidate: true })
+      setRawFile(null)
+    } catch {
+      // Image not ready yet — leave the editor open so the visitor can retry.
+    }
+  }
+
+  function removePhoto() {
+    setPhotoError(null)
+    setRawFile(null)
+    form.setValue("photo", null, { shouldValidate: true })
+  }
+
+  // If the visitor advances while still in the editor, finalize the crop first
+  // (the wizard awaits this before the cropper — and its object URL — unmount).
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      async commitCrop() {
+        if (rawFile) await applyCrop()
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawFile]
+  )
 
   function addDocuments(files: FileList | null) {
     setDocError(null)
@@ -103,29 +155,49 @@ export function StepPhotoDocuments({ form }: { form: UseFormReturn<AdmissionForm
             </FormLabel>
             <FormControl>
               <div className="flex flex-col gap-3">
-                {photo && photoUrl ? (
-                  <div className="flex items-center gap-4">
+                {rawFile ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <ImageCropper ref={cropperRef} file={rawFile} round />
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button type="button" size="sm" onClick={applyCrop}>
+                        Crop &amp; use photo
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={removePhoto}
+                      >
+                        <X className="size-4" aria-hidden />
+                        Remove image
+                      </Button>
+                    </div>
+                  </div>
+                ) : photo && photoUrl ? (
+                  <div className="flex flex-col items-center gap-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={photoUrl}
                       alt="Selected student photo"
-                      className="size-24 rounded-lg border border-surface-border object-cover"
+                      className="size-40 rounded-full border border-surface-border object-cover"
                     />
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm text-copy-primary">{photo.name}</span>
-                      <span className="text-xs text-copy-muted">{formatBytes(photo.size)}</span>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="w-fit"
-                        onClick={() => {
-                          setPhotoError(null)
-                          form.setValue("photo", null, { shouldValidate: true })
-                        }}
+                        onClick={() => setRawFile(photo)}
+                      >
+                        Recrop
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={removePhoto}
                       >
                         <X className="size-4" aria-hidden />
-                        Remove
+                        Remove image
                       </Button>
                     </div>
                   </div>
@@ -134,6 +206,8 @@ export function StepPhotoDocuments({ form }: { form: UseFormReturn<AdmissionForm
                     accept={["image/jpeg", "image/png"]}
                     maxBytes={2 * 1024 * 1024}
                     onSelect={(file) => {
+                      setPhotoError(null)
+                      setRawFile(file)
                       form.setValue("photo", file, { shouldValidate: true })
                     }}
                     onError={setPhotoError}
@@ -219,4 +293,4 @@ export function StepPhotoDocuments({ form }: { form: UseFormReturn<AdmissionForm
       />
     </div>
   )
-}
+})

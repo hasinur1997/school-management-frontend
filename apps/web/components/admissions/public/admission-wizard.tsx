@@ -35,6 +35,11 @@ import {
 } from "./schema"
 import { buildAdmissionFormData } from "./build-form-data"
 import { fileToDataUrl, type ApplicationSnapshot } from "./application-document"
+import {
+  loadAdmissionDraft,
+  saveAdmissionDraft,
+  clearAdmissionDraft,
+} from "./admission-draft"
 import { StepIndicator } from "./step-indicator"
 import { PaymentFlow } from "./payment-flow"
 import { ConfirmationScreen } from "./confirmation-screen"
@@ -43,10 +48,11 @@ import { StepStudentIdentity } from "./steps/step-student-identity"
 import { StepGuardian } from "./steps/step-guardian"
 import { StepAddress } from "./steps/step-address"
 import { StepPreviousEducation } from "./steps/step-previous-education"
-import { StepPhotoDocuments } from "./steps/step-photo-documents"
+import { StepPhotoDocuments, type PhotoStepHandle } from "./steps/step-photo-documents"
 import { StepPreview } from "./steps/step-preview"
 
 const PREVIEW_INDEX = STEPS.length - 1
+const PHOTO_INDEX = 5
 
 interface SubmitResult {
   applicationNo: string
@@ -72,8 +78,20 @@ export function AdmissionWizard({ resumeApplicationNo }: AdmissionWizardProps) {
   const [furthest, setFurthest] = React.useState(0)
   const [banner, setBanner] = React.useState<string | null>(null)
   const [result, setResult] = React.useState<SubmitResult | null>(null)
+  const [hydrated, setHydrated] = React.useState(false)
+  const photoStepRef = React.useRef<PhotoStepHandle>(null)
 
-  function goToStep(index: number) {
+  // Leaving the photo step bakes the visible crop into `photo` before the
+  // cropper unmounts (its object URL is revoked on unmount, so we must finish
+  // first). Mirrors the teacher photo dialog, which crops on save.
+  async function commitPhotoIfLeaving(fromStep: number) {
+    if (fromStep === PHOTO_INDEX) {
+      await photoStepRef.current?.commitCrop()
+    }
+  }
+
+  async function goToStep(index: number) {
+    await commitPhotoIfLeaving(step)
     setBanner(null)
     setStep(index)
     setFurthest((f) => Math.max(f, index))
@@ -82,8 +100,47 @@ export function AdmissionWizard({ resumeApplicationNo }: AdmissionWizardProps) {
   async function handleNext() {
     const valid = await form.trigger(STEP_FIELDS[step] as (keyof AdmissionFormValues)[])
     if (!valid) return
-    goToStep(Math.min(step + 1, PREVIEW_INDEX))
+    await goToStep(Math.min(step + 1, PREVIEW_INDEX))
   }
+
+  // ----- Draft persistence -----------------------------------------------------
+  // Restore any saved draft once on mount, then mirror every change back to
+  // storage so a refresh resumes exactly where the visitor left off. Returning
+  // from the payment gateway means the application was already submitted, so the
+  // draft is cleared instead of restored.
+  React.useEffect(() => {
+    if (resumeApplicationNo) {
+      clearAdmissionDraft()
+      setHydrated(true)
+      return
+    }
+    const draft = loadAdmissionDraft()
+    if (draft) {
+      form.reset(draft.values)
+      setStep(draft.step)
+      setFurthest(draft.furthest)
+    }
+    setHydrated(true)
+    // Run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  React.useEffect(() => {
+    if (!hydrated || result) return
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const schedule = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        void saveAdmissionDraft(form.getValues(), step, furthest)
+      }, 400)
+    }
+    schedule() // persist the latest step/furthest immediately (debounced)
+    const subscription = form.watch(() => schedule())
+    return () => {
+      subscription.unsubscribe()
+      if (timer) clearTimeout(timer)
+    }
+  }, [hydrated, result, step, furthest, form])
 
   const onSubmit = form.handleSubmit(
     async (values) => {
@@ -111,6 +168,9 @@ export function AdmissionWizard({ resumeApplicationNo }: AdmissionWizardProps) {
           invoiceId: res.invoice_id ?? null,
           snapshot,
         })
+        // The application is created — discard the saved draft so a later visit
+        // starts fresh rather than resurrecting a submitted application.
+        clearAdmissionDraft()
       } catch (error) {
         if (isValidationError(error)) {
           const fields = Object.keys(error.errors)
@@ -146,7 +206,8 @@ export function AdmissionWizard({ resumeApplicationNo }: AdmissionWizardProps) {
   )
 
   // ----- Settings gate (covers resume + fresh) --------------------------------
-  if (settingsQuery.isLoading) {
+  // Also wait for draft hydration so a restored step never flashes step 1 first.
+  if (settingsQuery.isLoading || !hydrated) {
     return (
       <div className="flex flex-col gap-4" aria-busy>
         <Skeleton className="h-8 w-2/3" />
@@ -238,7 +299,7 @@ export function AdmissionWizard({ resumeApplicationNo }: AdmissionWizardProps) {
           {step === 2 ? <StepGuardian form={form} /> : null}
           {step === 3 ? <StepAddress form={form} /> : null}
           {step === 4 ? <StepPreviousEducation form={form} /> : null}
-          {step === 5 ? <StepPhotoDocuments form={form} /> : null}
+          {step === 5 ? <StepPhotoDocuments ref={photoStepRef} form={form} /> : null}
           {step === 6 ? <StepPreview form={form} settings={settings} /> : null}
 
           <div className="flex flex-col-reverse gap-3 border-t border-surface-border pt-4 sm:flex-row sm:items-center sm:justify-between">

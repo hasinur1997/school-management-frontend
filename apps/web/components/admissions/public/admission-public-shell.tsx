@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from "react"
-import { Libre_Franklin } from "next/font/google"
 
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -10,22 +9,17 @@ import { cn } from "@workspace/ui/lib/utils"
  * and no app shell wraps them — just a centered, branded light card.
  *
  * It carries the dedicated "Admission form" look (Claude Design handoff): a fixed
- * light, navy-on-white institutional palette in Libre Franklin. Rather than
+ * light, navy-on-white institutional palette. To match the login screen, it uses
+ * the app's default sans font (Geist, inherited from the root layout). Rather than
  * hardcode hex in components, it re-points the design-system token CSS vars on
  * the page wrapper (`admissionTheme`) — exactly how the app's accent themes
  * work — so every shadcn primitive and `bg-*`/`text-*` utility inside inherits
  * the palette, pinned light regardless of dark mode. Scoped to these routes only.
  */
 
-const libreFranklin = Libre_Franklin({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-})
-
 /** Design-system tokens re-pointed to the Admission form palette (light only). */
 const admissionTheme = {
-  "--bg-base": "#eef1f6",
+  "--bg-base": "#f7f7f8",
   "--bg-surface": "#ffffff",
   "--bg-elevated": "#ffffff",
   "--bg-subtle": "#e9edf4",
@@ -34,23 +28,24 @@ const admissionTheme = {
   "--text-primary": "#13294b",
   "--text-secondary": "#33415c",
   "--text-muted": "#6b7891",
-  "--accent-primary": "#2f6fed",
-  "--accent-primary-dim": "rgba(47, 111, 237, 0.16)",
+  "--accent-primary": "#7c3aed",
+  "--accent-primary-dim": "#f3effe",
+  "--accent-soft-border": "#e7defb",
   "--state-success": "#16a34a",
   "--state-error": "#e5484d",
 } as CSSProperties
 
 /**
- * Field styling for the Admission surfaces, scoped to `.admission-fields`. The
- * app's shared shadcn inputs are compact (32px); the design handoff calls for
- * large, prominent fields (46px, 15px text, 10px radius, 1.5px border with a
- * soft accent focus ring) and 13.5px/600 labels. Scoping by wrapper class keeps
- * the rest of the app's inputs untouched while overriding only on these routes.
+ * Field styling for the Admission surfaces, scoped to `.admission-fields`. Fields
+ * stay large and prominent (46px, 10px radius, 1.5px border with a soft accent
+ * focus ring), but font and font sizes follow the login screen: the app's
+ * default 14px (`text-sm`) input/label scale. Scoping by wrapper class keeps the
+ * rest of the app's inputs untouched while overriding only on these routes.
  */
 const admissionFieldCss = `
 .admission-fields label[data-slot="form-label"],
 .admission-fields label[data-slot="label"] {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2d44;
   margin-bottom: 7px;
@@ -64,7 +59,7 @@ const admissionFieldCss = `
   border-color: #d8dfe9;
   background: #fff;
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: 14px;
   color: #16213b;
 }
 .admission-fields [data-slot="select-trigger"] {
@@ -85,9 +80,10 @@ export interface AdmissionThemeSurfaceProps {
 }
 
 /**
- * The themed standalone surface only: Libre Franklin font, the `admissionTheme`
- * CSS-var re-point, the `.admission-fields` overrides, and a full-height `<main>`.
- * No header/card chrome — callers lay out their own content. Both the public form
+ * The themed standalone surface only: the default sans font (Geist, inherited
+ * from the root layout, matching the login screen), the `admissionTheme` CSS-var
+ * re-point, the `.admission-fields` overrides, and a full-height `<main>`. No
+ * header/card chrome — callers lay out their own content. Both the public form
  * (via `AdmissionPublicShell`) and the status-check page build on this.
  */
 export function AdmissionThemeSurface({
@@ -96,7 +92,7 @@ export function AdmissionThemeSurface({
 }: AdmissionThemeSurfaceProps) {
   return (
     <main
-      className={cn(`${libreFranklin.className} min-h-svh`, className)}
+      className={cn("min-h-svh", className)}
       style={admissionTheme}
     >
       <style>{admissionFieldCss}</style>
@@ -123,7 +119,7 @@ export function AdmissionPublicShell({
           <h1 className="text-[30px] font-extrabold tracking-tight text-copy-primary">
             {title}
           </h1>
-          <p className="max-w-md text-[15px] text-copy-muted">{subtitle}</p>
+          <p className="max-w-md text-sm text-copy-muted">{subtitle}</p>
         </header>
 
         <div className="admission-fields rounded-[20px] border border-surface-border bg-surface p-5 shadow-[0_10px_40px_rgba(19,41,75,0.07)] sm:p-7 lg:px-10 lg:py-8">

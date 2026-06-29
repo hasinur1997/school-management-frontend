@@ -50,7 +50,7 @@ export function StepIndicator({ current, furthest, onStepSelect }: StepIndicator
                     isCurrent
                       ? "border-brand bg-brand text-white ring-4 ring-brand/15"
                       : isDone
-                        ? "border-success bg-success/10 text-success"
+                        ? "border-brand bg-brand/10 text-brand"
                         : "border-surface-border text-copy-muted"
                   )}
                 >
