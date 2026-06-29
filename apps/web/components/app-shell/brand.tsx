@@ -24,7 +24,7 @@ export function Brand({
         <GraduationCap className="size-5" aria-hidden />
       </span>
       {!iconOnly ? (
-        <span className="truncate text-base">School MS</span>
+        <span className="truncate">School MS</span>
       ) : (
         <span className="sr-only">School MS</span>
       )}

@@ -5,8 +5,7 @@
  *
  * Only super admin can switch branch context (`architecture-context.md`). This
  * provider:
- *   1. keeps the selected branch (`null` = all branches / consolidated),
- *      persisted in localStorage and restored on load;
+ *   1. keeps the selected branch (`null` = all branches / consolidated);
  *   2. mirrors it into the API branch bridge (`lib/api/branch`) so the request
  *      interceptor forwards `branch_id` on every call;
  *   3. invalidates branch-scoped queries when the branch changes so the UI
@@ -21,8 +20,6 @@ import { useQueryClient } from "@tanstack/react-query"
 
 import { setActiveBranchId } from "@/lib/api"
 import { useAuth } from "@/components/auth/auth-provider"
-
-const STORAGE_KEY = "active_branch_id"
 
 export interface BranchContextValue {
   /** Whether the current user may switch branch context. */
@@ -54,16 +51,10 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const { isSuperAdmin } = useAuth()
   const queryClient = useQueryClient()
 
-  // Restore the persisted branch (super admin only) during the first render so
-  // the bridge is set before any branch-scoped query fires.
+  // Default to consolidated data. Branch selections are session-local so every
+  // reload starts from "All branches" unless the user explicitly narrows it.
   const [activeBranchId, setActiveBranchIdState] = React.useState<string | null>(
-    () => {
-      if (!isSuperAdmin || typeof window === "undefined") return null
-      const stored = window.localStorage.getItem(STORAGE_KEY)
-      const initial = stored && stored.length > 0 ? stored : null
-      setActiveBranchId(initial)
-      return initial
-    }
+    null
   )
 
   // Keep the API bridge in sync and clear it on unmount / user switch so a new
@@ -79,11 +70,6 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 
       setActiveBranchId(id)
       setActiveBranchIdState(id)
-
-      if (typeof window !== "undefined") {
-        if (id === null) window.localStorage.removeItem(STORAGE_KEY)
-        else window.localStorage.setItem(STORAGE_KEY, String(id))
-      }
 
       // Re-scope: drop every cached query except the user/permission context so
       // branch-scoped reads refetch under the new branch.

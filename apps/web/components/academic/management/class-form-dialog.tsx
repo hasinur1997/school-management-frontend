@@ -40,6 +40,8 @@ import {
   useUpdateClass,
   type ClassInput,
 } from "@/hooks/academic"
+import { useBranch } from "@/components/branch/branch-provider"
+import { BranchSelect } from "@/components/branch/branch-select"
 import type { SchoolClass } from "@/types/academic"
 import { FormBanner, applyFieldErrors } from "./form-helpers"
 
@@ -54,11 +56,13 @@ const schema = z.object({
       const n = Number(v)
       return n >= 1 && n <= 12
     }, "Level must be between 1 and 12"),
+  // Target branch for a super-admin create; auto-scoped users keep it `null`.
+  branch_id: z.string().min(1).nullable(),
 })
 
 type ClassFormValues = z.infer<typeof schema>
 
-const FIELD_NAMES = ["name", "numeric_level"] as const
+const FIELD_NAMES = ["name", "numeric_level", "branch_id"] as const
 
 export interface ClassFormDialogProps {
   open: boolean
@@ -73,12 +77,13 @@ export function ClassFormDialog({
   schoolClass,
 }: ClassFormDialogProps) {
   const isEdit = schoolClass != null
+  const { isSuperAdmin, activeBranchId } = useBranch()
   const createMutation = useCreateClass()
   const updateMutation = useUpdateClass()
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", numeric_level: "" },
+    defaultValues: { name: "", numeric_level: "", branch_id: activeBranchId },
   })
   const [banner, setBanner] = React.useState<string | null>(null)
 
@@ -90,8 +95,9 @@ export function ClassFormDialog({
         schoolClass?.numeric_level != null
           ? String(schoolClass.numeric_level)
           : "",
+      branch_id: activeBranchId,
     })
-  }, [open, schoolClass, form])
+  }, [open, schoolClass, activeBranchId, form])
 
   // Clear the banner on close (kept out of the open effect to avoid a
   // synchronous setState during render).
@@ -103,6 +109,14 @@ export function ClassFormDialog({
 
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
+
+    // Super admin must scope a new class to a branch (the API requires it in the
+    // body when no branch is active). Edit and auto-scoped users never send it.
+    if (!isEdit && isSuperAdmin && values.branch_id == null) {
+      form.setError("branch_id", { message: "Select a branch" })
+      return
+    }
+
     const payload: ClassInput = {
       name: values.name.trim(),
       numeric_level: Number(values.numeric_level),
@@ -112,7 +126,12 @@ export function ClassFormDialog({
       if (isEdit) {
         await updateMutation.mutateAsync({ id: schoolClass.id, ...payload })
       } else {
-        await createMutation.mutateAsync(payload)
+        await createMutation.mutateAsync({
+          ...payload,
+          ...(isSuperAdmin && values.branch_id != null
+            ? { branch_id: values.branch_id }
+            : {}),
+        })
       }
       toastSuccess(isEdit ? "Class updated." : "Class created.", {
         id: "class-form",
@@ -191,6 +210,30 @@ export function ClassFormDialog({
                 </FormItem>
               )}
             />
+
+            {isSuperAdmin && !isEdit ? (
+              <FormField
+                control={form.control}
+                name="branch_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Branch</FormLabel>
+                    <FormControl>
+                      <BranchSelect
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={submitting}
+                        aria-label="Branch"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      The branch this class belongs to.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <DialogFooter>
               <Button
