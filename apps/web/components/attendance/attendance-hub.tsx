@@ -8,6 +8,7 @@
  */
 
 import * as React from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import {
   Tabs,
@@ -27,13 +28,26 @@ export function AttendanceHub({
 }) {
   const defaultTab = canCreate ? "entry" : "class-sheet"
 
+  const params = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
   // With a single available surface, skip the tab chrome entirely.
   if (!canCreate || !canView) {
     return canCreate ? <StudentAttendanceEntry /> : <ClassAttendanceSheet />
   }
 
+  const fromUrl = params.get("view")
+  const active = fromUrl === "entry" || fromUrl === "class-sheet" ? fromUrl : defaultTab
+
+  const onValueChange = (next: string) => {
+    const search = new URLSearchParams(params.toString())
+    search.set("view", next)
+    router.replace(`${pathname}?${search.toString()}`, { scroll: false })
+  }
+
   return (
-    <Tabs defaultValue={defaultTab} className="gap-6">
+    <Tabs value={active} onValueChange={onValueChange} className="gap-6">
       <TabsList className="inline-flex h-auto w-fit gap-1 rounded-xl bg-subtle p-1">
         <TabsTrigger
           value="entry"

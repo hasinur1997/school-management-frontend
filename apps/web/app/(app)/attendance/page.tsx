@@ -24,7 +24,7 @@
  */
 
 import * as React from "react"
-import { useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Lock } from "lucide-react"
 
 import { useAuth } from "@/components/auth/auth-provider"
@@ -168,7 +168,12 @@ function AttendanceWorkspace({
     initialTeacherId && canUseTeacherAdmin ? "teacher-records" : surfaces[0]!.key
 
   return (
-    <Tabs key={defaultValue} defaultValue={defaultValue} className="gap-6">
+    <PersistentTabs
+      param="tab"
+      defaultValue={defaultValue}
+      values={surfaces.map((s) => s.key)}
+      className="gap-6"
+    >
       <TabsList className="inline-flex h-auto w-fit max-w-full flex-wrap justify-start gap-1 rounded-xl bg-subtle p-1">
         {surfaces.map((surface) => (
           <TabsTrigger
@@ -185,6 +190,44 @@ function AttendanceWorkspace({
           {surface.content}
         </TabsContent>
       ))}
+    </PersistentTabs>
+  )
+}
+
+/**
+ * Tabs whose active value is mirrored into a URL query param, so the selection
+ * survives a page refresh (and is shareable). Falls back to `defaultValue` when
+ * the param is absent or names a surface the current user can't see.
+ */
+function PersistentTabs({
+  param,
+  defaultValue,
+  values,
+  className,
+  children,
+}: {
+  param: string
+  defaultValue: string
+  values: string[]
+  className?: string
+  children: React.ReactNode
+}) {
+  const params = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const fromUrl = params.get(param)
+  const active = fromUrl && values.includes(fromUrl) ? fromUrl : defaultValue
+
+  const onValueChange = (next: string) => {
+    const search = new URLSearchParams(params.toString())
+    search.set(param, next)
+    router.replace(`${pathname}?${search.toString()}`, { scroll: false })
+  }
+
+  return (
+    <Tabs value={active} onValueChange={onValueChange} className={className}>
+      {children}
     </Tabs>
   )
 }
