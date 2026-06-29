@@ -206,6 +206,8 @@ Surface, structural border, radius 14, card shadow, padding `20–30px`. Section
 ## 3.10 Tabs / pills
 Underline tabs (active = `{accent}` text + 2px accent underline) **or** pill tabs (active = `{accent-soft}` bg, accent text/border). Horizontal scroll on overflow; each pill may show a label + progress sub-line.
 
+**Persistence (required):** every tab strip must persist its active tab so the selection survives a page refresh and is shareable — never rely on local state / `defaultValue` alone. Mirror the active tab into a URL search param (`?tab=`, or `?view=` where `tab` is already taken). Keep the default tab's URL clean (omit the param), and fall back to the default when the param is absent or points at a tab the user can't see. Reuse the existing helpers: `useDetailTab` (detail pages, in `components/detail/detail-tabs.tsx`) or follow the inline pattern in `components/attendance/attendance-hub.tsx` / `components/academic/management/academic-management.tsx`.
+
 ## 3.11 Data table
 - Container: card, `overflow: hidden`; overflow-x wrapper when wide.
 - **Header:** subtle-surface bg, structural bottom border, 11.5px/600 uppercase muted, padding `13px 18px`.

@@ -12,6 +12,8 @@
  * Non-super-admin users are auto-scoped by the API.
  */
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+
 import {
   Tabs,
   TabsContent,
@@ -35,8 +37,31 @@ export function AcademicManagement() {
   // shell's branch switcher and has no per-branch scope of its own.
   const { isSuperAdmin } = useBranch()
 
+  // The active tab is mirrored into `?tab=` so the selection survives a page
+  // refresh (and is shareable), matching the URL-persisted tabs used elsewhere
+  // (Attendance, detail pages). Falls back to "sessions" when the param is
+  // absent or points at a tab the user can't see (e.g. Branches for non-super).
+  const params = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const values = ["sessions", "classes", "assignments"]
+  if (isSuperAdmin) values.push("branches")
+
+  const fromUrl = params.get("tab")
+  const active = fromUrl && values.includes(fromUrl) ? fromUrl : "sessions"
+
+  const onValueChange = (next: string) => {
+    const search = new URLSearchParams(params.toString())
+    // "sessions" is the default — keep its URL clean (no param).
+    if (next === "sessions") search.delete("tab")
+    else search.set("tab", next)
+    const query = search.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
+
   return (
-    <Tabs defaultValue="sessions" className="gap-6">
+    <Tabs value={active} onValueChange={onValueChange} className="gap-6">
       <TabsList className="inline-flex h-auto w-fit max-w-full flex-wrap justify-start gap-1 rounded-xl bg-subtle p-1">
         <TabsTrigger value="sessions" className={tabTriggerClass}>
           Sessions
