@@ -160,7 +160,7 @@ const RESULT_TONE: Record<RowResult, Tone> = {
   pass: "success",
   fail: "error",
   absent: "neutral",
-  pending: "warning",
+  pending: "neutral",
 }
 
 /** Parse a raw mark to a number within the subject's range, else null. */
@@ -516,7 +516,7 @@ export function MarkEntryGrid() {
   return (
     <div className="flex flex-col gap-4">
       {/* Page header + breadcrumb + selectors */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-5">
         <div className="min-w-0">
           <nav className="flex flex-wrap items-center gap-2 text-[13px] font-medium text-copy-muted">
             <span>Examinations</span>
@@ -529,16 +529,16 @@ export function MarkEntryGrid() {
               Mark entry · All subjects
             </span>
           </nav>
-          <h1 className="mt-1.5 truncate text-[27px] font-bold leading-tight tracking-[-0.025em] text-copy-primary">
+          <h1 className="mt-2 truncate text-[28px] font-extrabold leading-[1.1] tracking-[-0.03em] text-copy-primary">
             Mark entry — all subjects
           </h1>
-          <p className="mt-[5px] text-[15px] text-copy-muted">
+          <p className="mt-1.5 text-[15px] text-copy-muted">
             Enter every subject for the class in one grid. Totals, GPA and result
-            preview as you type; grades are mapped by the API.
+            update automatically.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-auto">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[560px] lg:grid-cols-3">
           <Field label="Exam">
             <AcademicSelect
               value={examId}
@@ -632,8 +632,8 @@ export function MarkEntryGrid() {
         <>
           <StatsBar matrix={matrix} draft={draft} scale={scale} />
 
-          {/* Toolbar: view toggle + search + actions */}
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          {/* Toolbar: view toggle + search, then actions on their own row */}
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center">
               <div className="inline-flex gap-1 rounded-[11px] bg-subtle p-1">
                 <SegButton
@@ -662,7 +662,7 @@ export function MarkEntryGrid() {
                   }}
                   placeholder="Search name or roll…"
                   aria-label="Search students by roll or name"
-                  className="h-[38px] rounded-[10px] pl-9 text-[14px]"
+                  className="h-10 rounded-[10px] bg-surface pl-9 text-[14px]"
                 />
               </div>
             </div>
@@ -830,7 +830,7 @@ function StatsBar({
       </div>
       <div className="hidden h-[42px] w-px bg-surface-border sm:block" aria-hidden />
       <Stat label="Class avg" value={stats.avg} />
-      <Stat label="Top GPA" value={stats.topGpa} tone="info" />
+      <Stat label="Top GPA" value={stats.topGpa} accent />
       <Stat label="Pass rate" value={stats.passRate} tone="success" />
       <Stat label="Failing" value={stats.failCount} tone="error" />
       <Stat label="Absent" value={stats.absent} />
@@ -842,17 +842,24 @@ function Stat({
   label,
   value,
   tone = "neutral",
+  accent = false,
 }: {
   label: string
   value: string
   tone?: Tone
+  /** Render the value in the brand accent (e.g. Top GPA). */
+  accent?: boolean
 }) {
   return (
     <div className="flex flex-col gap-1">
       <span
         className={cn(
           "font-mono text-[22px] font-bold tracking-[-0.02em] tabular-nums",
-          tone === "neutral" ? "text-copy-primary" : TONE_TEXT[tone]
+          accent
+            ? "text-brand"
+            : tone === "neutral"
+              ? "text-copy-primary"
+              : TONE_TEXT[tone]
         )}
       >
         {value}
@@ -970,9 +977,18 @@ function MatrixView({
           <tbody>
             {students.map((student, rowIndex) => {
               const summary = summarize(student, subjects, draft, scale)
+              const rowFail = summary.result === "fail"
               return (
-                <tr key={student.enrollment_id}>
-                  <td className="sticky left-0 z-10 border-b border-r border-surface-border bg-surface px-4 py-2">
+                <tr
+                  key={student.enrollment_id}
+                  className={cn(rowFail && "bg-error/[0.05]")}
+                >
+                  <td
+                    className={cn(
+                      "sticky left-0 z-10 border-b border-r border-surface-border px-4 py-2",
+                      rowFail ? "bg-error/[0.05]" : "bg-surface"
+                    )}
+                  >
                     <div className="flex items-center gap-3">
                       <span className="w-5 font-mono text-[13px] text-copy-muted">
                         {formatRoll(student.roll_no)}
@@ -1012,13 +1028,13 @@ function MatrixView({
                           onChange={(event) => onMark(key, event.target.value)}
                           onKeyDown={(event) => onKey(event, rowIndex, col)}
                           className={cn(
-                            "h-[34px] w-14 rounded-lg border bg-surface text-center font-mono text-[14px] font-semibold tabular-nums outline-none transition-colors",
+                            "h-[38px] w-[60px] rounded-[10px] border bg-surface text-center font-mono text-[15px] font-bold tabular-nums text-copy-primary outline-none transition-colors placeholder:font-normal placeholder:text-copy-muted",
                             "focus:border-brand focus:ring-2 focus:ring-brand/20",
                             error
                               ? "border-error text-error"
                               : fail
-                                ? "border-error/40 text-error"
-                                : "border-surface-border text-copy-primary",
+                                ? "border-error/50 text-error"
+                                : "border-surface-border",
                             cell.absent && "bg-subtle text-copy-muted",
                             locked && "cursor-not-allowed opacity-70"
                           )}
@@ -1026,7 +1042,10 @@ function MatrixView({
                       </td>
                     )
                   })}
-                  <StickyCell className="text-right" style={{ right: 168 }}>
+                  <StickyCell
+                    className={cn("text-right", rowFail && "bg-error/[0.05]")}
+                    style={{ right: 168 }}
+                  >
                     <span
                       className={cn(
                         "font-mono font-bold tabular-nums",
@@ -1038,7 +1057,10 @@ function MatrixView({
                       {summary.total == null ? EMPTY : summary.total}
                     </span>
                   </StickyCell>
-                  <StickyCell className="text-center" style={{ right: 104 }}>
+                  <StickyCell
+                    className={cn("text-center", rowFail && "bg-error/[0.05]")}
+                    style={{ right: 104 }}
+                  >
                     <span
                       className={cn(
                         "font-mono font-bold tabular-nums",
@@ -1048,7 +1070,10 @@ function MatrixView({
                       {summary.gpa == null ? EMPTY : summary.gpa.toFixed(2)}
                     </span>
                   </StickyCell>
-                  <StickyCell className="text-center" style={{ right: 0 }}>
+                  <StickyCell
+                    className={cn("text-center", rowFail && "bg-error/[0.05]")}
+                    style={{ right: 0 }}
+                  >
                     <ResultChip result={summary.result} />
                   </StickyCell>
                 </tr>
@@ -1333,13 +1358,13 @@ function SubjectView({
                             }
                           }}
                           className={cn(
-                            "h-9 w-[62px] rounded-[9px] border bg-surface text-center font-mono text-[15px] font-semibold tabular-nums outline-none transition-colors",
+                            "h-[38px] w-[62px] rounded-[10px] border bg-surface text-center font-mono text-[15px] font-bold tabular-nums text-copy-primary outline-none transition-colors placeholder:font-normal placeholder:text-copy-muted",
                             "focus:border-brand focus:ring-2 focus:ring-brand/20",
                             error
                               ? "border-error text-error"
                               : status === "fail"
-                                ? "border-error/40 text-error"
-                                : "border-surface-border text-copy-primary",
+                                ? "border-error/50 text-error"
+                                : "border-surface-border",
                             cell.absent && "bg-subtle text-copy-muted",
                             locked && "cursor-not-allowed opacity-70"
                           )}
