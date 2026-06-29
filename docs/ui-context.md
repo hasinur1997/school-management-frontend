@@ -1,178 +1,311 @@
-# UI Context
+# Design System — School MS
 
-## Theme
+App-wide design system for the School MS management app. Foundations and components are grounded in the **actually implemented** values from the Mark Entry screens, then generalized so *any* screen — students, fees, attendance, exams, admissions, settings — can be built from this one document.
 
-A clean, professional administrative dashboard. Light by default, with a dark mode and a set of selectable accent themes (Blue is the default; Purple, Emerald, Rose, Amber, and Cyan are also offered). The visual language is utilitarian and data-dense — neutral surfaces, clear hierarchy, and restrained accent color reserved for primary actions and status.
+**Conventions**
+- Visual language: clean, data-dense admin dashboard. Neutral surfaces, clear hierarchy, restrained accent reserved for primary actions, active state, and status.
+- Values below are literal style values (the project styles inline, per its component model). Where a token is themeable, it's written `{token}` and resolved from the tables here.
+- Two independent theme axes: **color mode** (light / dark / system) and **accent** (6 options). They compose — pick one of each.
+- Default theme as shipped: **light + Purple**.
 
-All colors are defined as CSS custom properties in `globals.css` and mapped to Tailwind tokens via `@theme inline`. Components must use these tokens — no hardcoded hex values or raw Tailwind color classes like `zinc-*`. Dark mode is the same tokens re-pointed under a `.dark` selector.
+---
 
-### Theme model — two independent axes
+# 1. Foundations
 
-Theme selection has **two orthogonal axes**, both persisted (localStorage) and applied to the `<html>` element:
+## 1.1 Fonts
 
-1. **Color mode** — `light` | `dark` | `system`, applied via the `.dark` class (managed with `next-themes`). Controls the neutral surface/border/text palette.
-2. **Accent theme** — applied via a `data-accent` attribute (`blue` default, `purple`, `emerald`, `rose`, `amber`, `cyan`). Overrides **only** the accent tokens, layered on top of either color mode.
+| Role | Stack | Used for |
+| --- | --- | --- |
+| UI / sans | `"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif` | All labels, headings, buttons, body |
+| Numeric / mono | `"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace` | Money, IDs, marks, GPA, %, dates, counts, page numbers, `⌘K` |
 
-This keeps a single neutral palette per mode and avoids duplicating full palettes per theme. The user picks a color mode and an accent independently; "Purple", "Emerald", etc. in the theme switcher set `data-accent`, while Light/Dark/System set the mode. The neutral palette below is shared by every accent.
+Loaded from Google Fonts (400/500/600/700). Body: `-webkit-font-smoothing: antialiased`, `font-feature-settings: "cv11","ss01"`. Mono carries tabular figures so numeric columns align — use it for every figure that sits in a column or table.
 
-### Neutral palette (shared by all accents)
+## 1.2 Color — Neutrals (light / dark)
 
-| Role             | CSS Variable        | Light value          | Dark value           |
-| ---------------- | ------------------- | -------------------- | -------------------- |
-| Page background  | `--bg-base`         | `#f7f8fa`            | `#0c0d10`            |
-| Surface          | `--bg-surface`      | `#ffffff`            | `#15171c`            |
-| Elevated surface | `--bg-elevated`     | `#ffffff`            | `#1c1f26`            |
-| Subtle surface   | `--bg-subtle`       | `#eef0f4`            | `#22262f`            |
-| Default border   | `--border-default`  | `#e2e5ea`            | `#2a2e38`            |
-| Subtle border    | `--border-subtle`   | `#eef0f4`            | `#363b46`            |
-| Primary text     | `--text-primary`    | `#16181d`            | `#f0f1f4`            |
-| Secondary text   | `--text-secondary`  | `#4a4f59`            | `#c2c6cf`            |
-| Muted text       | `--text-muted`      | `#828896`            | `#828896`            |
-| Brand accent     | `--accent-primary`  | `#2563eb` (blue)     | `#3b82f6`            |
-| Brand dim        | `--accent-primary-dim` | `rgba(37,99,235,0.10)` | `rgba(59,130,246,0.14)` |
-| Success          | `--state-success`   | `#16a34a`            | `#34d399`            |
-| Warning          | `--state-warning`   | `#d97706`            | `#fbbf24`            |
-| Error            | `--state-error`     | `#dc2626`            | `#ff5a5e`            |
-| Info             | `--state-info`      | `#0891b2`            | `#22d3ee`            |
+| Role | Light | Dark |
+| --- | --- | --- |
+| Page background | `#f7f7f8` | `#0c0d10` |
+| Surface / card | `#ffffff` | `#15171c` |
+| Elevated surface (menus, popovers) | `#ffffff` | `#1c1f26` |
+| Subtle surface (table header, rails) | `#fafafa` | `#22262f` |
+| Hover surface | `#f4f4f5` | `#22262f` |
+| Track (segmented / progress) | `#efeff1` / `#eeeef0` | `#22262f` |
+| Border — structural | `#ececef` | `#2a2e38` |
+| Border — default / strong | `#e2e2e6` | `#363b46` |
+| Row divider | `#f0f0f2` | `#22262f` |
+| Text — primary | `#1b1b1f` | `#f0f1f4` |
+| Text — secondary | `#71717a` | `#c2c6cf` |
+| Text — muted | `#9a9aa3` | `#828896` |
+| Text — faint / placeholder / disabled | `#c4c4cc` | `#5b606b` |
 
-Tailwind utility names map to these variables. Use `bg-base`, `bg-surface`, `text-copy-primary`, `text-copy-muted`, `border-surface-border`, `text-brand`, `bg-accent-dim`, etc.
+## 1.3 Color mode mechanics
+- Modes: `light`, `dark`, `system`. Apply dark by toggling a `dark` class/flag on the root; `system` follows `prefers-color-scheme`.
+- Only the **neutral** palette (1.2) and status surfaces re-point between modes; the accent axis is independent.
+- Persist the chosen mode (localStorage). Default `light`.
 
-> The `--accent-primary` / `--accent-primary-dim` rows above are the **Blue** (default) accent. Selecting another accent re-points only those two variables; everything else is unchanged.
+## 1.4 Accent themes
+Accent overrides **only** the primary + its soft/dim derivatives. Everything else is shared. Default **Purple**.
 
-### Accent themes
+| Accent | Primary (light) | Primary (dark) | Soft (light bg) | Soft border (light) | Status |
+| --- | --- | --- | --- | --- | --- |
+| Purple *(default)* | `#7c3aed` | `#8b5cf6` | `#f3effe` | `#e7defb` | wired |
+| Blue | `#2563eb` | `#3b82f6` | `#e9f1fe` | `#d4e2fb` | wired |
+| Teal / Emerald | `#0d9488` | `#10b981` | `#e6f6f4` | `#c7ebe6` | wired |
+| Rose | `#e11d48` | `#fb7185` | `#fdeaef` | `#f8cdd8` | wired |
+| Amber | `#d97706` | `#f59e0b` | `#fef3e6` | `#f7dcb4` | recommended |
+| Cyan | `#0891b2` | `#22d3ee` | `#e3f5f9` | `#bce8f1` | recommended |
 
-Each accent overrides `--accent-primary` and `--accent-primary-dim` only. Defined as `[data-accent="…"]` (light) and `.dark[data-accent="…"]` (dark) blocks. Blue is the baseline (no attribute needed).
+Derivatives: **soft** ≈ 10% accent tint on light / 14% alpha on dark (`accent-dim`); **button shadow** = `0 2px 8px rgba(accent, .28)`; **focus ring** = `0 0 0 3px rgba(accent, .12–.16)`; **focus border** = a light tint of accent. Logo gradient (Purple): `linear-gradient(160deg,#8b5cf6,#6d28d9)` — recolor per accent if desired.
 
-| Accent  | `data-accent` | Light primary | Dark primary | Dim (light / dark)                          |
-| ------- | ------------- | ------------- | ------------ | ------------------------------------------- |
-| Blue    | _(default)_   | `#2563eb`     | `#3b82f6`    | `rgba(37,99,235,0.10)` / `rgba(59,130,246,0.14)` |
-| Purple  | `purple`      | `#7c3aed`     | `#8b5cf6`    | `rgba(124,58,237,0.10)` / `rgba(139,92,246,0.14)` |
-| Emerald | `emerald`     | `#059669`     | `#10b981`    | `rgba(5,150,105,0.10)` / `rgba(16,185,129,0.14)` |
-| Rose    | `rose`        | `#e11d48`     | `#fb7185`    | `rgba(225,29,72,0.10)` / `rgba(251,113,133,0.14)` |
-| Amber   | `amber`       | `#d97706`     | `#f59e0b`    | `rgba(217,119,6,0.10)` / `rgba(245,158,11,0.14)` |
-| Cyan    | `cyan`        | `#0891b2`     | `#22d3ee`    | `rgba(8,145,178,0.10)` / `rgba(34,211,238,0.14)` |
+> Currently 4 accents are exposed as the `accent` prop (Purple/Blue/Teal/Rose). Amber & Cyan are the recommended additions to reach the full 6 — add by appending a soft/border pair; no component changes needed.
 
-The state tokens (success/warning/error/info) are **not** affected by the accent — status color stays consistent across themes. New accents are added by appending one `[data-accent]` / `.dark[data-accent]` pair; no component changes.
+## 1.5 Color — Status (consistent across every accent)
 
-## Status Colors
+| Status (domain mapping) | fg (light) | bg | border | dot | fg (dark) |
+| --- | --- | --- | --- | --- | --- |
+| **Success** — Present / Paid / Active / Pass / Published | `#15803d` | `#e9f8ee` | `#cdeed7` | `#22c55e` | `#34d399` |
+| **Warning** — Late / Pending / Partial / grade C–D | `#c2410c` | `#fff2e8` | `#fbdcc4` | `#f97316` | `#fbbf24` |
+| **Error** — Absent / Unpaid / Fail / Rejected | `#dc2626` | `#fdecec` | `#f8d3d3` | `#ef4444` | `#ff5a5e` |
+| **Info** — Leave / TC / grade A-–B / informational | `#2563eb` | `#e9f1fe` | `#d4e2fb` | `#3b82f6` | `#22d3ee` |
 
-Status is communicated with a small `Badge` using the state tokens. Map domain statuses consistently:
+Status never changes with the accent. Map every domain status to one of these four.
 
-| Domain status                          | Token             |
-| -------------------------------------- | ----------------- |
-| Present / Paid / Active / Approved / Passed | `--state-success` |
-| Late / Pending / Partial               | `--state-warning` |
-| Absent / Unpaid / Inactive / Rejected / Failed | `--state-error`   |
-| Leave / TC / Informational             | `--state-info`    |
+## 1.6 Type scale
 
-## Typography
+| Role | Size / weight |
+| --- | --- |
+| Page title (h1) | `27px` / 700, tracking `-0.025em` |
+| Section / card title | `17–18px` / 600 |
+| Metric — primary | `26px` / 700 (mono) |
+| Metric — secondary | `22px` / 700 (mono) |
+| Hero numeric input | `40px` / 700 |
+| Brand / nav-active | `16px` / 600 |
+| Body, inputs, controls | `14–15px` / 400–600 |
+| Nav item | `14.5px` / 500 (active 600) |
+| Caption / helper | `12.5–13px` |
+| Badge | `12–13px` / 600–700 |
+| Eyebrow / table header | `11–12px` / 600, uppercase, tracking `0.04–0.08em` |
 
-| Role      | Font          | CSS Variable        |
-| --------- | ------------- | ------------------- |
-| UI text   | Inter / Geist Sans | `--font-sans`  |
-| Numeric / tabular | Geist Mono (tabular figures) | `--font-mono` |
+Floor: `11px` (uppercase micro-labels only); interactive text ≥ `13px`.
 
-Tables, currency, GPA, and IDs use tabular figures so columns align. The base `body` uses the sans font with `antialiased`.
+## 1.7 Spacing scale
+4px base. Common steps used across the app: `2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 18 · 20 · 24 · 26 · 32 · 36 · 48 · 64`. Prefer flex/grid `gap` over per-element margins. Page padding tightens on mobile (`16px`) → desktop (`26–36px`).
 
-## Border Radius
+## 1.8 Radius
+inputs / buttons `9–10px` · nav item `10px` · cards / panels / tables `14px` · modals / overlays `16px` · pills / dots / progress `999px` · logo / segmented track `11px` · toast `12px`.
 
-| Context              | Class         |
-| -------------------- | ------------- |
-| Badges / buttons          | `rounded-md` / `rounded-lg` |
-| Form fields (input, select, textarea) | `rounded-xl` |
-| Cards / panels / tables   | `rounded-xl`  |
-| Modals / overlays         | `rounded-2xl` |
+## 1.9 Elevation (shadow)
+| Level | Value |
+| --- | --- |
+| Subtle | `0 1px 2px rgba(16,16,20,.04)` |
+| Card | `0 1px 3px rgba(16,16,20,.05)` |
+| Popover / menu | `0 8px 24px rgba(16,16,20,.12)` |
+| Modal | `0 24px 60px rgba(16,16,20,.22)` |
+| Toast | `0 8px 28px rgba(16,16,20,.28)` |
+| Sticky-column edge | `±8px 0 8px -8px rgba(16,16,20,.08–.10)` |
+| Accent button | `0 2px 8px rgba(accent,.28)` |
 
-### Form-modal pattern
+Dark mode: deepen alphas (~1.6×) and add a hairline top border on raised surfaces for separation.
 
-Create/edit dialogs share one look, driven by the shared primitives (no per-form overrides):
+## 1.10 Icons
+Lucide-style **stroke** icons only (no fills). `stroke-width 1.8–2`, round caps/joins. Sizes: `13–17px` inline / in controls, `19px` nav, `20–21px` logo, `8×8` (32px) empty-state & metric glyphs.
 
-- **Fields**: `h-11`, `rounded-xl`, `px-4`, `text-base` inputs/selects/textareas with a default border; labels are `font-semibold text-foreground` above the field; `2.5`-unit gap label→field, `5`-unit gap between fields (two-column on `≥ sm`).
-- **Header**: pass an `icon` to `DialogHeader` to render the rounded `bg-primary/10` icon badge beside the bold title + muted description, with a full-width divider below. The close (X) sits top-right. No per-modal theme toggle — theming stays in the global topbar switcher.
-- **Footer**: `DialogFooter` is a clean top-bordered row (no muted bar), right-aligned, with `h-11` buttons — outline Cancel + primary submit (submit carries a check icon and the loading/disabled state).
+## 1.11 Z-index
+content `0` · sticky table columns `2–4` · topbar / sidebar `20` · dropdown / popover `40` · drawer / sheet `50` · modal `60` · toast `100`.
 
-## Layout Patterns
+## 1.12 Motion
+Durations `.14s` (hover/color), `.22–.25s` (enter/exit), `.3s` (progress). Easing `ease` / `ease-out`. Keyframes in use: `toastIn` (fade + 12px rise), `bannerIn` (fade + 6px rise). Respect `prefers-reduced-motion`.
 
-- **App shell**: a **fixed** left sidebar (full-height, collapsible) and a **fixed** topbar (full-width, spanning above the content); only the content area scrolls. The sidebar lists only the modules the user has permission for. Content is offset by the sidebar width and topbar height so nothing sits under the fixed bars.
-- **Topbar** (fixed, three zones):
-  - **Left**: app logo + brand/school name, aligned with the sidebar; doubles as the sidebar collapse toggle on small screens.
-  - **Center**: a global **search box** (command-palette style) that searches across all app entities and navigable options — modules, students, teachers, classes, settings, etc. Opens results in a dropdown/`Command` panel; `Cmd/Ctrl+K` focuses it.
-  - **Right**: a theme switcher (color mode + accent), a super-admin-only branch switcher, notifications, and the **user menu** — avatar (profile picture) + name with a dropdown for Profile, Settings, and Logout.
-- **List pages**: page header (title + primary action), a filter/search bar, and a paginated data table. Empty, loading (skeleton), and error states are required for every list.
-- **Detail pages**: header with title and contextual actions; content in cards grouped by concern.
-- **Forms**: single-column on narrow screens, two-column on wide; labels above inputs; inline field errors; a sticky action footer for long forms.
-- **Modals/dialogs**: centered overlay, `rounded-2xl`, used for create/edit, confirmations, and quick actions. Destructive confirmations use the error token.
-- **Public admission**: standalone, unauthenticated layout — no app shell, just a centered branded multi-step form.
+---
 
-## Responsive & Mobile
+# 2. Layout & app shell
 
-Mobile-first and responsive is a baseline requirement for **every** screen — design for small viewports first, then enhance upward. Nothing is desktop-only.
+**Grid:** CSS grid `256px / 1fr`, `min-height: 100vh`. Sidebar + topbar are fixed/sticky; only content scrolls. Content offset by sidebar width and topbar height.
 
-- **Breakpoints**: Tailwind defaults — `sm 640`, `md 768`, `lg 1024`, `xl 1280`. Treat `< lg` as "compact" (drawer nav) and `≥ lg` as "full" (persistent sidebar).
-- **App shell**:
-  - `≥ lg`: fixed persistent sidebar + fixed topbar; content offset by both.
-  - `< lg`: sidebar collapses to an off-canvas overlay drawer (Sheet) toggled by a hamburger in the topbar-left; topbar stays fixed full-width.
-  - Topbar **center search** shows as a full input on `≥ md` and collapses to a search icon (opens the `Command` dialog) on `< md`. The user menu keeps the avatar; the name label hides below `sm`.
-- **Tables**: never force horizontal scroll of critical data. On `< md`, either (a) wrap the table in an overflow-x container with the key column pinned, or (b) switch to a stacked **card list** (label/value rows) — prefer the card list for primary entity lists. Filters collapse into a "Filters" sheet/popover; bulk-action toolbar becomes a sticky bottom bar.
-- **Forms**: single column on `< lg`, two columns on `≥ lg`. The sticky action footer spans full width on mobile with full-width primary buttons.
-- **Dialogs**: centered modal on `≥ sm`; on `< sm` use a bottom **Sheet**/full-screen dialog so content and the keyboard fit.
-- **Touch targets**: interactive elements ≥ 44×44px on touch; adequate spacing in menus and row actions.
-- **Typography & spacing**: fluid/scaled down on small screens; page padding tightens (`px-4` mobile → `px-6/8` desktop). No fixed pixel widths that overflow narrow viewports; use `min-w-0`, `truncate`, and flex/grid wrapping to prevent overflow.
-- **Media & content**: images and charts are fluid (`max-w-full`); long text truncates with tooltips; horizontal overflow is never allowed on the page body.
-- **Testing**: every screen verified at 360px (mobile), 768px (tablet), and ≥ 1280px (desktop) before a feature is considered done.
+## 2.1 Sidebar
+- `border-right` structural, surface background, full height, sticky.
+- **Brand:** 38×38 gradient logo (radius 11, accent shadow) + 16px/600 name; doubles as collapse/menu toggle on small screens.
+- **Section labels:** 11px/600 uppercase muted, tracking `0.08em`, padding `14px 10px 6px`.
+- **Nav item:** flex gap 12, padding `9px 11px`, radius 10, 14.5px/500 secondary text. Hover → hover-surface + primary text. **Active** → `bg {accent-soft}`, `color {accent}`, weight 600.
+- Show only modules the user has permission for (see §7).
+- **Footer:** collapse toggle row, top border, muted.
 
-## Data Tables
+## 2.2 Topbar (3 zones)
+- 68px, structural bottom border, translucent surface + `backdrop-filter: blur(8px)`, sticky `z-index 20`.
+- **Left:** logo + school name (aligned to sidebar; hamburger on `<lg`).
+- **Center:** command-style search, max-width 540, 40px field, leading search icon, trailing `⌘K` chip; `Cmd/Ctrl+K` focuses; opens a results/command panel. Collapses to an icon → command dialog on `<md`.
+- **Right:** theme switcher (mode + accent) · super-admin branch switcher · notifications · user menu (38px avatar + name; name hides `<sm`).
 
-- Server-side pagination, default 15 rows, driven by the API's `meta` block (`current_page`, `per_page`, `total`, `last_page`).
-- Column types: text, badge (status), currency (right-aligned, tabular), date, and an actions column.
-- Row actions appear in a kebab/overflow menu; bulk actions (e.g. promotion, attendance) appear in a toolbar above the table when rows are selected.
-- Filters (branch, session, class, status, date range) sit above the table and map to API query params.
+## 2.3 Page templates
+- **List page:** header (title + primary action) → filter/search bar → paginated table. Must define loading, empty, error states.
+- **Detail page:** header (title + contextual actions) → content cards grouped by concern.
+- **Form page:** single column `<lg`, two columns `≥lg`, labels above inputs, inline errors, sticky action footer.
+- **Public (unauth):** standalone centered layout — no shell — for login, public admission, payment callbacks.
 
-## Forms and Validation
+## 2.4 Responsive
+Breakpoints (Tailwind defaults): `sm 640 · md 768 · lg 1024 · xl 1280`. `<lg` = compact (drawer nav); `≥lg` = full (persistent sidebar).
+- Sidebar → off-canvas drawer (`<lg`); topbar stays fixed.
+- Tables → stacked label/value **card list** for primary entities on `<md`; or pin the key column in an overflow-x wrapper. Filters → a "Filters" sheet; bulk-action bar → sticky bottom bar.
+- Forms → single column; sticky footer full-width with full-width primary button.
+- Dialogs → bottom **sheet** / full-screen on `<sm`.
+- Touch targets ≥ `44×44px`. Use `min-w-0` / `truncate` / wrapping; never allow body horizontal overflow. Verify at 360 / 768 / ≥1280.
 
-- Built with React Hook Form + Zod via shadcn `Form`. **Every** form has a Zod schema; **every** input is wired through `FormField` so it can show its own message.
-- Client validation mirrors the API's Form Request rules but is never authoritative. Validate on submit and on blur/change after the first submit so messages appear next to each field as the user fixes them.
-- **Per-field messages are mandatory**: every input renders a `FormMessage` (inline, error token color, below the field) — required, format, length, range, match (e.g. password confirm), and uniqueness errors. The field also gets an error style (`aria-invalid`, error border).
-- The API's `422` validation errors are mapped back onto the corresponding fields by name; field errors not tied to an input, plus non-field/general messages, show in a form-level error banner. The first invalid field is focused/scrolled into view.
-- Disable the submit button and show its loading state while submitting (see Feedback & States); never allow double submit.
-- On success: show a success toast and close/redirect/reset per the flow. On failure: keep entered values, surface the error, never silently swallow.
-- Money inputs are decimal strings, displayed and submitted exactly as the API expects (`decimal(12,2)`) — no float math.
+---
 
-## Feedback, Loading & Resilience
+# 3. Components
 
-These apply to **every** component and screen — no screen ships without its loading, empty, error, and success states.
+## 3.1 Buttons
+| Variant | Spec |
+| --- | --- |
+| Primary | `bg {accent}`, `#fff`, radius 9, h 38 (lg 42), 13.5–14px/600, accent shadow, leading icon |
+| Secondary / outline | `bg surface`, default border, primary text, radius 9–10; hover → hover-surface |
+| Ghost / muted | transparent, secondary text; hover → hover-surface + primary text |
+| Destructive | `bg #dc2626`/`#fff` (or error-outline); confirm first |
+| On-success | `#fff`, success border, success text; hover faint success |
+| Icon-only / touch | 38×38, radius 10; toggled state may invert to a solid status color |
 
-- **Loading / preloaders** (required wherever data is fetched or a mutation runs):
-  - Data fetch: `Skeleton` placeholders matching the final layout (table rows, cards, detail blocks) — not a bare spinner — for initial loads. Use a subtle inline spinner for background refetches.
-  - Route-level: a `loading.tsx` (Suspense fallback) for every async route segment so navigation never shows a blank screen.
-  - Mutations (submit/save/delete): the triggering button enters a disabled + spinner "loading" state with its label (e.g. "Saving…"); the relevant region may show an overlay/`aria-busy`. Bulk actions show progress.
-  - A top-level route-change progress indicator (thin bar) for navigations.
-- **Success feedback**: **every** successful mutation shows a concise success `toast` (Sonner) describing what happened — this includes small inline actions (toggles, inline edits, status changes, single-row actions), not just full forms. Destructive actions confirm first (Dialog) and then confirm success. To avoid stacking on rapid repeats, use a stable Sonner toast `id` per action so a new toast replaces the prior one rather than piling up.
-- **Error feedback**: every failed request shows a clear, human error message — inline (forms, fields) where it maps to input, otherwise a toast or an error state panel. Messages prefer the API's `message`, with a sensible fallback; never show raw stack traces or `[object Object]`.
-- **Empty states**: lists/tables/detail sections that resolve to no data render a purposeful empty state (icon + short copy + primary action), never a blank area.
-- **Resilience / no unexpected errors**:
-  - A root **error boundary** plus per-route `error.tsx` segments catch render/runtime errors and show a recoverable "Something went wrong" panel with a retry — the app never white-screens.
-  - Query/mutation errors are handled at the boundary or with `isError` UI; no unhandled promise rejections.
-  - Guard against undefined/partial API data (optional chaining, defaults); components must not crash on missing fields.
-  - Network/timeout/`5xx` errors render a retryable error state.
+Loading: disabled + spinner, label swaps to "Saving…/Publishing…"; never allow double submit.
 
-## Authentication & Authorization (every screen)
+## 3.2 Segmented control
+Track subtle-surface, padding 4, radius 11, gap 4. Buttons padding `8×15`, radius 8, 13.5px/600. **Active** → surface bg, `{accent}` text, subtle shadow. Inactive → transparent, secondary text. (2–3 short options; use a Select past that.)
 
-- **Authentication**: the entire authenticated route group is protected by a server-side session check; unauthenticated users are redirected to login. Only the public group (login, public admission, payment callbacks) is exempt. A `401` from the API clears the session and redirects to login.
-- **Authorization**: every screen and action is gated on **permissions** (never role names) from the `/auth/me` permission context. Nav items, route access, buttons, and row actions are hidden/disabled when the permission is absent; the server remains authoritative (`403`/`404` are respected, out-of-branch records render as not-found).
-- Use the `usePermission()` helper and `<Can permission="…">` gate consistently; a protected screen with no permission shows an access-denied/not-found state rather than partial UI.
-- Branch context: only super admin sends `branch_id`; switching branch re-scopes and invalidates queries.
+## 3.3 Inputs / textarea
+| Property | Value |
+| --- | --- |
+| Background | surface (`#fff` light / `#15171c` dark) |
+| Border | default border |
+| Radius | `9–10px` (form-field convention may use larger) |
+| Height | `38–40px` (textarea auto) |
+| Text | 14–15px; **numeric** inputs use Geist Mono 600, centered |
+| Placeholder | muted text |
+| Focus | `outline:none`, accent focus border, accent ring |
+| Invalid | error border + error ring; inline `FormMessage` below (see §4) |
+| Disabled / readOnly | faint text, subtle bg, no ring |
 
-## Currency, Dates, and Numbers
+Numeric fields: `inputmode="numeric"`, sanitized to digits, clamped to range; arrows/Enter move focus in grids.
 
-- Money: render the API's decimal string with a `৳`/configured currency prefix; right-align in tables.
-- Dates: a single app-wide format helper; show relative time only where it aids scanning (e.g. "submitted 2h ago").
-- GPA/grades: shown to two decimals using tabular figures.
+## 3.4 Select / picker
+Trigger pill: `inline-flex`, h 40, padding `0 13px`, default border, radius 10, surface bg, 14px/600, muted chevron; hover → hover-surface. Eyebrow label above (5px gap). Menu uses elevated surface + popover shadow.
 
-## Component Library
+## 3.5 Checkbox / radio / switch
+Square `16px` radius 4 (checkbox) / circle (radio); checked = `{accent}` fill + white glyph. Switch: pill track, `{accent}` when on, muted track off. All ≥ 44px touch area via padding.
 
-shadcn/ui on top of Tailwind v4. No custom design system. Components live in `components/ui/` and are added via the `shadcn` CLI rather than written from scratch. Core primitives in use: Button, Input, Select, Dialog, Table, Badge, Card, Tabs, DropdownMenu, Form, Toast/Sonner, Skeleton, Pagination, Calendar/DatePicker.
+## 3.6 Badge / status pill
+`inline-flex` gap 6, padding `4–5px 10–12px`, radius 999, 12–13px/600: 6px status dot + label using the matching status `fg/bg/border`. **Grade chip** variant: min-w 38, h 26, radius 8, mono 700.
 
-## Icons
+## 3.7 Avatar
+Circle, sizes 32/38/42px, `object-fit: cover`, neutral placeholder bg, optional initials fallback. In menus pair with name (14.5px/600) + chevron.
 
-Lucide React. Stroke-based icons only — no filled variants. Sizes: `h-4 w-4` inline, `h-5 w-5` in buttons and nav, `h-8 w-8` for empty-state and summary-card glyphs.
+## 3.8 Metric / stat card
+Card row: surface, structural border, radius 14, padding `20–24px`, gap 26, wrap. Each metric = mono value (22–26px/700) + 11–12px uppercase muted label; `1px` vertical dividers between; lead metric may carry an 8px progress bar (track + `{accent}` fill). Tint values by meaning (success/accent/error).
+
+## 3.9 Card / panel
+Surface, structural border, radius 14, card shadow, padding `20–30px`. Section title 17–18px/600 + optional muted description; group related fields/metrics by concern.
+
+## 3.10 Tabs / pills
+Underline tabs (active = `{accent}` text + 2px accent underline) **or** pill tabs (active = `{accent-soft}` bg, accent text/border). Horizontal scroll on overflow; each pill may show a label + progress sub-line.
+
+## 3.11 Data table
+- Container: card, `overflow: hidden`; overflow-x wrapper when wide.
+- **Header:** subtle-surface bg, structural bottom border, 11.5px/600 uppercase muted, padding `13px 18px`.
+- **Rows:** row-divider border, padding `9px 18px`; hover subtle-surface. Status rows tint with the status bg (fail `#fef6f6`, etc.).
+- **Column types:** text · badge · currency (right-aligned, mono) · date · actions (kebab menu).
+- **Sticky columns:** freeze key/identity left and summary right with edge shadows; numeric body scrolls between.
+- **Footer:** aggregate row (subtotals/averages) on subtle surface.
+- **Bulk actions:** when rows selected, show a toolbar above (desktop) / sticky bottom bar (mobile).
+- Server-side pagination, default 15 rows.
+
+## 3.12 Pagination
+Footer flex row, structural top border, padding `14px 20px`. Range text 13px secondary. Prev/Next h 34, radius 8, outline; page numbers min-w 34, mono, **active** = `{accent}` bg / white. Disabled ends: opacity `.45`, default cursor.
+
+## 3.13 Banner / alert
+Full-width, status-tinted bg + border, radius 14, padding `14px 18px`, gap 12: status icon + bold title + sub-line + optional action button. Enter with `bannerIn`. Use for published/locked, warnings, info notices.
+
+## 3.14 Toast (Sonner)
+Fixed bottom-center, inverted dark surface, white text, padding `12px 20px`, radius 12, toast shadow, success check glyph. Enter `toastIn`; auto-dismiss ~2.2s. Use a stable toast `id` per action so rapid repeats replace rather than stack. **Every** successful mutation (incl. inline toggles) toasts.
+
+## 3.15 Dialog / modal
+Centered overlay (scrim `rgba(16,16,20,.4)`), elevated surface, radius 16, modal shadow, max-width ~`520–640px`. **Header:** accent-soft icon badge + bold title + muted description + divider; close (X) top-right. **Body:** form fields (§4). **Footer:** top-bordered right-aligned row, h 11 outline Cancel + primary submit (submit shows check + loading). Destructive confirmations use the error token. On `<sm` → bottom sheet / full-screen.
+
+## 3.16 Sheet / drawer
+Edge-anchored panel (left nav drawer, right filters), elevated surface, drawer shadow, slide-in. Scrim dismiss. Used for mobile nav, filters, and quick side detail.
+
+## 3.17 Tooltip
+Dark inverted surface, white 12px, radius 8, small shadow, 6px offset; for truncated text and icon-only controls.
+
+## 3.18 Breadcrumb
+Muted 13px segments + chevron separators; last segment secondary/primary 600. (Mark-entry header uses this pattern.)
+
+## 3.19 Empty state
+Centered: `8×8` stroke glyph (muted) + short title + one-line copy + primary action. Never leave a resolved-empty region blank.
+
+## 3.20 Skeleton / loading
+Skeleton blocks matching final layout (table rows, cards, detail blocks) for initial loads — not a bare spinner. Subtle inline spinner for background refetch. Route-level fallback per async segment; thin top progress bar on navigation. Mutations: button spinner + `aria-busy` region.
+
+## 3.21 Progress
+8px track (`#eeeef0` / dark subtle), `{accent}` fill, radius 999, `.3s` width transition. Bulk actions show determinate progress.
+
+## 3.22 File upload
+Dashed default-border dropzone, radius 14, subtle bg, centered glyph + prompt; on file → thumbnail/row with remove. Used for admission docs, photos.
+
+## 3.23 Grading-scale legend *(domain)*
+Inline wrap, 12.5px secondary: uppercase label + mono grade letters colored by band (A+/A success, A-/B info, C/D warning, F error) + threshold · GPA.
+
+---
+
+# 4. Forms & validation
+- Every form has a schema; every input shows its own message. Single column `<lg`, two-column `≥lg`.
+- **Field anatomy:** label (`600`, primary, above) → 2.5-unit gap → control → inline `FormMessage` (error token, below). 5-unit gap between fields.
+- Validate on submit, then on blur/change after first submit. Invalid field gets `aria-invalid` + error border/ring; first invalid field is focused/scrolled into view.
+- Map API `422` errors back onto fields by name; non-field errors → a form-level error banner.
+- Submit disabled + loading while pending; never double-submit. Success → toast + close/redirect/reset; failure → keep values, surface error.
+- **Money** inputs are decimal strings (`decimal(12,2)`), displayed/submitted exactly — no float math.
+
+---
+
+# 5. Feedback & states (every screen)
+- **Loading** — skeletons for fetch, button spinners for mutations, route fallback, top progress bar.
+- **Empty** — purposeful empty state (§3.19).
+- **Error** — human message (prefer API `message`), inline where it maps to a field else toast/panel; never raw stack traces or `[object Object]`.
+- **Success** — concise toast on every mutation, stable `id` to avoid stacking.
+- **Resilience** — root error boundary + per-route error segment with retry; guard undefined/partial data (optional chaining, defaults); network/`5xx` render a retryable state. The app never white-screens.
+
+---
+
+# 6. Data formatting
+- **Money:** API decimal string with a `৳`/configured prefix; right-aligned, mono, in tables.
+- **Dates:** one app-wide format helper; relative time ("2h ago") only where it aids scanning.
+- **GPA / grades:** two decimals, mono tabular.
+- **Numbers / IDs / counts:** mono so columns align.
+
+---
+
+# 7. Auth & permissions (every screen)
+- Authenticated route group behind a server session check; `401` clears session → login. Public group (login, admission, payment callback) exempt.
+- Gate on **permissions** (never role names) from the permission context. Hide/disable nav items, routes, buttons, and row actions when the permission is absent; server stays authoritative (`403`/`404` respected, out-of-branch records render as not-found). A protected screen with no permission shows access-denied/not-found, not partial UI.
+- **Branch context:** only super admin sends `branch_id`; switching branch re-scopes and invalidates queries.
+
+---
+
+# 8. Accessibility
+- Color is never the only signal — pair status color with a dot/icon/label.
+- Visible focus ring on every interactive element (accent ring). Maintain logical focus order; trap focus in modals/sheets; `Esc` closes.
+- Touch targets ≥ 44px; adequate menu/row spacing.
+- Respect `prefers-reduced-motion` and `prefers-color-scheme`.
+- Meet WCAG AA contrast for text on its surface in both modes.
+
+---
+
+# 9. Domain specifics (Mark Entry reference)
+Tweakable props demonstrated on the mark-entry screens:
+
+| Prop | Editor | Default | Range / options |
+| --- | --- | --- | --- |
+| `passMark` | range | `33` | 20–50 marks |
+| `maxMarks` | int | `100` | 20–100 (step 5) |
+| `pageSize` | int | `10` | 5–28 rows |
+| `highlightFails` | boolean | `true` | tint failing rows/cells |
+| `accent` | color | `#7c3aed` | Purple / Blue / Teal / Rose |
+
+View modes: density switch (Spreadsheet / Comfortable / Focus) and Matrix-grid / By-subject. Keyboard: arrows move between mark cells, Enter → next student; focused cell raises `z-index` above sticky columns.

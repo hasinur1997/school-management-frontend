@@ -10,11 +10,11 @@ import { Badge } from "@workspace/ui/components/badge"
 export type StatusTone = "success" | "warning" | "error" | "info" | "neutral"
 
 const TONE_CLASSES: Record<StatusTone, string> = {
-  success: "bg-success/10 text-success border-success/20",
-  warning: "bg-warning/10 text-warning border-warning/20",
-  error: "bg-error/10 text-error border-error/20",
-  info: "bg-info/10 text-info border-info/20",
-  neutral: "bg-subtle text-copy-secondary border-surface-border",
+  success: "bg-success-soft text-success border-success-border [&>span]:bg-success-dot",
+  warning: "bg-warning-soft text-warning border-warning-border [&>span]:bg-warning-dot",
+  error: "bg-error-soft text-error border-error-border [&>span]:bg-error-dot",
+  info: "bg-info-soft text-info border-info-border [&>span]:bg-info-dot",
+  neutral: "bg-subtle text-copy-secondary border-surface-border [&>span]:bg-copy-muted",
 }
 
 /**

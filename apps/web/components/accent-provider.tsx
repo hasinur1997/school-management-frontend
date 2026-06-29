@@ -3,10 +3,9 @@
 import * as React from "react"
 
 export const ACCENTS = [
-  { value: "indigo", label: "Indigo" },
-  { value: "blue", label: "Blue" },
   { value: "purple", label: "Purple" },
-  { value: "emerald", label: "Emerald" },
+  { value: "blue", label: "Blue" },
+  { value: "emerald", label: "Teal" },
   { value: "rose", label: "Rose" },
   { value: "amber", label: "Amber" },
   { value: "cyan", label: "Cyan" },
@@ -15,7 +14,7 @@ export const ACCENTS = [
 export type Accent = (typeof ACCENTS)[number]["value"]
 
 export const ACCENT_STORAGE_KEY = "accent"
-export const DEFAULT_ACCENT: Accent = "indigo"
+export const DEFAULT_ACCENT: Accent = "purple"
 
 interface AccentContextValue {
   accent: Accent
@@ -30,7 +29,7 @@ function isAccent(value: string | null): value is Accent {
 
 function applyAccent(accent: Accent) {
   const root = document.documentElement
-  // Blue is the baseline; it needs no attribute (matches globals.css :root).
+  // Purple is the baseline; it needs no attribute (matches globals.css :root).
   if (accent === DEFAULT_ACCENT) {
     root.removeAttribute("data-accent")
   } else {

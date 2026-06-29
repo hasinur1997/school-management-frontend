@@ -137,7 +137,7 @@ export function DetailHero({
         ) : (
           <div
             className={cn(
-              "grid size-[76px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-2xl font-semibold text-white ring-[3px] ring-offset-[3px] ring-offset-surface",
+              "grid size-[76px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-400 to-violet-700 text-2xl font-semibold text-white ring-[3px] ring-offset-[3px] ring-offset-surface",
               accent.ring
             )}
           >

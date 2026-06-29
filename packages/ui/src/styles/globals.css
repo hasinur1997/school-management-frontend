@@ -8,23 +8,40 @@
 @source "../**/*.{ts,tsx}";
 
 @theme inline {
-    /* Design-system tokens (ui-context.md) → Tailwind utility names */
+    /* Design-system tokens (ui-context.md §1) → Tailwind utility names */
     --color-base: var(--bg-base);
     --color-surface: var(--bg-surface);
     --color-elevated: var(--bg-elevated);
     --color-subtle: var(--bg-subtle);
+    --color-hover: var(--bg-hover);
+    --color-track: var(--bg-track);
     --color-surface-border: var(--border-default);
     --color-surface-border-subtle: var(--border-subtle);
+    --color-divider: var(--row-divider);
     --color-copy-primary: var(--text-primary);
     --color-copy-secondary: var(--text-secondary);
     --color-copy-muted: var(--text-muted);
+    --color-copy-faint: var(--text-faint);
     --color-brand: var(--accent-primary);
     --color-brand-dim: var(--accent-primary-dim);
     --color-accent-dim: var(--accent-primary-dim);
+    --color-accent-soft-border: var(--accent-soft-border);
     --color-success: var(--state-success);
+    --color-success-soft: var(--state-success-soft);
+    --color-success-border: var(--state-success-border);
+    --color-success-dot: var(--state-success-dot);
     --color-warning: var(--state-warning);
+    --color-warning-soft: var(--state-warning-soft);
+    --color-warning-border: var(--state-warning-border);
+    --color-warning-dot: var(--state-warning-dot);
     --color-error: var(--state-error);
+    --color-error-soft: var(--state-error-soft);
+    --color-error-border: var(--state-error-border);
+    --color-error-dot: var(--state-error-dot);
     --color-info: var(--state-info);
+    --color-info-soft: var(--state-info-soft);
+    --color-info-border: var(--state-info-border);
+    --color-info-dot: var(--state-info-dot);
 
     /* shadcn semantic tokens */
     --font-heading: var(--font-sans);
@@ -68,29 +85,63 @@
     --radius-4xl: calc(var(--radius) * 2.6);
     --font-sans: var(--font-sans);
     --font-mono: var(--font-mono);
+
+    /* Elevation scale — ui-context §1.9 */
+    --shadow-subtle: 0 1px 2px rgba(16, 16, 20, 0.04);
+    --shadow-card: 0 1px 3px rgba(16, 16, 20, 0.05);
+    --shadow-popover: 0 8px 24px rgba(16, 16, 20, 0.12);
+    --shadow-modal: 0 24px 60px rgba(16, 16, 20, 0.22);
+    --shadow-toast: 0 8px 28px rgba(16, 16, 20, 0.28);
+    /* Accent button shadow — tracks the active accent — ui-context §1.4 */
+    --shadow-accent: 0 2px 8px color-mix(in oklab, var(--primary) 28%, transparent);
+
+    /* Radii — ui-context §1.8 (modals/overlays 16, toast 12) */
+    --radius-modal: 16px;
+    --radius-toast: 12px;
+
+    /* Type scale — ui-context §1.6 */
+    --text-section: 17px; /* section / card / sheet title */
+    --text-eyebrow: 11.5px; /* table header / eyebrow */
 }
 
 :root {
-    /* Neutral palette — light (shared by all accents) */
-    --bg-base: #f7f8fa;
+    /* Neutral palette — light (shared by all accents) — ui-context §1.2 */
+    --bg-base: #f7f7f8;
     --bg-surface: #ffffff;
     --bg-elevated: #ffffff;
-    --bg-subtle: #eef0f4;
-    --border-default: #e2e5ea;
-    --border-subtle: #eef0f4;
-    --text-primary: #16181d;
-    --text-secondary: #4a4f59;
-    --text-muted: #828896;
+    --bg-subtle: #fafafa;
+    --bg-hover: #f4f4f5;
+    --bg-track: #efeff1;
+    --border-default: #e2e2e6; /* default / strong */
+    --border-subtle: #ececef; /* structural */
+    --row-divider: #f0f0f2;
+    --text-primary: #1b1b1f;
+    --text-secondary: #71717a;
+    --text-muted: #9a9aa3;
+    --text-faint: #c4c4cc;
 
-    /* Brand accent — Indigo (default). Re-pointed by [data-accent]. */
-    --accent-primary: #4f46e5;
-    --accent-primary-dim: rgba(79, 70, 229, 0.1);
+    /* Brand accent — Purple (default). Re-pointed by [data-accent]. */
+    --accent-primary: #7c3aed;
+    --accent-primary-dim: #f3effe; /* soft fill */
+    --accent-soft-border: #e7defb;
 
-    /* State tokens — never change across accents */
-    --state-success: #16a34a;
-    --state-warning: #d97706;
+    /* State tokens — never change across accents — ui-context §1.5 */
+    --state-success: #15803d; /* fg */
+    --state-success-soft: #e9f8ee; /* bg */
+    --state-success-border: #cdeed7;
+    --state-success-dot: #22c55e;
+    --state-warning: #c2410c;
+    --state-warning-soft: #fff2e8;
+    --state-warning-border: #fbdcc4;
+    --state-warning-dot: #f97316;
     --state-error: #dc2626;
-    --state-info: #0891b2;
+    --state-error-soft: #fdecec;
+    --state-error-border: #f8d3d3;
+    --state-error-dot: #ef4444;
+    --state-info: #2563eb;
+    --state-info-soft: #e9f1fe;
+    --state-info-border: #d4e2fb;
+    --state-info-dot: #3b82f6;
 
     /* shadcn semantic aliases mapped onto the tokens above */
     --background: var(--bg-base);
@@ -128,88 +179,110 @@
 }
 
 .dark {
-    /* Neutral palette — dark (re-points only the raw tokens) */
+    /* Neutral palette — dark (re-points only the raw tokens) — ui-context §1.2 */
     --bg-base: #0c0d10;
     --bg-surface: #15171c;
     --bg-elevated: #1c1f26;
     --bg-subtle: #22262f;
-    --border-default: #2a2e38;
-    --border-subtle: #363b46;
+    --bg-hover: #22262f;
+    --bg-track: #22262f;
+    --border-default: #363b46; /* default / strong */
+    --border-subtle: #2a2e38; /* structural */
+    --row-divider: #22262f;
     --text-primary: #f0f1f4;
     --text-secondary: #c2c6cf;
     --text-muted: #828896;
+    --text-faint: #5b606b;
 
-    /* Brand accent — Indigo (default) dark. Re-pointed by .dark[data-accent]. */
-    --accent-primary: #6366f1;
-    --accent-primary-dim: rgba(99, 102, 241, 0.14);
+    /* Brand accent — Purple (default) dark. Re-pointed by .dark[data-accent]. */
+    --accent-primary: #8b5cf6;
+    --accent-primary-dim: rgba(139, 92, 246, 0.14);
+    --accent-soft-border: rgba(139, 92, 246, 0.28);
 
-    /* State tokens — dark */
+    /* State tokens — dark — ui-context §1.5 (fg dark; soft/border derived) */
     --state-success: #34d399;
+    --state-success-soft: color-mix(in oklab, #34d399 14%, transparent);
+    --state-success-border: color-mix(in oklab, #34d399 26%, transparent);
+    --state-success-dot: #22c55e;
     --state-warning: #fbbf24;
+    --state-warning-soft: color-mix(in oklab, #fbbf24 14%, transparent);
+    --state-warning-border: color-mix(in oklab, #fbbf24 26%, transparent);
+    --state-warning-dot: #f97316;
     --state-error: #ff5a5e;
+    --state-error-soft: color-mix(in oklab, #ff5a5e 14%, transparent);
+    --state-error-border: color-mix(in oklab, #ff5a5e 26%, transparent);
+    --state-error-dot: #ef4444;
     --state-info: #22d3ee;
+    --state-info-soft: color-mix(in oklab, #22d3ee 14%, transparent);
+    --state-info-border: color-mix(in oklab, #22d3ee 26%, transparent);
+    --state-info-dot: #3b82f6;
 }
 
-/* Accent themes — re-point ONLY --accent-primary / --accent-primary-dim.
-   Indigo is the baseline; its explicit blocks let a scoped data-accent="indigo"
-   (e.g. a swatch in the theme switcher) resolve correctly regardless of the
-   ambient selection. */
-[data-accent="indigo"] {
-    --accent-primary: #4f46e5;
-    --accent-primary-dim: rgba(79, 70, 229, 0.1);
+/* Accent themes (ui-context §1.4) — re-point ONLY the accent tokens.
+   Purple is the baseline (matches :root above); its explicit blocks let a
+   scoped data-accent="purple" (e.g. a swatch in the theme switcher) resolve
+   correctly regardless of the ambient selection. Light soft/soft-border use the
+   explicit tints from §1.4; dark uses a 14% accent-dim + soft border alpha. */
+[data-accent="purple"] {
+    --accent-primary: #7c3aed;
+    --accent-primary-dim: #f3effe;
+    --accent-soft-border: #e7defb;
 }
 [data-accent="blue"] {
     --accent-primary: #2563eb;
-    --accent-primary-dim: rgba(37, 99, 235, 0.1);
-}
-[data-accent="purple"] {
-    --accent-primary: #7c3aed;
-    --accent-primary-dim: rgba(124, 58, 237, 0.1);
+    --accent-primary-dim: #e9f1fe;
+    --accent-soft-border: #d4e2fb;
 }
 [data-accent="emerald"] {
-    --accent-primary: #059669;
-    --accent-primary-dim: rgba(5, 150, 105, 0.1);
+    --accent-primary: #0d9488;
+    --accent-primary-dim: #e6f6f4;
+    --accent-soft-border: #c7ebe6;
 }
 [data-accent="rose"] {
     --accent-primary: #e11d48;
-    --accent-primary-dim: rgba(225, 29, 72, 0.1);
+    --accent-primary-dim: #fdeaef;
+    --accent-soft-border: #f8cdd8;
 }
 [data-accent="amber"] {
     --accent-primary: #d97706;
-    --accent-primary-dim: rgba(217, 119, 6, 0.1);
+    --accent-primary-dim: #fef3e6;
+    --accent-soft-border: #f7dcb4;
 }
 [data-accent="cyan"] {
     --accent-primary: #0891b2;
-    --accent-primary-dim: rgba(8, 145, 178, 0.1);
+    --accent-primary-dim: #e3f5f9;
+    --accent-soft-border: #bce8f1;
 }
 
-.dark[data-accent="indigo"] {
-    --accent-primary: #6366f1;
-    --accent-primary-dim: rgba(99, 102, 241, 0.14);
+.dark[data-accent="purple"] {
+    --accent-primary: #8b5cf6;
+    --accent-primary-dim: rgba(139, 92, 246, 0.14);
+    --accent-soft-border: rgba(139, 92, 246, 0.28);
 }
 .dark[data-accent="blue"] {
     --accent-primary: #3b82f6;
     --accent-primary-dim: rgba(59, 130, 246, 0.14);
-}
-.dark[data-accent="purple"] {
-    --accent-primary: #8b5cf6;
-    --accent-primary-dim: rgba(139, 92, 246, 0.14);
+    --accent-soft-border: rgba(59, 130, 246, 0.28);
 }
 .dark[data-accent="emerald"] {
     --accent-primary: #10b981;
     --accent-primary-dim: rgba(16, 185, 129, 0.14);
+    --accent-soft-border: rgba(16, 185, 129, 0.28);
 }
 .dark[data-accent="rose"] {
     --accent-primary: #fb7185;
     --accent-primary-dim: rgba(251, 113, 133, 0.14);
+    --accent-soft-border: rgba(251, 113, 133, 0.28);
 }
 .dark[data-accent="amber"] {
     --accent-primary: #f59e0b;
     --accent-primary-dim: rgba(245, 158, 11, 0.14);
+    --accent-soft-border: rgba(245, 158, 11, 0.28);
 }
 .dark[data-accent="cyan"] {
     --accent-primary: #22d3ee;
     --accent-primary-dim: rgba(34, 211, 238, 0.14);
+    --accent-soft-border: rgba(34, 211, 238, 0.28);
 }
 
 @layer base {
