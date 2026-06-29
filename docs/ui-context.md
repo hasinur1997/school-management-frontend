@@ -249,7 +249,10 @@ Skeleton blocks matching final layout (table rows, cards, detail blocks) for ini
 ## 3.22 File upload
 Dashed default-border dropzone, radius 14, subtle bg, centered glyph + prompt; on file → thumbnail/row with remove. Used for admission docs, photos.
 
-## 3.23 Grading-scale legend *(domain)*
+## 3.23 Date picker
+Never use the browser-native `type="date"`/`datetime-local` field — it ignores the theme. Use the shared `DatePicker` (`@workspace/ui/components/date-picker`): a standard themed **input you can type into** (app date format, `31 Jan 2025`; also accepts `1970-05-19`, `19/05/1970`, etc.) with a trailing ghost **calendar button** that opens the themed **Calendar** in a popover. Typing is the fast path for far-back dates — no clicking back month-by-month; inside the calendar, **month + year dropdowns** (`captionLayout="dropdown"`, the default) jump straight to any year, and `↓` from the input opens it. Value/IO is a plain ISO string (`YYYY-MM-DD`) so it drops into RHF/string state; pass `value`/`onValueChange`/`onBlur`/`name`. Bound the year range with `startMonth`/`endMonth` (defaults span 1940 → +10y) and restrict days with `disabledDates` (e.g. date of birth: `{ after: new Date() }`). Invalid state takes `aria-invalid` (error border/ring) like any field.
+
+## 3.24 Grading-scale legend *(domain)*
 Inline wrap, 12.5px secondary: uppercase label + mono grade letters colored by band (A+/A success, A-/B info, C/D warning, F error) + threshold · GPA.
 
 ---

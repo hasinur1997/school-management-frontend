@@ -46,7 +46,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@workspace/ui/components/form"
-import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 import {
   Table,
   TableBody,
@@ -580,10 +580,12 @@ export function StudentAttendanceEntry() {
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type="date"
-                      onChange={(event) => changeDate(event.target.value)}
+                    <DatePicker
+                      value={field.value}
+                      onValueChange={changeDate}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      placeholder="Select date"
                     />
                   </FormControl>
                   <FormMessage />

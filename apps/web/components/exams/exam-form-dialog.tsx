@@ -41,6 +41,7 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 import {
   Select,
   SelectContent,
@@ -389,7 +390,14 @@ export function ExamFormDialog({
                   <FormItem>
                     <FormLabel>Start date</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" disabled={submitting} />
+                      <DatePicker
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled={submitting}
+                        placeholder="Start date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -402,7 +410,14 @@ export function ExamFormDialog({
                   <FormItem>
                     <FormLabel>End date</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" disabled={submitting} />
+                      <DatePicker
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled={submitting}
+                        placeholder="End date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

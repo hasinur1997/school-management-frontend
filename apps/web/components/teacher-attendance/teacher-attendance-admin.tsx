@@ -32,6 +32,7 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 import {
   Select,
   SelectContent,
@@ -167,14 +168,14 @@ export function TeacherAttendanceAdmin({
               <label className="text-sm font-semibold text-copy-primary" htmlFor="teacher-attendance-date">
                 Date
               </label>
-              <Input
+              <DatePicker
                 id="teacher-attendance-date"
-                type="date"
                 value={date}
-                onChange={(event) => {
-                  setDate(event.target.value)
+                onValueChange={(value) => {
+                  setDate(value)
                   setPage(1)
                 }}
+                placeholder="Select date"
                 className="h-11"
               />
             </div>

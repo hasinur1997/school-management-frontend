@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 
 import type { AdmissionFormValues } from "./schema"
 
@@ -81,15 +82,30 @@ export function TextField({
             {required ? <Req /> : null}
           </FormLabel>
           <FormControl>
-            <Input
-              {...field}
-              value={(field.value as string) ?? ""}
-              type={type}
-              inputMode={inputMode}
-              placeholder={placeholder}
-              autoComplete={autoComplete}
-              disabled={disabled}
-            />
+            {type === "date" ? (
+              <DatePicker
+                value={(field.value as string) ?? ""}
+                onValueChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                disabled={disabled}
+                placeholder={placeholder ?? label}
+                captionLayout="dropdown"
+                startMonth={new Date(1950, 0)}
+                endMonth={new Date()}
+                disabledDates={{ after: new Date() }}
+              />
+            ) : (
+              <Input
+                {...field}
+                value={(field.value as string) ?? ""}
+                type={type}
+                inputMode={inputMode}
+                placeholder={placeholder}
+                autoComplete={autoComplete}
+                disabled={disabled}
+              />
+            )}
           </FormControl>
           <FormMessage />
         </FormItem>

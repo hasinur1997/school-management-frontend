@@ -28,6 +28,7 @@ import { Search, SearchX, Check, User, AlertTriangle } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { Card, CardContent } from "@workspace/ui/components/card"
 import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 import { Label } from "@workspace/ui/components/label"
 import { Badge } from "@workspace/ui/components/badge"
 import { API_BASE_URL, isNotFoundError } from "@/lib/api"
@@ -202,12 +203,16 @@ function FormView(props: {
                   *
                 </span>
               </Label>
-              <Input
+              <DatePicker
                 id="date_of_birth"
-                type="date"
                 value={props.dob}
-                onChange={(e) => props.onDob(e.target.value)}
+                onValueChange={props.onDob}
+                placeholder="Date of birth"
                 aria-invalid={!!props.error && !props.dob.trim()}
+                captionLayout="dropdown"
+                startMonth={new Date(1950, 0)}
+                endMonth={new Date()}
+                disabledDates={{ after: new Date() }}
               />
             </div>
 

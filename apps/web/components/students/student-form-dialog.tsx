@@ -36,6 +36,7 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 import { Button } from "@/components/button"
 import { isValidationError } from "@/lib/api"
 import { toastError, toastSuccess } from "@/lib/toast"
@@ -312,7 +313,18 @@ export function StudentFormDialog({
                   <FormItem>
                     <FormLabel>Date of birth</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" disabled={submitting} />
+                      <DatePicker
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled={submitting}
+                        placeholder="Date of birth"
+                        captionLayout="dropdown"
+                        startMonth={new Date(1950, 0)}
+                        endMonth={new Date()}
+                        disabledDates={{ after: new Date() }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

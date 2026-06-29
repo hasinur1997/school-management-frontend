@@ -31,6 +31,7 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Input } from "@workspace/ui/components/input"
+import { DatePicker } from "@workspace/ui/components/date-picker"
 import { Button } from "@/components/button"
 import { isValidationError } from "@/lib/api"
 import { toastError, toastSuccess } from "@/lib/toast"
@@ -179,7 +180,14 @@ export function SessionFormDialog({
                   <FormItem>
                     <FormLabel>Start date</FormLabel>
                     <FormControl>
-                      <Input type="date" disabled={submitting} {...field} />
+                      <DatePicker
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled={submitting}
+                        placeholder="Start date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,7 +201,14 @@ export function SessionFormDialog({
                   <FormItem>
                     <FormLabel>End date</FormLabel>
                     <FormControl>
-                      <Input type="date" disabled={submitting} {...field} />
+                      <DatePicker
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled={submitting}
+                        placeholder="End date"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
