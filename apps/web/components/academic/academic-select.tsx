@@ -116,7 +116,7 @@ export function AcademicSelect<T extends SelectId = SelectId>({
     <div className={cn("relative w-full min-w-[10rem]", className)}>
       {isLoading ? (
         <Loader2
-          className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-4 -translate-y-1/2 animate-spin text-copy-muted"
+          className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
           aria-hidden
         />
       ) : null}
@@ -129,12 +129,12 @@ export function AcademicSelect<T extends SelectId = SelectId>({
         onChange={(event) => handleValueChange(event.target.value)}
         disabled={effectiveDisabled}
         className={cn(
-          "h-10 w-full appearance-none rounded-[10px] border border-surface-border bg-surface py-1.5 pr-8 pl-3 text-[15px] font-medium text-copy-primary transition-colors outline-none",
+          "h-10 w-full appearance-none rounded-lg border border-input bg-transparent py-2 pr-8 pl-3.5 text-sm text-foreground transition-colors outline-none dark:bg-input/30",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-          "disabled:cursor-not-allowed disabled:bg-subtle disabled:opacity-50",
+          "disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50",
           "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
           "dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-          selectedValue == null && "font-normal text-copy-muted",
+          selectedValue == null && "text-muted-foreground",
           isLoading && "pl-8"
         )}
       >

@@ -24,6 +24,12 @@ import { BranchesManager } from "./branches-manager"
 import { ClassesManager } from "./classes-manager"
 import { SessionsManager } from "./sessions-manager"
 
+// Segmented-control tab styling shared by every trigger, matching the app-wide
+// convention (subtle track + surface-filled active pill) used elsewhere in the
+// shell so the academic tabs read the same as Attendance and the rest.
+const tabTriggerClass =
+  "h-9 flex-none rounded-lg px-4 text-sm font-medium text-copy-muted data-active:bg-surface data-active:text-copy-primary data-active:shadow-sm"
+
 export function AcademicManagement() {
   // Branch management is super-admin only (task 2.3) — it's the source for the
   // shell's branch switcher and has no per-branch scope of its own.
@@ -31,12 +37,20 @@ export function AcademicManagement() {
 
   return (
     <Tabs defaultValue="sessions" className="gap-6">
-      <TabsList>
-        <TabsTrigger value="sessions">Sessions</TabsTrigger>
-        <TabsTrigger value="classes">Classes</TabsTrigger>
-        <TabsTrigger value="assignments">Assignments</TabsTrigger>
+      <TabsList className="inline-flex h-auto w-fit max-w-full flex-wrap justify-start gap-1 rounded-xl bg-subtle p-1">
+        <TabsTrigger value="sessions" className={tabTriggerClass}>
+          Sessions
+        </TabsTrigger>
+        <TabsTrigger value="classes" className={tabTriggerClass}>
+          Classes
+        </TabsTrigger>
+        <TabsTrigger value="assignments" className={tabTriggerClass}>
+          Assignments
+        </TabsTrigger>
         {isSuperAdmin ? (
-          <TabsTrigger value="branches">Branches</TabsTrigger>
+          <TabsTrigger value="branches" className={tabTriggerClass}>
+            Branches
+          </TabsTrigger>
         ) : null}
       </TabsList>
 

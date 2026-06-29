@@ -210,7 +210,7 @@ export function SessionFormDialog({
                     <FormControl>
                       <input
                         type="checkbox"
-                        className="size-4 rounded border-surface-border accent-[--accent-primary]"
+                        className="size-4 rounded border-surface-border accent-brand"
                         checked={field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
                         disabled={submitting}

@@ -9,9 +9,8 @@
  */
 
 import * as React from "react"
-import { Loader2, Plus } from "lucide-react"
+import { Layers, Library, Loader2, Plus, type LucideIcon } from "lucide-react"
 
-import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@/components/button"
 import { Can } from "@/components/auth/can"
 import { toastError, toastSuccess } from "@/lib/toast"
@@ -30,7 +29,7 @@ import { SubjectFormDialog } from "./subject-form-dialog"
 
 export function ClassChildren({ classId }: { classId: string }) {
   return (
-    <div className="grid grid-cols-1 gap-6 border-t border-surface-border bg-subtle/30 p-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 border-t border-surface-border bg-subtle/50 p-3 sm:p-4 lg:grid-cols-2">
       <SectionsGroup classId={classId} />
       <SubjectsGroup classId={classId} />
     </div>
@@ -58,9 +57,11 @@ function SectionsGroup({ classId }: { classId: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-3.5">
       <ChildHeader
+        icon={Layers}
         title="Sections"
+        count={data?.length}
         onAdd={() => {
           setEditing(undefined)
           setFormOpen(true)
@@ -130,9 +131,11 @@ function SubjectsGroup({ classId }: { classId: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-3.5">
       <ChildHeader
+        icon={Library}
         title="Subjects"
+        count={data?.length}
         onAdd={() => {
           setEditing(undefined)
           setFormOpen(true)
@@ -181,10 +184,28 @@ function SubjectsGroup({ classId }: { classId: string }) {
   )
 }
 
-function ChildHeader({ title, onAdd }: { title: string; onAdd: () => void }) {
+function ChildHeader({
+  icon: Icon,
+  title,
+  count,
+  onAdd,
+}: {
+  icon: LucideIcon
+  title: string
+  count?: number
+  onAdd: () => void
+}) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <h4 className="text-sm font-semibold text-copy-primary">{title}</h4>
+      <div className="flex min-w-0 items-center gap-2">
+        <Icon className="size-4 shrink-0 text-copy-muted" aria-hidden />
+        <h4 className="text-sm font-semibold text-copy-primary">{title}</h4>
+        {count != null && count > 0 ? (
+          <span className="rounded-full bg-subtle px-2 py-0.5 font-mono text-xs leading-none text-copy-muted">
+            {count}
+          </span>
+        ) : null}
+      </div>
       <Can permission={ACADEMIC_MANAGE}>
         <Button variant="outline" size="sm" onClick={onAdd}>
           <Plus className="size-3.5" aria-hidden />
@@ -232,12 +253,16 @@ function ChildBody({
   }
   if (isEmpty) {
     return (
-      <p className="rounded-md border border-dashed border-surface-border px-3 py-3 text-sm text-copy-muted">
+      <p className="rounded-lg border border-dashed border-surface-border bg-subtle/40 px-3 py-4 text-center text-sm text-copy-muted">
         {emptyLabel}
       </p>
     )
   }
-  return <ul className="flex flex-col gap-1.5">{children}</ul>
+  return (
+    <ul className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border">
+      {children}
+    </ul>
+  )
 }
 
 function ChildRow({
@@ -252,17 +277,17 @@ function ChildRow({
   onDelete: () => void
 }) {
   return (
-    <li
-      className={cn(
-        "flex items-center justify-between gap-2 rounded-md border border-surface-border bg-surface px-3 py-2"
-      )}
-    >
-      <div className="flex min-w-0 items-center gap-2">
+    <li className="flex items-center justify-between gap-2 bg-surface px-3 py-2 transition-colors hover:bg-subtle">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span
+          className="size-1.5 shrink-0 rounded-full bg-accent-dim ring-2 ring-accent-soft-border"
+          aria-hidden
+        />
         <span className="truncate text-sm font-medium text-copy-primary">
           {label}
         </span>
         {meta ? (
-          <span className="shrink-0 font-mono text-xs text-copy-muted">
+          <span className="shrink-0 rounded-md bg-subtle px-1.5 py-0.5 font-mono text-xs text-copy-muted">
             {meta}
           </span>
         ) : null}

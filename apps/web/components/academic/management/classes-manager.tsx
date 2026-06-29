@@ -152,32 +152,46 @@ function ClassRow({
   const panelId = `class-${schoolClass.id}-children`
 
   return (
-    <li className="overflow-hidden rounded-xl border border-surface-border bg-surface">
-      <div className="flex items-center gap-2 p-3 sm:p-4">
+    <li
+      className={cn(
+        "overflow-hidden rounded-xl border bg-surface shadow-sm transition-colors",
+        expanded ? "border-accent-soft-border" : "border-surface-border"
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center gap-2 p-2.5 transition-colors sm:px-3",
+          expanded && "bg-accent-dim/50"
+        )}
+      >
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={expanded}
           aria-controls={panelId}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-dim text-brand">
+            <BookOpen className="size-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-semibold text-copy-primary">
+              {schoolClass.name}
+            </span>
+            <span className="block truncate text-xs text-copy-muted">
+              {schoolClass.numeric_level != null
+                ? `Level ${schoolClass.numeric_level} · `
+                : ""}
+              Sections &amp; subjects
+            </span>
+          </span>
           <ChevronDown
             className={cn(
-              "size-4 shrink-0 text-copy-muted transition-transform",
+              "size-4 shrink-0 text-copy-muted transition-transform group-hover:text-copy-secondary",
               expanded && "rotate-180"
             )}
             aria-hidden
           />
-          <span className="min-w-0">
-            <span className="block truncate font-medium text-copy-primary">
-              {schoolClass.name}
-            </span>
-            {schoolClass.numeric_level != null ? (
-              <span className="block truncate text-xs text-copy-muted">
-                Level {schoolClass.numeric_level}
-              </span>
-            ) : null}
-          </span>
         </button>
         <Can permission={ACADEMIC_MANAGE}>
           <RowActions
