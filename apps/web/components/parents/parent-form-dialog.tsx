@@ -55,6 +55,12 @@ type ParentFormValues = z.infer<typeof schema>
 
 const FIELD_NAMES = ["name", "phone", "email", "relation", "student_ids"] as const
 
+const RELATIONS: { value: ParentRelation; label: string }[] = [
+  { value: "father", label: "Father" },
+  { value: "mother", label: "Mother" },
+  { value: "guardian", label: "Guardian" },
+]
+
 const DEFAULT_VALUES: ParentFormValues = {
   name: "",
   phone: "",
@@ -151,13 +157,20 @@ export function ParentFormDialog({ open, onOpenChange }: ParentFormDialogProps) 
                     >
                       <FormControl>
                         <SelectTrigger className="h-9 w-full">
-                          <SelectValue placeholder="Select relation" />
+                          <SelectValue placeholder="Select relation">
+                            {(v: string) =>
+                              RELATIONS.find((r) => r.value === v)?.label ??
+                              "Select relation"
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="father">Father</SelectItem>
-                        <SelectItem value="mother">Mother</SelectItem>
-                        <SelectItem value="guardian">Guardian</SelectItem>
+                        {RELATIONS.map((r) => (
+                          <SelectItem key={r.value} value={r.value}>
+                            {r.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

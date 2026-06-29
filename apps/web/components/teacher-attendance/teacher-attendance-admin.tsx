@@ -190,7 +190,13 @@ export function TeacherAttendanceAdmin({
                 }}
               >
                 <SelectTrigger id="teacher-attendance-status" className="h-11">
-                  <SelectValue />
+                  <SelectValue>
+                    {(v: string) =>
+                      v === ALL_STATUSES
+                        ? "All statuses"
+                        : attendanceStatusLabel(v as AttendanceStatusValue)
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL_STATUSES}>All statuses</SelectItem>
@@ -461,7 +467,11 @@ function TeacherAttendanceCorrectionDialog({
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="h-11">
-                          <SelectValue />
+                          <SelectValue>
+                            {(v: string) =>
+                              attendanceStatusLabel(v as AttendanceStatusValue)
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

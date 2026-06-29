@@ -417,7 +417,12 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                             disabled={submitting}
                           >
                             <SelectTrigger aria-label="Parent relation" className="w-full">
-                              <SelectValue placeholder="Select relation" />
+                              <SelectValue placeholder="Select relation">
+                                {(v: string) =>
+                                  RELATIONS.find((r) => r.value === v)?.label ??
+                                  "Select relation"
+                                }
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {RELATIONS.map((r) => (
