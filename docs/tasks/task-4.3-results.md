@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 4 — Exams, Results, Promotion |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 4.2 |
 | Blocks | 4.4 |
 | Feature spec | `feature-specs/13-results.md` |
@@ -24,7 +24,7 @@ View per-exam and weighted annual results, search students, and (with permission
 - GPA/grades: tabular figures, two decimals (`ui-context.md`).
 
 ## Check When Done
-- [ ] Permitted user can search/view any student's results; students/parents see only their own.
-- [ ] Annual result + pass/fail reflect the API exactly; generate/publish work with confirmation.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Permitted user can search/view any student's results; students/parents see only their own.
+- [x] Annual result + pass/fail reflect the API exactly; generate/publish work with confirmation.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

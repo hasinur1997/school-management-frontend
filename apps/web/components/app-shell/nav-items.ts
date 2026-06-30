@@ -156,7 +156,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Results",
         href: "/results",
         icon: Award,
-        permission: "results.view",
+        permission: "result.view",
       },
       {
         label: "Promotion",

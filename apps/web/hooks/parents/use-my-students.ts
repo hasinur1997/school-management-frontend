@@ -11,10 +11,11 @@ import { useQuery } from "@tanstack/react-query"
 import { api, queryKey, STALE_TIME } from "@/lib/api"
 import type { LinkedStudent } from "@/types/parent"
 
-export function useMyStudents() {
+export function useMyStudents(enabled = true) {
   return useQuery({
     queryKey: queryKey("parents", "my-students"),
     queryFn: () => api.get<LinkedStudent[]>("/me/students"),
+    enabled,
     staleTime: STALE_TIME.STANDARD,
   })
 }

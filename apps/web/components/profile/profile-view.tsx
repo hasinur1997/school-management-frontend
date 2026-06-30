@@ -14,7 +14,6 @@ import * as React from "react"
 import { useSearchParams } from "next/navigation"
 import {
   CalendarOff,
-  FileText,
   GraduationCap,
   IdCard,
   ImageUp,
@@ -59,6 +58,7 @@ import {
   type Student,
 } from "@/types/student"
 import { StudentEnrollments } from "@/components/students/student-enrollments"
+import { MyResultsPanel } from "@/components/results"
 import {
   StudentAddressCards,
   StudentGuardiansCard,
@@ -337,13 +337,7 @@ function StudentSelfPanel({ student }: { student: Student }) {
   }
 
   if (active === "results") {
-    return (
-      <ComingSoonPanel
-        icon={FileText}
-        title="Results aren't available yet"
-        description="Your exam results will appear here once the results module is live."
-      />
-    )
+    return <MyResultsPanel />
   }
 
   if (active === "leaves") {

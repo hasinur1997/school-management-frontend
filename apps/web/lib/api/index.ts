@@ -6,6 +6,9 @@
 export {
   api,
   http,
+  publicApi,
+  publicHttp,
+  publicRequest,
   request,
   requestPaginated,
   API_BASE_URL,

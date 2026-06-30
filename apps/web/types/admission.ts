@@ -10,7 +10,9 @@
 
 /** `GET /public/settings` → a class a visitor can apply for (nested under its branch). */
 export interface PublicClass {
-  id: number
+  id: number | string
+  /** Opaque public id, when the API returns it separately from `id`. */
+  public_id?: string | null
   name: string
 }
 

@@ -44,6 +44,7 @@ import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
+import { EnrollmentResultsPanel } from "@/components/results"
 import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import {
   DetailActions,
@@ -418,10 +419,11 @@ function StudentDetailTabs({
       ) : active === "attendance" ? (
         <StudentAttendancePanel studentId={student.id} />
       ) : active === "results" ? (
-        <ComingSoonPanel
-          icon={FileText}
-          title="Results aren't available yet"
-          description="This student's exam results will appear here once the results module is live."
+        <EnrollmentResultsPanel
+          enrollmentId={
+            student.enrollments?.find((e) => e.status === "active")?.id ??
+            student.enrollments?.[0]?.id
+          }
         />
       ) : active === "leaves" ? (
         <ComingSoonPanel

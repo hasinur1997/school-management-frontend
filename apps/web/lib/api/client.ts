@@ -40,6 +40,18 @@ export const http: AxiosInstance = axios.create({
   },
 })
 
+/**
+ * Token-free Axios instance for standalone public endpoints. It shares base URL,
+ * envelope handling, and normalized errors with `http`, but intentionally has no
+ * auth/branch request interceptor.
+ */
+export const publicHttp: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    Accept: "application/json",
+  },
+})
+
 // Request: attach the bearer token from the session, when present, plus the
 // active `branch_id` for super-admin sessions (the branch bridge stays `null`
 // for everyone else, so non-super-admin users never send it — see `branch.ts`).
@@ -60,6 +72,11 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Response: pass success envelopes straight through; map failures to typed
 // errors so `request<T>()` below can return the unwrapped payload.
 http.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<ApiErrorBody>) => Promise.reject(normalizeError(error))
+)
+
+publicHttp.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorBody>) => Promise.reject(normalizeError(error))
 )
@@ -125,6 +142,14 @@ export async function request<T>(
   return { data, meta }
 }
 
+export async function publicRequest<T>(
+  config: AxiosRequestConfig
+): Promise<ApiResult<T>> {
+  const response = await publicHttp.request<ApiEnvelope<T>>(config)
+  const { data, meta } = response.data
+  return { data, meta }
+}
+
 /**
  * Typed verb helpers. Each resolves to the unwrapped `data` for the common
  * case; reach for `request<T>()` directly when a caller also needs `meta`
@@ -157,6 +182,11 @@ export const api = {
 
   delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
     (await request<T>({ ...config, method: "DELETE", url })).data,
+}
+
+export const publicApi = {
+  get: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
+    (await publicRequest<T>({ ...config, method: "GET", url })).data,
 }
 
 /**
