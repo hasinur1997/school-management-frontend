@@ -366,7 +366,19 @@ export function PublicResultLookup() {
               )}
             />
 
-            <div className="flex flex-col gap-2 self-start md:col-span-2 xl:col-span-1 xl:self-end">
+            {/*
+              Top-aligned with an invisible label spacer (styled by the scoped
+              `.admission-fields` label CSS) so the button stays level with the
+              inputs when validation messages grow the row below them.
+            */}
+            <div className="flex flex-col gap-2.5 self-start md:col-span-2 xl:col-span-1">
+              <label
+                data-slot="form-label"
+                aria-hidden="true"
+                className="invisible hidden select-none xl:block"
+              >
+                Search
+              </label>
               <Button
                 type="submit"
                 loading={loading}
