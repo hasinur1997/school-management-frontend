@@ -3,7 +3,8 @@
 /**
  * Approve an admission application (task 2.6). Approval is the office-use box
  * that converts an application into a student, so it collects the academic
- * session, the class (defaults to the desired class, may be overridden) + its
+ * session, the class (fixed to the desired class when the applicant entered
+ * one, otherwise selectable) + its
  * section, a roll number, an optional admission number (auto-generated when
  * blank), and whether to also create a linked parent account
  * (`ApproveAdmissionRequest`). RHF + Zod; `422` (incl. the roll-uniqueness and
@@ -155,6 +156,13 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
   }, [open, admission, sessions, form])
 
   const submitting = form.formState.isSubmitting
+  // When the applicant chose a desired class, admission happens into that class
+  // and the field is fixed; a class select is offered only when no class was
+  // entered. Rendered as a read-only input showing the class *name* (not a
+  // ClassSelect) so it displays correctly even when the desired class isn't in
+  // the reviewer's branch-scoped `/classes` options.
+  const desiredClass = admission?.desired_class
+  const classLocked = desiredClass?.id != null
   const classId = form.watch("class_id")
   const createParent = form.watch("create_parent_account")
 
@@ -288,16 +296,30 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                       <FormItem>
                         <FormLabel>Class</FormLabel>
                         <FormControl>
-                          <ClassSelect
-                            value={field.value}
-                            onValueChange={(next) => {
-                              field.onChange(next)
-                              form.setValue("section_id", null)
-                            }}
-                            disabled={submitting}
-                            aria-label="Class"
-                          />
+                          {classLocked ? (
+                            <Input
+                              value={desiredClass?.name ?? "Desired class"}
+                              readOnly
+                              disabled
+                              aria-label="Class"
+                            />
+                          ) : (
+                            <ClassSelect
+                              value={field.value}
+                              onValueChange={(next) => {
+                                field.onChange(next)
+                                form.setValue("section_id", null)
+                              }}
+                              disabled={submitting}
+                              aria-label="Class"
+                            />
+                          )}
                         </FormControl>
+                        {classLocked ? (
+                          <FormDescription>
+                            Fixed to the applicant&apos;s desired class.
+                          </FormDescription>
+                        ) : null}
                         <FormMessage />
                       </FormItem>
                     )}
