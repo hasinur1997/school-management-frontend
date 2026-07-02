@@ -308,18 +308,19 @@ export type ParentRelation = "father" | "mother" | "guardian"
 /**
  * `POST /admissions/{id}/approve` body — the office-use box that converts an
  * application into a student (`ApproveAdmissionRequest`): the academic session,
- * the class (may override the desired class) + its section, a roll number
- * (unique within session+class+section), an optional admission number
- * (auto-generated when blank), and whether to also create a linked parent
- * account (and under which relation).
+ * the class (may override the desired class), an optional section (a class
+ * may have none), an optional roll number (unique within
+ * session+class+section; the API assigns the class's next roll when null), an
+ * optional admission number (auto-generated when blank), and whether to also
+ * create a linked parent account (and under which relation).
  */
 export interface AdmissionApproveInput {
   // Class/section/session are `public_id` hashes resolved server-side; roll_no
   // is a real integer.
   session_id: string
   class_id: string
-  section_id: string
-  roll_no: number
+  section_id: string | null
+  roll_no: number | null
   admission_no?: string | null
   create_parent_account: boolean
   parent_relation?: ParentRelation | null

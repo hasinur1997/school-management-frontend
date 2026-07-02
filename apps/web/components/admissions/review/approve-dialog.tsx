@@ -4,9 +4,10 @@
  * Approve an admission application (task 2.6). Approval is the office-use box
  * that converts an application into a student, so it collects the academic
  * session, the class (fixed to the desired class when the applicant entered
- * one, otherwise selectable) + its
- * section, a roll number, an optional admission number (auto-generated when
- * blank), and whether to also create a linked parent account
+ * one, otherwise selectable), an optional section (only selectable when the
+ * class has sections), an optional roll number (blank = the API assigns the class's next
+ * roll), an optional admission number (auto-generated when blank), and whether
+ * to also create a linked parent account — on by default, as father
  * (`ApproveAdmissionRequest`). RHF + Zod; `422` (incl. the roll-uniqueness and
  * branch-scoped class/section checks) maps back onto the fields.
  *
@@ -88,12 +89,6 @@ const schema = z
     if (values.class_id == null) {
       ctx.addIssue({ path: ["class_id"], code: z.ZodIssueCode.custom, message: "Select a class" })
     }
-    if (values.section_id == null) {
-      ctx.addIssue({ path: ["section_id"], code: z.ZodIssueCode.custom, message: "Select a section" })
-    }
-    if (values.roll_no == null) {
-      ctx.addIssue({ path: ["roll_no"], code: z.ZodIssueCode.custom, message: "Enter a roll number" })
-    }
     if (values.create_parent_account && values.parent_relation == null) {
       ctx.addIssue({
         path: ["parent_relation"],
@@ -135,8 +130,8 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
       section_id: null,
       roll_no: null,
       admission_no: "",
-      create_parent_account: false,
-      parent_relation: null,
+      create_parent_account: true,
+      parent_relation: "father",
     },
   })
 
@@ -150,8 +145,8 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
       section_id: null,
       roll_no: null,
       admission_no: "",
-      create_parent_account: false,
-      parent_relation: null,
+      create_parent_account: true,
+      parent_relation: "father",
     })
   }, [open, admission, sessions, form])
 
@@ -182,8 +177,8 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
         id: admission.id,
         session_id: values.session_id!,
         class_id: values.class_id!,
-        section_id: values.section_id!,
-        roll_no: values.roll_no!,
+        section_id: values.section_id ?? null,
+        roll_no: values.roll_no ?? null,
         admission_no: values.admission_no?.trim() ? values.admission_no.trim() : null,
         create_parent_account: values.create_parent_account,
         parent_relation: values.create_parent_account ? values.parent_relation : null,
@@ -340,6 +335,9 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                             aria-label="Section"
                           />
                         </FormControl>
+                        <FormDescription>
+                          Optional — only if the class has sections.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -363,10 +361,14 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                               const v = e.target.value
                               field.onChange(v === "" ? null : Number(v))
                             }}
+                            placeholder="Auto-generated"
                             disabled={submitting}
                             aria-label="Roll number"
                           />
                         </FormControl>
+                        <FormDescription>
+                          Blank = next roll in the class.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -406,7 +408,10 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                             checked={field.value}
                             onChange={(e) => {
                               field.onChange(e.target.checked)
-                              if (!e.target.checked) form.setValue("parent_relation", null)
+                              form.setValue(
+                                "parent_relation",
+                                e.target.checked ? "father" : null,
+                              )
                             }}
                             disabled={submitting}
                             className="mt-0.5 size-4 shrink-0 rounded border-input accent-brand"
