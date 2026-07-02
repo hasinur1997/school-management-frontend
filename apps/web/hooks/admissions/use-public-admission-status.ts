@@ -17,7 +17,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { api, queryKey, STALE_TIME } from "@/lib/api"
+import { publicApi, queryKey, STALE_TIME } from "@/lib/api"
 import type { AdmissionStatus } from "@/types/admission"
 
 export interface PublicAdmissionStatusArgs {
@@ -40,7 +40,7 @@ export function usePublicAdmissionStatus({
       const search = new URLSearchParams({
         date_of_birth: dateOfBirth as string,
       })
-      return api.get<AdmissionStatus>(
+      return publicApi.get<AdmissionStatus>(
         `/public/admissions/${encodeURIComponent(applicationNo as string)}/status?${search}`
       )
     },

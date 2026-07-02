@@ -12,12 +12,12 @@
 
 import { useMutation } from "@tanstack/react-query"
 
-import { api } from "@/lib/api"
+import { publicApi } from "@/lib/api"
 import type { AdmissionSubmitResponse } from "@/types/admission"
 
 export function useSubmitAdmission() {
   return useMutation({
     mutationFn: (form: FormData) =>
-      api.post<AdmissionSubmitResponse>("/public/admissions", form),
+      publicApi.post<AdmissionSubmitResponse>("/public/admissions", form),
   })
 }

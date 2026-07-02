@@ -12,13 +12,13 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { api, queryKey, STALE_TIME } from "@/lib/api"
+import { publicApi, queryKey, STALE_TIME } from "@/lib/api"
 import type { PublicSettings } from "@/types/admission"
 
 export function usePublicSettings() {
   return useQuery({
     queryKey: queryKey("public-settings", "detail"),
-    queryFn: () => api.get<PublicSettings>("/public/settings"),
+    queryFn: () => publicApi.get<PublicSettings>("/public/settings"),
     staleTime: STALE_TIME.REFERENCE,
     // Normalize defensively: the API may omit arrays/flags. Guarantee the shape
     // every consumer relies on so the wizard never crashes on a partial payload.

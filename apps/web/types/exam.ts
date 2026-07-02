@@ -85,6 +85,8 @@ export interface Exam {
   class_ids?: string[]
   /** Targeted classes with names (empty for an all-classes exam). For display. */
   classes?: ExamClass[]
+  /** Branch the exam belongs to (`public_id` hash). Used to pre-fill the edit form. */
+  branch_id?: string | null
   start_date?: string | null
   end_date?: string | null
   status: ExamStatus
@@ -108,7 +110,9 @@ export interface ExamListParams {
 /**
  * `POST /exams` body. An exam targets a set of classes (`class_ids`) or all
  * classes in a branch (`all_classes`). Branch is derived server-side from the
- * targeted classes (or, for an all-classes exam, the active branch).
+ * targeted classes; for an all-classes exam it comes from `branch_id`, which
+ * super admin must pick explicitly. Everyone else is scoped server-side and
+ * omits `branch_id`.
  */
 export interface ExamInput {
   session_id: string
@@ -117,13 +121,23 @@ export interface ExamInput {
   all_classes: boolean
   /** Required (non-empty) unless `all_classes` is true. */
   class_ids?: string[]
+  /** Super-admin only — the branch the exam belongs to. */
+  branch_id?: string
   start_date?: string | null
   end_date?: string | null
 }
 
-/** `PUT /exams/{id}` body — only name/dates/status are editable. */
+/**
+ * `PUT /exams/{id}` body. Name, schedule, status, class targeting, and — for
+ * super admin — branch are editable. Session and type are immutable once created
+ * (the API rejects them with a `prohibited` error), so they're never sent. A
+ * published exam's status is frozen server-side, so `status` is omitted for it.
+ */
 export interface ExamUpdateInput {
   name?: string
+  all_classes?: boolean
+  class_ids?: string[]
+  branch_id?: string
   start_date?: string | null
   end_date?: string | null
   status?: ExamStatus

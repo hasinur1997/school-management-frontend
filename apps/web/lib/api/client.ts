@@ -187,6 +187,14 @@ export const api = {
 export const publicApi = {
   get: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> =>
     (await publicRequest<T>({ ...config, method: "GET", url })).data,
+
+  post: async <T>(
+    url: string,
+    body?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<T> =>
+    (await publicRequest<T>({ ...config, method: "POST", url, data: body }))
+      .data,
 }
 
 /**
