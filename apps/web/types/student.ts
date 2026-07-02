@@ -81,7 +81,8 @@ export interface StudentEnrollment {
 export interface EnrollmentUpdateInput {
   session_id: string
   class_id: string
-  section_id: string
+  /** Null when the class has no sections. */
+  section_id: string | null
   roll_no: number
   status: EnrollmentStatusValue
 }
@@ -230,7 +231,8 @@ export interface StudentCreateInput {
 
   session_id: string
   class_id: string
-  section_id: string
+  /** Null when the class has no sections. */
+  section_id: string | null
   roll_no: number
 
   admission_no?: string | null

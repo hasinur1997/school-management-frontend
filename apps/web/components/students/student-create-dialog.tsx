@@ -8,7 +8,8 @@
  *
  * Collects the full profile (the same mutable set as the edit dialog, plus the
  * required birth registration number), the initial enrollment (session / class /
- * section / roll), an optional admission number (auto-generated when blank), and
+ * optional section / roll — roll is unique per class section, so each section
+ * numbers from 1), an optional admission number (auto-generated when blank), and
  * the optional linked-parent box — mirroring `StoreStudentRequest`. Super admins
  * also choose the target branch; everyone else is auto-scoped by the API.
  *
@@ -137,9 +138,6 @@ const schema = z
     }
     if (values.class_id == null) {
       ctx.addIssue({ path: ["class_id"], code: z.ZodIssueCode.custom, message: "Select a class" })
-    }
-    if (values.section_id == null) {
-      ctx.addIssue({ path: ["section_id"], code: z.ZodIssueCode.custom, message: "Select a section" })
     }
     if (values.roll_no == null) {
       ctx.addIssue({ path: ["roll_no"], code: z.ZodIssueCode.custom, message: "Enter a roll number" })
@@ -346,7 +344,7 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
       caste: values.caste || null,
       session_id: values.session_id!,
       class_id: values.class_id!,
-      section_id: values.section_id!,
+      section_id: values.section_id ?? null,
       roll_no: values.roll_no!,
       admission_no: values.admission_no?.trim() ? values.admission_no.trim() : null,
       create_parent_account: values.create_parent_account,
@@ -492,6 +490,9 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
                         aria-label="Roll number"
                       />
                     </FormControl>
+                    <FormDescription>
+                      Unique within the class &amp; section.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -532,6 +533,9 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
                         aria-label="Section"
                       />
                     </FormControl>
+                    <FormDescription>
+                      Optional — only if the class has sections.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

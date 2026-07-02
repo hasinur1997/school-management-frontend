@@ -5,8 +5,10 @@
  * that converts an application into a student, so it collects the academic
  * session, the class (fixed to the desired class when the applicant entered
  * one, otherwise selectable), an optional section (only selectable when the
- * class has sections), an optional roll number (blank = the API assigns the class's next
- * roll), an optional admission number (auto-generated when blank), and whether
+ * class has sections), an optional roll number (blank = the API assigns the
+ * next roll in the section, or in the class when it has none — rolls are
+ * unique per class section, so each section numbers from 1), an optional
+ * admission number (auto-generated when blank), and whether
  * to also create a linked parent account — on by default, as father
  * (`ApproveAdmissionRequest`). RHF + Zod; `422` (incl. the roll-uniqueness and
  * branch-scoped class/section checks) maps back onto the fields.
@@ -367,7 +369,8 @@ export function ApproveDialog({ open, onOpenChange, admission }: ApproveDialogPr
                           />
                         </FormControl>
                         <FormDescription>
-                          Blank = next roll in the class.
+                          Blank = next roll in the selected section (or the
+                          class when it has none).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

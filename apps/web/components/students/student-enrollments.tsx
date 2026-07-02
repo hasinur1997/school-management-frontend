@@ -238,7 +238,6 @@ function EnrollmentEditor({
     const nextErrors: Record<string, string> = {}
     if (!sessionId) nextErrors.session_id = "Required"
     if (!classId) nextErrors.class_id = "Required"
-    if (!sectionId) nextErrors.section_id = "Required"
     if (!roll || !Number.isInteger(rollNum) || rollNum < 1) {
       nextErrors.roll_no = "Enter a valid roll number"
     }
@@ -252,7 +251,7 @@ function EnrollmentEditor({
         enrollmentId: enrollment.id,
         session_id: sessionId!,
         class_id: classId!,
-        section_id: sectionId!,
+        section_id: sectionId,
         roll_no: rollNum,
         status,
       })
@@ -302,7 +301,7 @@ function EnrollmentEditor({
             aria-label="Class"
           />
         </Field>
-        <Field label="Section" error={errors.section_id}>
+        <Field label="Section (optional)" error={errors.section_id}>
           <SectionSelect
             classId={classId}
             value={sectionId}
