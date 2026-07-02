@@ -23,6 +23,7 @@ export function useMarkMatrix(params: MarkMatrixParams) {
   const examId = params.exam_id
   const classId = params.class_id
   const sectionId = params.section_id || null
+  const branchId = params.branch_id || null
   const enabled =
     examId != null && examId !== "" && classId != null && classId !== ""
 
@@ -31,13 +32,16 @@ export function useMarkMatrix(params: MarkMatrixParams) {
       exam_id: examId ?? null,
       class_id: classId ?? null,
       section_id: sectionId,
-      branch: branchParam,
+      branch: branchId ?? branchParam,
     }),
     queryFn: () =>
       api.get<MarkMatrix>(`/exams/${examId}/marks/matrix`, {
         params: {
           class_id: classId,
           ...(sectionId ? { section_id: sectionId } : {}),
+          // Screen-local branch filter; wins over the active branch in the
+          // request interceptor.
+          ...(branchId ? { branch_id: branchId } : {}),
         },
       }),
     enabled,

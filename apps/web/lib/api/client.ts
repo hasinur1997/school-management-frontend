@@ -61,9 +61,11 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     config.headers.set("Authorization", `Bearer ${token}`)
   }
 
+  // A branch_id a caller passed explicitly (a screen-local branch filter)
+  // takes precedence over the global active branch.
   const branchId = getActiveBranchId()
   if (branchId !== null) {
-    config.params = { ...config.params, branch_id: branchId }
+    config.params = { branch_id: branchId, ...config.params }
   }
 
   return config

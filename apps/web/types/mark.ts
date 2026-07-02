@@ -80,6 +80,8 @@ export interface MatrixCell {
 /** A roster row on the matrix — one student carrying a cell per subject. */
 export interface MatrixStudent {
   enrollment_id: string
+  /** The student's `public_id` — links the row to `/students/{id}`. */
+  student_id?: string | null
   roll_no: string | number | null
   name_en: string | null
   /** Student identifier (admission no) shown under the name. */
@@ -100,6 +102,8 @@ export interface MarkMatrixParams {
   class_id?: string | null
   /** Optional filter — omit to load the whole class (all sections). */
   section_id?: string | null
+  /** Screen-local branch filter (super admin); overrides the active branch. */
+  branch_id?: string | null
 }
 
 /** Selection that scopes the sheet read; all three are required to load. */

@@ -17,7 +17,13 @@ import { useBranches } from "@/hooks/branches/use-branches"
 
 type BranchSelectProps = Pick<
   AcademicSelectProps<string>,
-  "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
+  | "value"
+  | "onValueChange"
+  | "disabled"
+  | "id"
+  | "className"
+  | "aria-label"
+  | "clearLabel"
 > & {
   placeholder?: string
 }

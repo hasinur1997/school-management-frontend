@@ -29,6 +29,9 @@ function toParams(params: ExamListParams) {
   if (params.class_id) query.class_id = params.class_id
   if (params.type && params.type !== "all") query.type = params.type
   if (params.status && params.status !== "all") query.status = params.status
+  // Explicit screen-local branch filter; wins over the active branch in the
+  // request interceptor.
+  if (params.branch_id) query.branch_id = params.branch_id
   return query
 }
 
@@ -37,7 +40,10 @@ export function useExams(params: ExamListParams) {
   const query = toParams(params)
 
   return useQuery({
-    queryKey: queryKey("exams", "list", { ...query, branch: branchParam }),
+    queryKey: queryKey("exams", "list", {
+      ...query,
+      branch: params.branch_id ?? branchParam,
+    }),
     queryFn: () => requestPaginated<Exam>("/exams", { params: query }),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIME.STANDARD,

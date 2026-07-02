@@ -14,12 +14,17 @@ import { api, queryKey, STALE_TIME } from "@/lib/api"
 import { useBranch } from "@/components/branch/branch-provider"
 import type { SchoolClass } from "@/types/academic"
 
-export function useClasses() {
+export function useClasses(branchId?: string | null) {
   const { branchParam } = useBranch()
 
   return useQuery({
-    queryKey: queryKey("classes", "list", { branch: branchParam }),
-    queryFn: () => api.get<SchoolClass[]>("/classes"),
+    queryKey: queryKey("classes", "list", { branch: branchId ?? branchParam }),
+    queryFn: () =>
+      api.get<SchoolClass[]>("/classes", {
+        // A screen-local branch filter wins over the active branch (the
+        // request interceptor keeps an explicit branch_id).
+        params: branchId ? { branch_id: branchId } : undefined,
+      }),
     staleTime: STALE_TIME.REFERENCE,
   })
 }

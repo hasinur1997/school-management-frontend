@@ -103,6 +103,8 @@ export interface ExamListParams {
   class_id?: string | null
   type?: ExamTypeFilter
   status?: ExamStatusFilter
+  /** Screen-local branch filter (super admin); overrides the active branch. */
+  branch_id?: string | null
   page?: number
   per_page?: number
 }

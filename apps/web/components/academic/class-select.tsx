@@ -17,13 +17,16 @@ type ClassSelectProps = Pick<
   "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
 > & {
   placeholder?: string
+  /** Screen-local branch filter (super admin); overrides the active branch. */
+  branchId?: string | null
 }
 
 export function ClassSelect({
   placeholder = "Select class",
+  branchId,
   ...props
 }: ClassSelectProps) {
-  const { data, isLoading, isError } = useClasses()
+  const { data, isLoading, isError } = useClasses(branchId)
 
   const options = (data ?? []).map((schoolClass) => ({
     value: schoolClass.id,

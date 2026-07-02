@@ -3,8 +3,11 @@
 /**
  * Multi-subject mark entry (task 4.2, "Multi-Subject Mark Entry" design).
  *
- * Pick exam → class → section and the whole grid loads: every subject of the
- * class as columns, every active student as a row. Two views share the same
+ * Pick exam → semester → class → section and the whole grid loads: every
+ * subject of the class as columns, every active student as a row. The exam
+ * picker lists distinct exam *names*; the semester picker then offers the
+ * `type` variants that exist under that name, and the pair resolves to the
+ * actual exam record. Two views share the same
  * draft — a **Matrix grid** (all subjects at once, with frozen Student / Total /
  * GPA / Result columns) and a dense **By subject** table (one subject, with a
  * per-student absent toggle). Search filters by roll or name; the roster
@@ -25,6 +28,7 @@
  */
 
 import * as React from "react"
+import Link from "next/link"
 import {
   ClipboardPen,
   Eraser,
@@ -51,6 +55,8 @@ import {
   ClassSelect,
   SectionSelect,
 } from "@/components/academic"
+import { BranchSelect } from "@/components/branch/branch-select"
+import { useBranch } from "@/components/branch/branch-provider"
 import { useExams } from "@/hooks/exams"
 import {
   useGradingScale,
@@ -64,8 +70,10 @@ import { getErrorMessage, toastError, toastSuccess } from "@/lib/toast"
 import type { PaginationMeta } from "@/types/api"
 import {
   EXAM_TYPE_LABELS,
+  EXAM_TYPES,
   isExamPublished,
   type Exam,
+  type ExamType,
 } from "@/types/exam"
 import {
   resolveGrade,
@@ -232,7 +240,15 @@ function summarize(
 }
 
 export function MarkEntryGrid() {
-  const [examId, setExamId] = React.useState<string | null>(null)
+  // Screen-local branch filter (super admin only — everyone else is scoped
+  // server-side and never sees the field). Deliberately *not* wired to the
+  // shared active-branch context so narrowing marks here never re-scopes the
+  // navbar switcher or other screens; `null` inherits the navbar's scope.
+  const { isSuperAdmin } = useBranch()
+  const [branchId, setBranchId] = React.useState<string | null>(null)
+
+  const [examName, setExamName] = React.useState<string | null>(null)
+  const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
   const [sectionId, setSectionId] = React.useState<string | null>(null)
 
@@ -246,12 +262,43 @@ export function MarkEntryGrid() {
   const [banner, setBanner] = React.useState<string | null>(null)
   const [isSaving, setIsSaving] = React.useState(false)
 
-  const examsQuery = useExams({ page: 1, per_page: EXAM_OPTIONS_LIMIT })
+  const examsQuery = useExams({
+    page: 1,
+    per_page: EXAM_OPTIONS_LIMIT,
+    branch_id: branchId,
+  })
   const exams = React.useMemo(
     () => examsQuery.data?.data ?? [],
     [examsQuery.data]
   )
-  const selectedExam = exams.find((exam) => exam.id === examId) ?? null
+
+  // The exam picker offers distinct names; semester then picks among that
+  // name's `type` variants. Both together resolve the actual exam record.
+  const examNames = React.useMemo(() => {
+    const names: string[] = []
+    for (const exam of exams) {
+      if (!names.includes(exam.name)) names.push(exam.name)
+    }
+    return names
+  }, [exams])
+  const semesterOptions = React.useMemo(() => {
+    if (examName == null) return []
+    const types: ExamType[] = []
+    for (const exam of exams) {
+      if (exam.name === examName && !types.includes(exam.type)) {
+        types.push(exam.type)
+      }
+    }
+    return EXAM_TYPES.filter((type) => types.includes(type))
+  }, [exams, examName])
+
+  const selectedExam =
+    examName != null && semester != null
+      ? (exams.find(
+          (exam) => exam.name === examName && exam.type === semester
+        ) ?? null)
+      : null
+  const examId = selectedExam?.id ?? null
 
   const gradingQuery = useGradingScale()
   const scale = gradingQuery.data
@@ -260,6 +307,7 @@ export function MarkEntryGrid() {
     exam_id: examId,
     class_id: classId,
     section_id: sectionId,
+    branch_id: branchId,
   })
   const matrix = matrixQuery.data
 
@@ -296,6 +344,24 @@ export function MarkEntryGrid() {
     setSelSubject(0)
   }, [matrix])
 
+  // When the active branch changes (super admin), the exam list re-scopes.
+  // Drop a selection that is no longer in it so the grid can't keep showing
+  // another branch's exam.
+  React.useEffect(() => {
+    if (examName == null || examsQuery.data == null) return
+    if (!exams.some((exam) => exam.name === examName)) {
+      setExamName(null)
+      setSemester(null)
+      setClassId(null)
+      setSectionId(null)
+      setDraft({})
+      setCellErrors({})
+      setBanner(null)
+      setQuery("")
+      setPage(1)
+    }
+  }, [exams, examsQuery.data, examName])
+
   function resetSelection() {
     setDraft({})
     setCellErrors({})
@@ -303,8 +369,27 @@ export function MarkEntryGrid() {
     setQuery("")
     setPage(1)
   }
+  function changeBranch(value: string | null) {
+    setBranchId(value)
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+    setSectionId(null)
+    resetSelection()
+  }
   function changeExam(value: string | null) {
-    setExamId(value)
+    setExamName(value)
+    // Pre-select the semester when the exam only exists under one type.
+    const types = new Set(
+      exams.filter((exam) => exam.name === value).map((exam) => exam.type)
+    )
+    setSemester(types.size === 1 ? [...types][0]! : null)
+    setClassId(null)
+    setSectionId(null)
+    resetSelection()
+  }
+  function changeSemester(value: ExamType | null) {
+    setSemester(value)
     setClassId(null)
     setSectionId(null)
     resetSelection()
@@ -522,7 +607,7 @@ export function MarkEntryGrid() {
             <span>Examinations</span>
             <span aria-hidden>›</span>
             <span className="text-copy-secondary">
-              {selectedExam?.name ?? "Select an exam"}
+              {examName ?? "Select an exam"}
             </span>
             <span aria-hidden>›</span>
             <span className="font-semibold text-copy-secondary">
@@ -538,14 +623,32 @@ export function MarkEntryGrid() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[560px] lg:grid-cols-3">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-3 sm:grid-cols-2",
+            isSuperAdmin
+              ? "lg:max-w-[950px] lg:grid-cols-5"
+              : "lg:max-w-[760px] lg:grid-cols-4"
+          )}
+        >
+          {isSuperAdmin ? (
+            <Field label="Branch">
+              <BranchSelect
+                value={branchId}
+                onValueChange={changeBranch}
+                clearLabel="All branches"
+                placeholder="All branches"
+                aria-label="Select branch"
+              />
+            </Field>
+          ) : null}
           <Field label="Exam">
             <AcademicSelect
-              value={examId}
+              value={examName}
               onValueChange={changeExam}
-              options={exams.map((exam) => ({
-                value: exam.id,
-                label: examOptionLabel(exam),
+              options={examNames.map((name) => ({
+                value: name,
+                label: name,
               }))}
               isLoading={examsQuery.isPending}
               isError={examsQuery.isError}
@@ -554,18 +657,36 @@ export function MarkEntryGrid() {
               aria-label="Select exam"
             />
           </Field>
+          <Field label="Semester">
+            <AcademicSelect
+              value={semester}
+              onValueChange={changeSemester}
+              options={semesterOptions.map((type) => ({
+                value: type,
+                label: EXAM_TYPE_LABELS[type],
+              }))}
+              disabled={examName == null}
+              disabledPlaceholder="Select exam first"
+              placeholder="Select semester"
+              emptyPlaceholder="No semesters"
+              aria-label="Select semester"
+            />
+          </Field>
           <Field label="Class">
             <ClassPicker
               exam={selectedExam}
+              branchId={branchId}
               value={classId}
               onValueChange={changeClass}
             />
           </Field>
-          <Field label="Section (optional)">
+          <Field label="Section">
             <SectionSelect
               classId={classId}
               value={sectionId}
               onValueChange={changeSection}
+              clearLabel="All sections"
+              placeholder="All sections"
               aria-label="Select section"
             />
           </Field>
@@ -994,9 +1115,10 @@ function MatrixView({
                         {formatRoll(student.roll_no)}
                       </span>
                       <div className="min-w-0">
-                        <div className="truncate text-[14px] font-semibold tracking-tight text-copy-primary">
-                          {student.name_en || EMPTY}
-                        </div>
+                        <StudentNameLink
+                          student={student}
+                          className="truncate text-[14px] font-semibold tracking-tight text-copy-primary"
+                        />
                         {student.sid ? (
                           <div className="truncate font-mono text-[11.5px] text-copy-muted">
                             {student.sid}
@@ -1322,14 +1444,13 @@ function SubjectView({
                       {formatRoll(student.roll_no)}
                     </td>
                     <td className="px-[18px] py-2.5">
-                      <div
+                      <StudentNameLink
+                        student={student}
                         className={cn(
                           "text-[14.5px] font-semibold tracking-tight",
                           cell.absent ? "text-copy-muted" : "text-copy-primary"
                         )}
-                      >
-                        {student.name_en || EMPTY}
-                      </div>
+                      />
                       {student.sid ? (
                         <div className="mt-px font-mono text-[12.5px] text-copy-muted">
                           {student.sid}
@@ -1443,6 +1564,32 @@ function SubjectView({
 }
 
 /* -------------------------------- helpers -------------------------------- */
+
+/**
+ * Student name linking to the detail page's Results tab. Falls back to plain
+ * text when the row carries no `student_id` (older API payloads).
+ */
+function StudentNameLink({
+  student,
+  className,
+}: {
+  student: MatrixStudent
+  className?: string
+}) {
+  const name = student.name_en || EMPTY
+  if (!student.student_id) return <div className={className}>{name}</div>
+  return (
+    <Link
+      href={`/students/${student.student_id}?tab=results`}
+      className={cn(
+        "block rounded-sm outline-none hover:text-brand hover:underline focus-visible:ring-2 focus-visible:ring-brand/40",
+        className
+      )}
+    >
+      {name}
+    </Link>
+  )
+}
 
 function ResultChip({ result }: { result: RowResult }) {
   const tone = RESULT_TONE[result]
@@ -1573,10 +1720,13 @@ function Field({
  */
 function ClassPicker({
   exam,
+  branchId,
   value,
   onValueChange,
 }: {
   exam: Exam | null
+  /** Screen-local branch filter, forwarded to the all-classes `ClassSelect`. */
+  branchId: string | null
   value: string | null
   onValueChange: (value: string | null) => void
 }) {
@@ -1601,16 +1751,11 @@ function ClassPicker({
     <ClassSelect
       value={value}
       onValueChange={onValueChange}
+      branchId={branchId}
       disabled={exam == null}
       aria-label="Select class"
     />
   )
-}
-
-/** A short label for the exam picker: name + its type. */
-function examOptionLabel(exam: Exam): string {
-  const type = EXAM_TYPE_LABELS[exam.type] ?? exam.type
-  return `${exam.name} · ${type}`
 }
 
 /** Roll number padded to two digits for column alignment. */
