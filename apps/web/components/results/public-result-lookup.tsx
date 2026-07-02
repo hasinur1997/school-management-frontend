@@ -91,6 +91,7 @@ function valuesFromParams(params: URLSearchParams): LookupValues {
 function toLookupParams(values: LookupValues): PublicResultLookupParams {
   return {
     roll_no: values.roll_no.trim(),
+    branch_id: values.branch_id.trim(),
     class_id: values.class_id.trim(),
     year: values.year.trim(),
     semester: values.semester.trim(),

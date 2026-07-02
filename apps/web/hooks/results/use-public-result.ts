@@ -18,6 +18,7 @@ function cleanPublicResultParams(
 
   const cleaned = {
     roll_no: params.roll_no.trim(),
+    branch_id: params.branch_id.trim(),
     class_id: params.class_id.trim(),
     year: params.year.trim(),
     semester: params.semester.trim(),

@@ -100,6 +100,7 @@ export interface AnnualResultInput {
 
 export interface PublicResultLookupParams {
   roll_no: string
+  branch_id: string
   class_id: string
   year: string
   semester: string
