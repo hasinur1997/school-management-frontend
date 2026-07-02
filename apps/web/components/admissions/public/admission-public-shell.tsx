@@ -65,8 +65,27 @@ const admissionFieldCss = `
 .admission-fields [data-slot="select-trigger"] {
   width: 100%;
 }
+/*
+ * Native selects (AcademicSelect / LocationSelect) carry no data-slot, so give
+ * them the same 46px field metrics. Right padding keeps the chevron clear;
+ * color is left to the utility classes so the muted placeholder state holds.
+ */
+.admission-fields select {
+  height: auto;
+  min-height: 46px;
+  border-radius: 10px;
+  border-width: 1.5px;
+  border-color: #d8dfe9;
+  background: #fff;
+  padding: 12px 32px 12px 14px;
+  font-size: 14px;
+}
+.admission-fields select.pl-8 {
+  padding-left: 32px;
+}
 .admission-fields [data-slot="input"]:focus-visible,
-.admission-fields [data-slot="select-trigger"]:focus-visible {
+.admission-fields [data-slot="select-trigger"]:focus-visible,
+.admission-fields select:focus-visible {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px var(--accent-primary-dim);
 }

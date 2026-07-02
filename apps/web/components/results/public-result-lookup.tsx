@@ -383,7 +383,7 @@ export function PublicResultLookup() {
                 type="submit"
                 loading={loading}
                 disabled={settings.isPending}
-                className="h-11 w-full"
+                className="h-[46px] w-full"
               >
                 {loading ? null : <Search className="size-4" aria-hidden />}
                 {loading ? "Searching..." : "Search result"}
