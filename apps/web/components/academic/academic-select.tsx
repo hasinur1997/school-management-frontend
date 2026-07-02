@@ -51,6 +51,11 @@ export interface AcademicSelectProps<T extends SelectId = SelectId> {
    * parent hasn't been chosen yet. `disabledPlaceholder` explains why.
    */
   disabled?: boolean
+  /**
+   * When set, the empty option is selectable with this label (e.g. "All
+   * sections"), so a made selection can be cleared back to `null`.
+   */
+  clearLabel?: string
   loadingPlaceholder?: string
   errorPlaceholder?: string
   emptyPlaceholder?: string
@@ -70,6 +75,7 @@ export function AcademicSelect<T extends SelectId = SelectId>({
   isLoading = false,
   isError = false,
   disabled = false,
+  clearLabel,
   loadingPlaceholder = "Loading…",
   errorPlaceholder = "Couldn't load",
   emptyPlaceholder = "None available",
@@ -138,8 +144,8 @@ export function AcademicSelect<T extends SelectId = SelectId>({
           isLoading && "pl-8"
         )}
       >
-        <option value="" disabled>
-          {placeholderText}
+        <option value="" disabled={clearLabel == null || effectiveDisabled}>
+          {effectiveDisabled ? placeholderText : (clearLabel ?? placeholderText)}
         </option>
         {options.map((option) => (
           <option key={option.value} value={String(option.value)}>

@@ -23,6 +23,8 @@ export interface AttendanceSheetStudent {
   student_id?: string | null
   roll_no: string | number | null
   name_en: string | null
+  /** The row's section name — labels students on a whole-class roster. */
+  section?: string | null
   photo_url: string | null
   status: AttendanceStatusValue | null
   /** When the mark was last recorded (ISO), or null if not yet taken. */
@@ -55,7 +57,10 @@ export interface AttendanceEntryRecord {
 }
 
 export interface AttendanceBulkInput {
-  section_id: string
+  /** Required when no section is given (whole-class "all sections" save). */
+  class_id?: string | null
+  /** Omitted, the save spans the whole class. */
+  section_id?: string | null
   date: string
   records: AttendanceEntryRecord[]
 }
@@ -69,6 +74,7 @@ export interface AttendanceRecord {
   enrollment_id?: string | null
   roll_no?: string | number | null
   name_en?: string | null
+  section?: string | null
   date: string
   status: AttendanceStatusValue
   recorded_by?: string | null
@@ -128,6 +134,8 @@ export interface ClassAttendanceRow {
   enrollment_id: string
   roll_no: string | number | null
   name_en: string | null
+  /** Section name, shown when the sheet spans a whole class (no section filter). */
+  section: string | null
   /** date (`YYYY-MM-DD`) → status for the days a mark exists. */
   marks: Record<string, AttendanceStatusValue>
 }

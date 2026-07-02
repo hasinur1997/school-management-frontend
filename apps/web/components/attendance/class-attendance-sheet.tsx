@@ -108,18 +108,30 @@ export function ClassAttendanceSheet() {
   const { data: classes } = useClasses()
   const { data: sections } = useSections(classId)
 
+  // When the active branch changes (super admin), the class list re-scopes.
+  // Drop a selection that is no longer in it so the sheet can't keep showing
+  // another branch's class.
+  React.useEffect(() => {
+    if (classId == null || classes == null) return
+    if (!classes.some((c) => c.id === classId)) {
+      setClassId(null)
+      setSectionId(null)
+    }
+  }, [classes, classId])
+
   const className =
     classes?.find((c) => c.id === classId)?.name ?? null
   const sectionName =
     sections?.find((s) => s.id === sectionId)?.name ?? null
 
-  const isReady = classId != null && sectionId != null
+  // Section is optional: class alone loads the whole class's sheet.
+  const isReady = classId != null
   const sheet = query.data
 
   const scope =
     isReady && className
-      ? `${className}${sectionName ? ` — Section ${sectionName}` : ""} · ${monthLabel(period.year, period.month)}`
-      : `Select a class and section · ${monthLabel(period.year, period.month)}`
+      ? `${className} — ${sectionName ? `Section ${sectionName}` : "All sections"} · ${monthLabel(period.year, period.month)}`
+      : `Select a class · ${monthLabel(period.year, period.month)}`
 
   function changeClass(value: string | null) {
     setClassId(value)
@@ -128,7 +140,9 @@ export function ClassAttendanceSheet() {
 
   function exportCsv() {
     if (!sheet || sheet.rows.length === 0) return
+    const withSection = sectionId == null
     const header = [
+      ...(withSection ? ["Section"] : []),
       "Roll",
       "Student",
       ...sheet.days.map(String),
@@ -139,7 +153,13 @@ export function ClassAttendanceSheet() {
         const status = row.marks[isoDate(sheet.year, sheet.month, day)]
         return status ? STATUS_ABBR[status] : ""
       })
-      return [row.roll_no ?? "", row.name_en ?? "", ...cells, `${rowPercent(row, sheet)}`]
+      return [
+        ...(withSection ? [row.section ?? ""] : []),
+        row.roll_no ?? "",
+        row.name_en ?? "",
+        ...cells,
+        `${rowPercent(row, sheet)}`,
+      ]
     })
     const csv = [header, ...lines]
       .map((cols) => cols.map(csvField).join(","))
@@ -186,6 +206,8 @@ export function ClassAttendanceSheet() {
             classId={classId}
             value={sectionId}
             onValueChange={setSectionId}
+            clearLabel="All sections"
+            placeholder="All sections"
             aria-label="Select section"
             className="w-40"
           />
@@ -203,8 +225,8 @@ export function ClassAttendanceSheet() {
       {!isReady ? (
         <EmptyState
           icon={CalendarRange}
-          title="Choose a class and section"
-          description="The monthly sheet loads once a class and section are selected."
+          title="Choose a class"
+          description="The monthly sheet loads once a class is selected. Pick a section to narrow it, or leave it on all sections."
         />
       ) : query.isPending ? (
         <TableSkeleton rows={8} columns={6} />
@@ -220,12 +242,13 @@ export function ClassAttendanceSheet() {
         <SheetTable
           key={`${classId}-${sectionId}-${period.year}-${period.month}`}
           sheet={sheet}
+          showSection={sectionId == null}
         />
       ) : (
         <EmptyState
           icon={Users}
           title="No attendance this month"
-          description="No attendance has been recorded for this section in the selected month."
+          description="No attendance has been recorded for this selection in the chosen month."
         />
       )}
     </div>
@@ -245,7 +268,14 @@ function rowPercent(row: Sheet["rows"][number], sheet: Sheet): number {
   return marked === 0 ? 0 : Math.round((attended / marked) * 100)
 }
 
-function SheetTable({ sheet }: { sheet: Sheet }) {
+function SheetTable({
+  sheet,
+  showSection,
+}: {
+  sheet: Sheet
+  /** Label each row with its section — set when the sheet spans a whole class. */
+  showSection: boolean
+}) {
   const total = sheet.rows.length
   const lastPage = Math.max(1, Math.ceil(total / ROW_PAGE_SIZE))
   const [page, setPage] = React.useState(1)
@@ -393,6 +423,9 @@ function SheetTable({ sheet }: { sheet: Sheet }) {
                           </div>
                           <div className="text-xs text-copy-muted">
                             Roll {row.roll_no ?? "—"}
+                            {showSection && row.section
+                              ? ` · Section ${row.section}`
+                              : ""}
                           </div>
                         </div>
                       </div>

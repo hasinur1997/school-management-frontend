@@ -57,6 +57,7 @@ import {
 } from "@workspace/ui/components/table"
 import { cn } from "@workspace/ui/lib/utils"
 import { ClassSelect, SectionSelect } from "@/components/academic"
+import { useClasses } from "@/hooks/academic"
 import { FormBanner } from "@/components/academic/management/form-helpers"
 import { usePermission } from "@/hooks/auth/use-permission"
 import { STUDENT_VIEW } from "@/components/students/permissions"
@@ -178,13 +179,6 @@ const attendanceEntrySchema = z
         message: "Select a class.",
       })
     }
-    if (values.section_id == null) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["section_id"],
-        message: "Select a section.",
-      })
-    }
     if (values.records.length === 0) {
       ctx.addIssue({
         code: "custom",
@@ -268,7 +262,8 @@ export function StudentAttendanceEntry() {
   const saveAttendance = useSaveAttendance()
   const sheet = sheetQuery.data
   const students = sheet?.students ?? []
-  const isReady = classId != null && sectionId != null && Boolean(date)
+  // Section is optional — omitted, the roster spans the whole class.
+  const isReady = classId != null && Boolean(date)
 
   // Restore the last class/section/date once on mount so a refresh re-opens the
   // same roster instead of the empty setup state. Done in an effect (not the
@@ -290,6 +285,16 @@ export function StudentAttendanceEntry() {
     if (!restored) return
     writeJSON(SELECTION_KEY, { class_id: classId, section_id: sectionId, date })
   }, [restored, classId, sectionId, date])
+
+  // When the active branch changes (super admin), the class list re-scopes.
+  // Drop a selection that is no longer in it — otherwise the roster keeps
+  // showing another branch's students.
+  const { data: classes } = useClasses()
+  React.useEffect(() => {
+    if (!restored || classId == null || classes == null) return
+    if (!classes.some((c) => c.id === classId)) changeClass(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restored, classes, classId])
 
   // Seed the records from the loaded sheet, overlaying any unsaved draft marks
   // for this exact class/section/date so refreshing mid-entry keeps them.
@@ -337,7 +342,7 @@ export function StudentAttendanceEntry() {
   // marks, push them so a teacher who forgets to click Save doesn't lose work.
   // Only changed marks gate the timer; the backend's idempotent upsert merges.
   React.useEffect(() => {
-    if (!restored || !isReady || !sheet || sectionId == null) return
+    if (!restored || !isReady || !sheet || classId == null) return
     if (saveAttendance.isPending || pendingCount === 0) return
 
     const timer = setTimeout(() => {
@@ -347,7 +352,8 @@ export function StudentAttendanceEntry() {
       setAutosaveError(false)
       saveAttendance.mutate(
         {
-          section_id: sectionId,
+          class_id: classId,
+          ...(sectionId != null ? { section_id: sectionId } : {}),
           date,
           records: changed.map((record) => ({
             enrollment_id: record.enrollment_id,
@@ -380,7 +386,7 @@ export function StudentAttendanceEntry() {
 
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restored, isReady, sheet, sectionId, date, records, baseline, pendingCount])
+  }, [restored, isReady, sheet, classId, sectionId, date, records, baseline, pendingCount])
 
   function changeClass(value: string | null) {
     form.setValue("class_id", normalizeOptionalId(value), {
@@ -438,8 +444,9 @@ export function StudentAttendanceEntry() {
       return
     }
 
+    const class_id = result.data.class_id
+    if (class_id == null) return
     const section_id = result.data.section_id
-    if (section_id == null) return
 
     // Send only marks that changed since the last save — unmarked rows are left
     // for later, and already-saved rows are skipped so their recorded time/by
@@ -456,7 +463,8 @@ export function StudentAttendanceEntry() {
     }
 
     const body = {
-      section_id,
+      class_id,
+      ...(section_id != null ? { section_id } : {}),
       date: result.data.date,
       records: changed.map((record) => ({
         enrollment_id: record.enrollment_id,
@@ -566,6 +574,8 @@ export function StudentAttendanceEntry() {
                       classId={classId}
                       value={normalizeOptionalId(field.value)}
                       onValueChange={changeSection}
+                      clearLabel="All sections"
+                      placeholder="All sections"
                       aria-label="Select section"
                     />
                   </FormControl>
@@ -600,8 +610,8 @@ export function StudentAttendanceEntry() {
         {!isReady ? (
           <EmptyState
             icon={CalendarCheck}
-            title="Choose a class, section, and date"
-            description="The attendance roster loads after all three fields are selected."
+            title="Choose a class and date"
+            description="The roster loads once a class and date are selected — pick a section to narrow it, or leave it on all sections."
           />
         ) : sheetQuery.isPending ? (
           <TableSkeleton rows={8} columns={5} />
@@ -657,10 +667,10 @@ function RosterPanel({
   const [page, setPage] = React.useState(1)
 
   // Reset to the first page whenever the roster identity changes (new
-  // section/date), and clamp if the current page falls out of range.
+  // class/section/date), and clamp if the current page falls out of range.
   React.useEffect(() => {
     setPage(1)
-  }, [sheet.section, sheet.date])
+  }, [sheet.class, sheet.section, sheet.date])
   React.useEffect(() => {
     setPage((current) => Math.min(current, lastPage))
   }, [lastPage])
@@ -694,7 +704,7 @@ function RosterPanel({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-base font-semibold text-copy-primary">
-              {sheet.class || EMPTY} · {sheet.section || EMPTY}
+              {sheet.class || EMPTY} · {sheet.section || "All sections"}
             </h2>
             {isFetching ? (
               <Loader2
@@ -753,6 +763,11 @@ function RosterPanel({
               <TableRow key={student.enrollment_id}>
                 <TableCell className="font-mono text-copy-secondary">
                   {student.roll_no ?? EMPTY}
+                  {sheet.section == null && student.section ? (
+                    <span className="block font-sans text-xs text-copy-muted">
+                      Sec {student.section}
+                    </span>
+                  ) : null}
                 </TableCell>
                 <TableCell>
                   <RosterStudent student={student} canView={canViewStudent} />
@@ -800,6 +815,9 @@ function RosterPanel({
               <RosterStudent student={student} canView={canViewStudent} />
               <span className="shrink-0 rounded-md bg-subtle px-2 py-1 font-mono text-xs text-copy-secondary">
                 Roll {student.roll_no ?? EMPTY}
+                {sheet.section == null && student.section
+                  ? ` · Sec ${student.section}`
+                  : ""}
               </span>
             </div>
             <StatusField form={form} index={index} disabled={isSaving} />

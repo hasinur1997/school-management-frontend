@@ -2,8 +2,9 @@
 
 /**
  * `useAttendanceSheet(params)` — reads `GET /attendance/sheet`, the roster
- * entry source for a class/section/date. The query stays disabled until all
- * three selectors are filled, so the screen can render a purposeful setup state.
+ * entry source for a class/date (plus an optional section — omitted, the
+ * roster spans the whole class). The query stays disabled until class and date
+ * are filled, so the screen can render a purposeful setup state.
  */
 
 import { useQuery } from "@tanstack/react-query"
@@ -23,8 +24,7 @@ function toParams(params: AttendanceSheetParams) {
 export function useAttendanceSheet(params: AttendanceSheetParams) {
   const { branchParam } = useBranch()
   const query = toParams(params)
-  const enabled =
-    params.class_id != null && params.section_id != null && Boolean(params.date)
+  const enabled = params.class_id != null && Boolean(params.date)
 
   return useQuery({
     queryKey: queryKey("attendance", "sheet", {

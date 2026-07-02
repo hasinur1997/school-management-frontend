@@ -15,7 +15,13 @@ import {
 
 type SectionSelectProps = Pick<
   AcademicSelectProps<string>,
-  "value" | "onValueChange" | "disabled" | "id" | "className" | "aria-label"
+  | "value"
+  | "onValueChange"
+  | "disabled"
+  | "id"
+  | "className"
+  | "aria-label"
+  | "clearLabel"
 > & {
   /** The selected class; sections are scoped to it. */
   classId: SelectId | null | undefined

@@ -12,7 +12,7 @@
  *
  * The result is a pure reshape of API rows into a student × day grid — no totals
  * are computed (`feature-specs/10`, Rules). The query stays disabled until a
- * class and section are chosen.
+ * class is chosen; the section filter is optional (omitted = whole class).
  */
 
 import { useQuery } from "@tanstack/react-query"
@@ -41,7 +41,7 @@ interface ClassMonthArgs {
 
 async function fetchClassMonth(
   classId: string,
-  sectionId: string,
+  sectionId: string | null,
   year: number,
   month: number
 ): Promise<ClassAttendanceMonth> {
@@ -62,7 +62,8 @@ async function fetchClassMonth(
       {
         params: {
           class_id: classId,
-          section_id: sectionId,
+          // Section is optional: omitted, the sheet spans the whole class.
+          ...(sectionId != null ? { section_id: sectionId } : {}),
           per_page: PER_PAGE,
           page,
         },
@@ -110,6 +111,7 @@ function assembleGrid(
         enrollment_id: enrollmentId,
         roll_no: record.roll_no ?? null,
         name_en: record.name_en ?? null,
+        section: record.section ?? null,
         marks: {},
       }
       byEnrollment.set(enrollmentId, row)
@@ -123,8 +125,11 @@ function assembleGrid(
   return { month, year, days, rows, truncated }
 }
 
-/** Order rows by roll number (numeric when possible), then by name. */
+/** Order rows by section, then roll number (numeric when possible), then name. */
 function compareRows(a: ClassAttendanceRow, b: ClassAttendanceRow): number {
+  const bySection = (a.section ?? "").localeCompare(b.section ?? "")
+  if (bySection !== 0) return bySection
+
   const rollA = Number(a.roll_no)
   const rollB = Number(b.roll_no)
   const aNumeric = a.roll_no != null && !Number.isNaN(rollA)
@@ -143,7 +148,8 @@ export function useClassAttendanceMonth({
   month,
 }: ClassMonthArgs) {
   const { branchParam } = useBranch()
-  const enabled = classId != null && sectionId != null
+  // Section is optional — a class alone loads the whole class's sheet.
+  const enabled = classId != null
 
   return useQuery({
     queryKey: queryKey("attendance", "class-month", {
@@ -153,8 +159,7 @@ export function useClassAttendanceMonth({
       month,
       branch: branchParam,
     }),
-    queryFn: () =>
-      fetchClassMonth(classId as string, sectionId as string, year, month),
+    queryFn: () => fetchClassMonth(classId as string, sectionId, year, month),
     enabled,
     staleTime: STALE_TIME.SHORT,
   })
