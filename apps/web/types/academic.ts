@@ -25,6 +25,8 @@ export interface SchoolClass {
   name: string
   /** Grade level 1–12; the ordinal used for promotion ordering, unique per branch. */
   numeric_level?: number | null
+  /** Owning branch — read defensively; used to prefill the edit form. */
+  branch_id?: string | null
 }
 
 /** `GET /classes/{class}/sections` — a section within a class. */

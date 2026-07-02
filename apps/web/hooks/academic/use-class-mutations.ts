@@ -19,8 +19,8 @@ export interface ClassInput {
   /** Grade level 1–12 (required by the API, unique per branch). */
   numeric_level: number
   /**
-   * Target branch (super-admin create only). The API requires it in the body
-   * when no branch is active; auto-scoped users omit it. Edit never sends it.
+   * Target branch (super admin, create and edit). The API requires it in the
+   * body when no branch is active; auto-scoped users omit it.
    */
   branch_id?: string
 }

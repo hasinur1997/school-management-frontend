@@ -56,7 +56,7 @@ const schema = z.object({
       const n = Number(v)
       return n >= 1 && n <= 12
     }, "Level must be between 1 and 12"),
-  // Target branch for a super-admin create; auto-scoped users keep it `null`.
+  // Target branch for a super-admin create/edit; auto-scoped users keep it `null`.
   branch_id: z.string().min(1).nullable(),
 })
 
@@ -95,7 +95,7 @@ export function ClassFormDialog({
         schoolClass?.numeric_level != null
           ? String(schoolClass.numeric_level)
           : "",
-      branch_id: activeBranchId,
+      branch_id: schoolClass?.branch_id ?? activeBranchId,
     })
   }, [open, schoolClass, activeBranchId, form])
 
@@ -110,9 +110,10 @@ export function ClassFormDialog({
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
 
-    // Super admin must scope a new class to a branch (the API requires it in the
-    // body when no branch is active). Edit and auto-scoped users never send it.
-    if (!isEdit && isSuperAdmin && values.branch_id == null) {
+    // Super admin must scope the class to a branch on both create and edit
+    // (the API requires it in the body when no branch is active). Auto-scoped
+    // users never send it.
+    if (isSuperAdmin && values.branch_id == null) {
       form.setError("branch_id", { message: "Select a branch" })
       return
     }
@@ -120,18 +121,16 @@ export function ClassFormDialog({
     const payload: ClassInput = {
       name: values.name.trim(),
       numeric_level: Number(values.numeric_level),
+      ...(isSuperAdmin && values.branch_id != null
+        ? { branch_id: values.branch_id }
+        : {}),
     }
 
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ id: schoolClass.id, ...payload })
       } else {
-        await createMutation.mutateAsync({
-          ...payload,
-          ...(isSuperAdmin && values.branch_id != null
-            ? { branch_id: values.branch_id }
-            : {}),
-        })
+        await createMutation.mutateAsync(payload)
       }
       toastSuccess(isEdit ? "Class updated." : "Class created.", {
         id: "class-form",
@@ -211,7 +210,7 @@ export function ClassFormDialog({
               )}
             />
 
-            {isSuperAdmin && !isEdit ? (
+            {isSuperAdmin ? (
               <FormField
                 control={form.control}
                 name="branch_id"
