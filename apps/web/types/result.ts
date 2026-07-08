@@ -33,6 +33,10 @@ export interface PerExamResult {
   gpa: string | number | null
   grade: string | null
   is_passed: boolean
+  /** Academic session year for the transcript title (e.g. "2016"). */
+  year?: string | null
+  /** "Held in the Month of …" label from the exam's date range. */
+  held_in?: string | null
   subjects: ResultSubject[]
 }
 
@@ -144,6 +148,8 @@ export interface PublicResultStudentInformation {
   semester: string | null
   date_of_birth: string | null
   result: string | number | null
+  /** "Held in the Month of …" label from the exam's date range. */
+  held_in?: string | null
 }
 
 export interface PublicResultSubject {

@@ -575,9 +575,16 @@ function PublicResultView({ result }: { result: PublicResult }) {
     point: subject.grade_point,
   }))
 
+  // "Second Semester Examination, 2016" when the session year is known; the
+  // paper strips the duplicate year from the month line below the title.
+  const title = info.session
+    ? `${semesterLabel} Examination, ${info.session}`
+    : `${semesterLabel} Result`
+
   return (
     <ResultMarkSheet
-      title={`${semesterLabel} Result`}
+      title={title}
+      examMonth={info.held_in}
       fields={fields}
       scale={PUBLIC_MARKSHEET_SCALE}
       subjects={subjects}

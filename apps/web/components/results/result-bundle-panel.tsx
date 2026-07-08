@@ -90,11 +90,19 @@ function ExamMarkSheet({
     point: subject.grade_point,
   }))
 
+  // "Second Semester Examination, 2016" when the session year is known, else a
+  // plain "… Result" heading. The paper drops the year from the month line when
+  // the title already carries it, so it never prints twice.
+  const title = result.year
+    ? `${label} Examination, ${result.year}`
+    : `${label} Result`
+
   // School name/logo come from settings (not yet implemented); until then the
   // sheet renders its default institution from the imported design.
   return (
     <ResultMarkSheet
-      title={`${label} Result`}
+      title={title}
+      examMonth={result.held_in}
       fields={fields}
       scale={scale}
       subjects={subjects}
