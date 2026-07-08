@@ -1,0 +1,145 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="720"
+  height="720"
+  viewBox="0 0 720 720"
+  role="img"
+  aria-labelledby="logo-title"
+>
+  <title id="logo-title">হাজী জাবেদ আলী মেমোরিয়াল স্কুল seal</title>
+  <defs>
+    <clipPath id="seal-inner-clip">
+      <circle cx="360" cy="360" r="176" />
+    </clipPath>
+    <path
+      id="seal-top-arc"
+      d="M 168 292 A 226 226 0 0 1 552 292"
+      fill="none"
+    />
+  </defs>
+
+  <circle cx="360" cy="360" r="264" fill="#ffffff" />
+  <circle cx="360" cy="360" r="258" fill="none" stroke="#35b657" stroke-width="10" />
+  <circle cx="360" cy="360" r="240" fill="none" stroke="#1f4b89" stroke-width="5" />
+  <circle cx="360" cy="360" r="192" fill="#ffffff" stroke="#1f4b89" stroke-width="5" />
+
+  <g font-family="'Noto Sans Bengali', 'Hind Siliguri', 'Bangla Sangam MN', sans-serif">
+    <text
+      fill="#143d77"
+      font-size="41"
+      font-weight="700"
+      letter-spacing="1"
+    >
+      <textPath href="#seal-top-arc" startOffset="50%" text-anchor="middle">
+        হাজী জাবেদ আলী মেমোরিয়াল স্কুল
+      </textPath>
+    </text>
+  </g>
+
+  <g fill="#35b657">
+    <polygon points="152,340 158,355 174,355 161,365 166,381 152,371 138,381 143,365 130,355 146,355" />
+    <polygon points="146,392 152,407 168,407 155,417 160,433 146,423 132,433 137,417 124,407 140,407" />
+    <polygon points="168,444 174,459 190,459 177,469 182,485 168,475 154,485 159,469 146,459 162,459" />
+    <polygon points="568,340 574,355 590,355 577,365 582,381 568,371 554,381 559,365 546,355 562,355" />
+    <polygon points="574,392 580,407 596,407 583,417 588,433 574,423 560,433 565,417 552,407 568,407" />
+    <polygon points="552,444 558,459 574,459 561,469 566,485 552,475 538,485 543,469 530,459 546,459" />
+  </g>
+
+  <g clip-path="url(#seal-inner-clip)">
+    <circle cx="360" cy="360" r="176" fill="#41b653" />
+    <g stroke="#ffffff" stroke-linecap="round" stroke-width="7">
+      <line x1="360" y1="214" x2="360" y2="120" />
+      <line x1="360" y1="214" x2="297" y2="134" />
+      <line x1="360" y1="214" x2="246" y2="164" />
+      <line x1="360" y1="214" x2="212" y2="214" />
+      <line x1="360" y1="214" x2="246" y2="264" />
+      <line x1="360" y1="214" x2="424" y2="134" />
+      <line x1="360" y1="214" x2="474" y2="164" />
+      <line x1="360" y1="214" x2="508" y2="214" />
+      <line x1="360" y1="214" x2="474" y2="264" />
+      <line x1="360" y1="214" x2="321" y2="146" />
+      <line x1="360" y1="214" x2="399" y2="146" />
+      <line x1="360" y1="214" x2="280" y2="180" />
+      <line x1="360" y1="214" x2="440" y2="180" />
+      <line x1="360" y1="214" x2="322" y2="258" />
+      <line x1="360" y1="214" x2="398" y2="258" />
+    </g>
+    <rect x="184" y="360" width="352" height="176" fill="#22497f" />
+  </g>
+
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <path
+      d="M 360 166
+         C 346 196, 340 244, 340 302
+         L 340 380
+         C 340 393, 348 401, 360 401
+         C 372 401, 380 393, 380 380
+         L 380 302
+         C 380 244, 374 196, 360 166 Z"
+      fill="#38546d"
+    />
+    <path
+      d="M 360 166
+         C 352 182, 348 196, 344 222
+         C 352 236, 368 236, 376 222
+         C 372 196, 368 182, 360 166 Z"
+      fill="#4e5f72"
+    />
+    <circle cx="360" cy="214" r="9" fill="#ffffff" />
+    <path
+      d="M 284 318
+         Q 320 290 360 302
+         Q 400 290 436 318
+         L 436 450
+         Q 400 433 360 443
+         Q 320 433 284 450 Z"
+      fill="#39ae52"
+      stroke="#12385f"
+      stroke-width="5"
+    />
+    <path
+      d="M 292 312
+         Q 325 288 360 298
+         L 360 434
+         Q 327 424 292 440 Z"
+      fill="#ffffff"
+      stroke="#143d77"
+      stroke-width="4"
+    />
+    <path
+      d="M 428 312
+         Q 395 288 360 298
+         L 360 434
+         Q 393 424 428 440 Z"
+      fill="#ffffff"
+      stroke="#143d77"
+      stroke-width="4"
+    />
+    <path d="M 360 300 L 360 436" fill="none" stroke="#143d77" stroke-width="4" />
+    <path d="M 304 330 C 320 326, 334 326, 350 330" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 304 346 C 320 342, 334 342, 350 346" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 304 362 C 320 358, 334 358, 350 362" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 304 378 C 320 374, 334 374, 350 378" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 304 394 C 320 390, 334 390, 350 394" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 304 410 C 320 406, 334 406, 350 410" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 370 330 C 386 326, 400 326, 416 330" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 370 346 C 386 342, 400 342, 416 346" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 370 362 C 386 358, 400 358, 416 362" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 370 378 C 386 374, 400 374, 416 378" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 370 394 C 386 390, 400 390, 416 394" fill="none" stroke="#143d77" stroke-width="2.4" />
+    <path d="M 370 410 C 386 406, 400 406, 416 410" fill="none" stroke="#143d77" stroke-width="2.4" />
+  </g>
+
+  <g font-family="'Noto Sans Bengali', 'Hind Siliguri', 'Bangla Sangam MN', sans-serif">
+    <text
+      x="360"
+      y="478"
+      fill="#ffffff"
+      font-size="36"
+      font-weight="700"
+      text-anchor="middle"
+    >
+      স্থাপিতঃ ২০১৭
+    </text>
+  </g>
+</svg>

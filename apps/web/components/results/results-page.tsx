@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
   Award,
@@ -29,6 +30,8 @@ import { ClassSelect } from "@/components/academic/class-select"
 import { SectionSelect } from "@/components/academic/section-select"
 import { SessionSelect } from "@/components/academic/session-select"
 import { useAuth } from "@/components/auth/auth-provider"
+import { BranchSelect } from "@/components/branch/branch-select"
+import { useBranch } from "@/components/branch/branch-provider"
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
@@ -37,14 +40,21 @@ import { useMyStudents } from "@/hooks/parents"
 import {
   useExamResults,
   useGenerateAnnualResults,
-  useGenerateExamResults,
   usePublishAnnualResults,
-  usePublishExamResults,
   useResultSearch,
 } from "@/hooks/results"
 import { toastError, toastSuccess } from "@/lib/toast"
-import { EXAM_TYPE_LABELS } from "@/types/exam"
-import type { ResultPassFilter, ResultSearchParams } from "@/types/result"
+import {
+  EXAM_TYPE_LABELS,
+  EXAM_TYPES,
+  type Exam,
+  type ExamType,
+} from "@/types/exam"
+import type {
+  ExamResultRow,
+  ResultPassFilter,
+  ResultSearchParams,
+} from "@/types/result"
 import { ListPager } from "@/components/list-pager"
 import { StatusBadge } from "@/components/status-badge"
 import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
@@ -150,35 +160,169 @@ function StaffViewTabs({
   )
 }
 
+/**
+ * Class picker scoped to the chosen exam: an exam targeting an explicit set of
+ * classes only offers those; an all-classes exam offers every class via the
+ * shared `ClassSelect`. Disabled until an exam is chosen.
+ */
+function SearchClassPicker({
+  exam,
+  branchId,
+  value,
+  onValueChange,
+}: {
+  exam: Exam | null
+  /** Screen-local branch filter, forwarded to the all-classes `ClassSelect`. */
+  branchId: string | null
+  value: string | null
+  onValueChange: (value: string | null) => void
+}) {
+  if (exam && !exam.all_classes) {
+    const options = (exam.classes ?? []).map((schoolClass) => ({
+      value: schoolClass.id,
+      label: schoolClass.name || `Class #${schoolClass.id}`,
+    }))
+    return (
+      <AcademicSelect
+        value={value}
+        onValueChange={onValueChange}
+        options={options}
+        placeholder="Select class"
+        emptyPlaceholder="No classes on this exam"
+      />
+    )
+  }
+
+  return (
+    <ClassSelect
+      value={value}
+      onValueChange={onValueChange}
+      branchId={branchId}
+      disabled={exam == null}
+    />
+  )
+}
+
 function StaffSearchPanel() {
+  // Screen-local branch filter (super admin only — everyone else is scoped
+  // server-side and never sees the field), mirroring the mark entry grid.
+  const { isSuperAdmin } = useBranch()
   const [mode, setMode] = React.useState<SearchMode>("admission")
   const [admissionNo, setAdmissionNo] = React.useState("")
-  const [sessionId, setSessionId] = React.useState<string | null>(null)
+  const [branchId, setBranchId] = React.useState<string | null>(null)
+  const [examName, setExamName] = React.useState<string | null>(null)
+  const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
   const [sectionId, setSectionId] = React.useState<string | null>(null)
   const [rollNo, setRollNo] = React.useState("")
   const [submitted, setSubmitted] = React.useState<ResultSearchParams | null>(
     null
   )
+  // Frozen at submit so tweaking the pickers doesn't re-filter shown results.
+  const [submittedSemester, setSubmittedSemester] =
+    React.useState<ExamType | null>(null)
+
+  const examsQuery = useExams(
+    { page: 1, per_page: 100, branch_id: branchId },
+    mode === "coordinates"
+  )
+  const exams = React.useMemo(
+    () => examsQuery.data?.data ?? [],
+    [examsQuery.data]
+  )
+
+  // The exam picker offers distinct names; semester then picks among that
+  // name's `type` variants. Both together resolve the actual exam record,
+  // which pins the session the bundle search runs against.
+  const examNames = React.useMemo(() => {
+    const names: string[] = []
+    for (const exam of exams) {
+      if (!names.includes(exam.name)) names.push(exam.name)
+    }
+    return names
+  }, [exams])
+  const semesterOptions = React.useMemo(() => {
+    if (examName == null) return []
+    const types: ExamType[] = []
+    for (const exam of exams) {
+      if (exam.name === examName && !types.includes(exam.type)) {
+        types.push(exam.type)
+      }
+    }
+    return EXAM_TYPES.filter((type) => types.includes(type))
+  }, [exams, examName])
+
+  const selectedExam =
+    examName != null && semester != null
+      ? (exams.find(
+          (exam) => exam.name === examName && exam.type === semester
+        ) ?? null)
+      : null
 
   const query = useResultSearch(submitted ?? {}, submitted !== null)
 
+  // When the active branch changes, the exam list re-scopes. Drop a selection
+  // that is no longer in it so the form can't keep another branch's tuple
+  // (state adjusted during render; the null reset keeps it from re-entering).
+  if (
+    examName != null &&
+    examsQuery.data != null &&
+    !exams.some((exam) => exam.name === examName)
+  ) {
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+    setSectionId(null)
+  }
+
+  // Section stays optional — a class without sections searches by roll alone.
   const canSubmit =
     mode === "admission"
       ? admissionNo.trim().length > 0
-      : Boolean(sessionId && classId && sectionId && rollNo.trim())
+      : Boolean(selectedExam?.session_id && classId && rollNo.trim())
+
+  function changeBranch(value: string | null) {
+    setBranchId(value)
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+    setSectionId(null)
+  }
+  function changeExam(value: string | null) {
+    setExamName(value)
+    // Pre-select the semester when the exam only exists under one type.
+    const types = new Set(
+      exams.filter((exam) => exam.name === value).map((exam) => exam.type)
+    )
+    setSemester(types.size === 1 ? [...types][0]! : null)
+    setClassId(null)
+    setSectionId(null)
+  }
+  function changeSemester(value: ExamType | null) {
+    setSemester(value)
+    setClassId(null)
+    setSectionId(null)
+  }
+  function changeClass(value: string | null) {
+    setClassId(value)
+    setSectionId(null)
+  }
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!canSubmit) return
+    // Coordinates search narrows the bundle to the picked semester; an
+    // admission-no search shows the full bundle.
+    setSubmittedSemester(mode === "coordinates" ? semester : null)
     setSubmitted(
       mode === "admission"
         ? { admission_no: admissionNo }
         : {
-            session_id: sessionId,
+            session_id: selectedExam?.session_id,
             class_id: classId,
             section_id: sectionId,
             roll_no: rollNo,
+            branch_id: branchId,
           }
     )
   }
@@ -225,51 +369,95 @@ function StaffSearchPanel() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_10rem_auto]">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {isSuperAdmin ? (
+                <label className="grid gap-1.5">
+                  <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+                    Branch
+                  </span>
+                  <BranchSelect
+                    value={branchId}
+                    onValueChange={changeBranch}
+                    clearLabel="All branches"
+                    placeholder="All branches"
+                  />
+                </label>
+              ) : null}
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-                  Session
+                  Exam
                 </span>
-                <SessionSelect value={sessionId} onValueChange={setSessionId} />
+                <AcademicSelect
+                  value={examName}
+                  onValueChange={changeExam}
+                  options={examNames.map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                  isLoading={examsQuery.isPending}
+                  isError={examsQuery.isError}
+                  placeholder="Select exam"
+                  emptyPlaceholder="No exams"
+                />
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+                  Semester
+                </span>
+                <AcademicSelect
+                  value={semester}
+                  onValueChange={changeSemester}
+                  options={semesterOptions.map((type) => ({
+                    value: type,
+                    label: EXAM_TYPE_LABELS[type],
+                  }))}
+                  disabled={examName == null}
+                  disabledPlaceholder="Select exam first"
+                  placeholder="Select semester"
+                  emptyPlaceholder="No semesters"
+                />
               </label>
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
                   Class
                 </span>
-                <ClassSelect
+                <SearchClassPicker
+                  exam={selectedExam}
+                  branchId={branchId}
                   value={classId}
-                  onValueChange={(next) => {
-                    setClassId(next)
-                    setSectionId(null)
-                  }}
+                  onValueChange={changeClass}
                 />
               </label>
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-                  Section
+                  Section (optional)
                 </span>
                 <SectionSelect
                   classId={classId}
                   value={sectionId}
                   onValueChange={setSectionId}
+                  clearLabel="All sections"
+                  placeholder="All sections"
                 />
               </label>
-              <label className="grid gap-1.5">
-                <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-                  Roll
-                </span>
-                <Input
-                  value={rollNo}
-                  onChange={(event) => setRollNo(event.target.value)}
-                  inputMode="numeric"
-                  placeholder="12"
-                  className="font-mono tabular-nums"
-                />
-              </label>
-              <Button type="submit" disabled={!canSubmit} className="self-end">
-                <Search className="size-4" aria-hidden />
-                Search
-              </Button>
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                <label className="grid gap-1.5">
+                  <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+                    Roll
+                  </span>
+                  <Input
+                    value={rollNo}
+                    onChange={(event) => setRollNo(event.target.value)}
+                    inputMode="numeric"
+                    placeholder="12"
+                    className="font-mono tabular-nums"
+                  />
+                </label>
+                <Button type="submit" disabled={!canSubmit} className="self-end">
+                  <Search className="size-4" aria-hidden />
+                  Search
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -290,106 +478,257 @@ function StaffSearchPanel() {
           onRetry={() => query.refetch()}
         />
       ) : (
-        <ResultBundlePanel bundle={query.data} />
+        <ResultBundlePanel bundle={query.data} examType={submittedSemester} />
       )}
     </section>
   )
 }
 
-function ExamResultsPanel({ canGenerate }: { canGenerate: boolean }) {
-  const [examId, setExamId] = React.useState<string | null>(null)
+/**
+ * Student name linking to the detail page's Results tab, mirroring the mark
+ * entry grid. Falls back to plain text when the row carries no `student_id`
+ * (older API payloads).
+ */
+function ResultStudentLink({
+  row,
+  className,
+}: {
+  row: ExamResultRow
+  className?: string
+}) {
+  const name = row.name_en || "-"
+  if (!row.student_id) return <span className={className}>{name}</span>
+  return (
+    <Link
+      href={`/students/${row.student_id}?tab=results`}
+      className={cn(
+        "rounded-sm outline-none hover:text-brand hover:underline focus-visible:ring-2 focus-visible:ring-brand/40",
+        className
+      )}
+    >
+      {name}
+    </Link>
+  )
+}
+
+/** Share of the cohort as "62.5%", or null when there is no cohort yet. */
+function formatShare(part: number | null, whole: number | null): string | null {
+  if (part == null || whole == null || whole <= 0) return null
+  return `${((part / whole) * 100).toFixed(1)}%`
+}
+
+function ResultSummaryCard({
+  label,
+  value,
+  percent,
+  tone,
+}: {
+  label: string
+  value: number | null
+  /** Rendered right of the figure — the value's share of the cohort. */
+  percent?: string | null
+  tone?: "success" | "error" | "brand"
+}) {
+  const toneClass =
+    tone === "success"
+      ? "text-success"
+      : tone === "error"
+        ? "text-error"
+        : tone === "brand"
+          ? "text-brand"
+          : "text-copy-primary"
+
+  return (
+    <div className="rounded-xl border border-surface-border bg-surface p-4 shadow-sm">
+      <p className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+        {label}
+      </p>
+      <div className="mt-1 flex items-baseline justify-between gap-2">
+        <p className={cn("font-mono text-2xl font-bold tabular-nums", toneClass)}>
+          {value ?? "-"}
+        </p>
+        {percent != null ? (
+          <p className={cn("font-mono text-sm font-semibold tabular-nums", toneClass)}>
+            {percent}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function ExamResultsPanel() {
+  // Screen-local branch filter (super admin only), mirroring the search panel:
+  // everyone else is scoped server-side and never sees the field.
+  const { isSuperAdmin } = useBranch()
+  const [branchId, setBranchId] = React.useState<string | null>(null)
+  const [examName, setExamName] = React.useState<string | null>(null)
+  const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
-  const [sectionId, setSectionId] = React.useState<string | null>(null)
   const [passFilter, setPassFilter] = React.useState<ResultPassFilter>("all")
   const [page, setPage] = React.useState(1)
-  const [confirm, setConfirm] = React.useState<"generate" | "publish" | null>(
-    null
+  // Frozen at submit so tweaking the pickers doesn't reload shown results; the
+  // verdict filter stays live and re-filters the submitted list.
+  const [submitted, setSubmitted] = React.useState<{
+    exam_id: string
+    class_id: string
+    branch_id: string | null
+  } | null>(null)
+
+  const examsQuery = useExams({ page: 1, per_page: 100, branch_id: branchId })
+  const exams = React.useMemo(
+    () => examsQuery.data?.data ?? [],
+    [examsQuery.data]
   )
 
-  const exams = useExams({ page: 1, per_page: 100 })
-  const rows = useExamResults(
-    { exam_id: examId, section_id: sectionId, is_passed: passFilter, page },
-    Boolean(examId)
-  )
-  const generate = useGenerateExamResults()
-  const publish = usePublishExamResults()
-
-  const examOptions =
-    exams.data?.data.map((exam) => ({
-      value: exam.id,
-      label: `${exam.name} - ${EXAM_TYPE_LABELS[exam.type] ?? exam.type}`,
-    })) ?? []
-
-  async function runConfirmed() {
-    if (!examId || !confirm) return
-
-    try {
-      if (confirm === "generate") {
-        const result = await generate.mutateAsync(examId)
-        toastSuccess(
-          `Generated ${result.generated} exam result${result.generated === 1 ? "" : "s"}.`,
-          { id: "results-exam-generate" }
-        )
-      } else {
-        const result = await publish.mutateAsync(examId)
-        toastSuccess(
-          `Published ${result.published} exam result${result.published === 1 ? "" : "s"}.`,
-          { id: "results-exam-publish" }
-        )
-      }
-    } catch (error) {
-      toastError(error, "Result action failed.", { id: "results-exam-action" })
-      throw error
+  // The exam picker offers distinct names; semester then picks among that
+  // name's `type` variants. Both together resolve the actual exam record.
+  const examNames = React.useMemo(() => {
+    const names: string[] = []
+    for (const exam of exams) {
+      if (!names.includes(exam.name)) names.push(exam.name)
     }
+    return names
+  }, [exams])
+  const semesterOptions = React.useMemo(() => {
+    if (examName == null) return []
+    const types: ExamType[] = []
+    for (const exam of exams) {
+      if (exam.name === examName && !types.includes(exam.type)) {
+        types.push(exam.type)
+      }
+    }
+    return EXAM_TYPES.filter((type) => types.includes(type))
+  }, [exams, examName])
+
+  const selectedExam =
+    examName != null && semester != null
+      ? (exams.find(
+          (exam) => exam.name === examName && exam.type === semester
+        ) ?? null)
+      : null
+
+  // When the active branch changes, the exam list re-scopes. Drop a selection
+  // that is no longer in it so the form can't keep another branch's tuple
+  // (state adjusted during render; the null reset keeps it from re-entering).
+  if (
+    examName != null &&
+    examsQuery.data != null &&
+    !exams.some((exam) => exam.name === examName)
+  ) {
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+  }
+
+  const rows = useExamResults(
+    { ...submitted, is_passed: passFilter, page },
+    submitted !== null
+  )
+  // `meta.summary` describes the whole cohort under the submitted scope,
+  // regardless of the verdict filter, so any page carries the strip's figures.
+  const summary = rows.data?.meta?.summary ?? null
+  const totalExaminee = summary?.examinee ?? null
+  const totalPassed = summary?.passed ?? null
+  const totalFailed = summary?.failed ?? null
+  const totalGpa5 = summary?.gpa5 ?? null
+
+  function changeBranch(value: string | null) {
+    setBranchId(value)
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+  }
+  function changeExam(value: string | null) {
+    setExamName(value)
+    // Pre-select the semester when the exam only exists under one type.
+    const types = new Set(
+      exams.filter((exam) => exam.name === value).map((exam) => exam.type)
+    )
+    setSemester(types.size === 1 ? [...types][0]! : null)
+    setClassId(null)
+  }
+  function changeSemester(value: ExamType | null) {
+    setSemester(value)
+    setClassId(null)
+  }
+
+  const canSubmit = selectedExam != null && classId != null
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (!selectedExam || !classId) return
+    setPage(1)
+    setSubmitted({
+      exam_id: selectedExam.id,
+      class_id: classId,
+      branch_id: branchId,
+    })
   }
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="rounded-xl border border-surface-border bg-surface p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_12rem_auto]">
+      <form
+        onSubmit={submit}
+        className="rounded-xl border border-surface-border bg-surface p-4 shadow-sm"
+      >
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {isSuperAdmin ? (
+            <label className="grid gap-1.5">
+              <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+                Branch
+              </span>
+              <BranchSelect
+                value={branchId}
+                onValueChange={changeBranch}
+                clearLabel="All branches"
+                placeholder="All branches"
+              />
+            </label>
+          ) : null}
           <label className="grid gap-1.5">
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
               Exam
             </span>
             <AcademicSelect
-              value={examId}
-              onValueChange={(next) => {
-                setExamId(next)
-                setPage(1)
-              }}
-              options={examOptions}
-              isLoading={exams.isPending}
-              isError={exams.isError}
+              value={examName}
+              onValueChange={changeExam}
+              options={examNames.map((name) => ({
+                value: name,
+                label: name,
+              }))}
+              isLoading={examsQuery.isPending}
+              isError={examsQuery.isError}
               placeholder="Select exam"
               emptyPlaceholder="No exams"
             />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-              Class for section filter
+              Semester
             </span>
-            <ClassSelect
-              value={classId}
-              onValueChange={(next) => {
-                setClassId(next)
-                setSectionId(null)
-                setPage(1)
-              }}
-              placeholder="Optional class"
+            <AcademicSelect
+              value={semester}
+              onValueChange={changeSemester}
+              options={semesterOptions.map((type) => ({
+                value: type,
+                label: EXAM_TYPE_LABELS[type],
+              }))}
+              disabled={examName == null}
+              disabledPlaceholder="Select exam first"
+              placeholder="Select semester"
+              emptyPlaceholder="No semesters"
             />
           </label>
           <label className="grid gap-1.5">
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-              Section
+              Class
             </span>
-            <SectionSelect
-              classId={classId}
-              value={sectionId}
-              onValueChange={(next) => {
-                setSectionId(next)
-                setPage(1)
-              }}
-              placeholder="All sections"
+            <SearchClassPicker
+              exam={selectedExam}
+              branchId={branchId}
+              value={classId}
+              onValueChange={setClassId}
             />
           </label>
           <label className="grid gap-1.5">
@@ -409,40 +748,44 @@ function ExamResultsPanel({ canGenerate }: { canGenerate: boolean }) {
               ]}
             />
           </label>
-          <div className="flex flex-wrap gap-2 self-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!canGenerate || !examId}
-              onClick={() => setConfirm("generate")}
-            >
-              <Send className="size-4" aria-hidden />
-              Generate
-            </Button>
-            <Button
-              type="button"
-              disabled={!canGenerate || !examId}
-              onClick={() => setConfirm("publish")}
-            >
-              <ShieldCheck className="size-4" aria-hidden />
-              Publish
+          <div className="flex items-end">
+            <Button type="submit" disabled={!canSubmit}>
+              <Search className="size-4" aria-hidden />
+              Search
             </Button>
           </div>
         </div>
-        {!canGenerate ? (
-          <p className="mt-3 flex items-center gap-2 text-sm text-copy-muted">
-            <Lock className="size-4" aria-hidden />
-            You can browse results, but result generation requires additional
-            permission.
-          </p>
-        ) : null}
-      </div>
+      </form>
 
-      {!examId ? (
+      {submitted !== null ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ResultSummaryCard label="Total examinee" value={totalExaminee} />
+          <ResultSummaryCard
+            label="Total passed"
+            value={totalPassed}
+            percent={formatShare(totalPassed, totalExaminee)}
+            tone="success"
+          />
+          <ResultSummaryCard
+            label="Total failed"
+            value={totalFailed}
+            percent={formatShare(totalFailed, totalExaminee)}
+            tone="error"
+          />
+          <ResultSummaryCard
+            label="Total GPA-5"
+            value={totalGpa5}
+            percent={formatShare(totalGpa5, totalExaminee)}
+            tone="brand"
+          />
+        </div>
+      ) : null}
+
+      {!submitted ? (
         <EmptyState
           icon={BookOpenCheck}
-          title="Select an exam"
-          description="Choose an exam to browse generated result rows."
+          title="Search exam results"
+          description="Pick an exam, semester, and class, then search to browse the generated result sheet."
         />
       ) : rows.isPending ? (
         <ResultsSkeleton />
@@ -456,7 +799,7 @@ function ExamResultsPanel({ canGenerate }: { canGenerate: boolean }) {
         <EmptyState
           icon={BookOpenCheck}
           title="No generated results"
-          description="Generate results for this exam, or adjust the filters."
+          description="No result rows match this exam and filters."
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-surface-border bg-surface shadow-sm">
@@ -476,7 +819,7 @@ function ExamResultsPanel({ canGenerate }: { canGenerate: boolean }) {
                 {rows.data.data.map((row) => (
                   <TableRow key={row.enrollment_id}>
                     <TableCell className="font-medium text-copy-primary">
-                      {row.name_en || "-"}
+                      <ResultStudentLink row={row} />
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
                       {row.roll_no ?? "-"}
@@ -511,7 +854,7 @@ function ExamResultsPanel({ canGenerate }: { canGenerate: boolean }) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-copy-primary">
-                      {row.name_en || "-"}
+                      <ResultStudentLink row={row} />
                     </p>
                     <p className="font-mono text-sm text-copy-muted">
                       Roll {row.roll_no ?? "-"}
@@ -552,20 +895,6 @@ function ExamResultsPanel({ canGenerate }: { canGenerate: boolean }) {
           </div>
         </div>
       )}
-
-      <ConfirmDialog
-        open={confirm !== null}
-        onOpenChange={(open) => !open && setConfirm(null)}
-        title={confirm === "publish" ? "Publish exam results?" : "Generate exam results?"}
-        description={
-          confirm === "publish"
-            ? "This stamps the generated rows as published and freezes the exam results."
-            : "This regenerates result rows from the marks currently saved for this exam."
-        }
-        confirmLabel={confirm === "publish" ? "Publish results" : "Generate results"}
-        pendingLabel={confirm === "publish" ? "Publishing..." : "Generating..."}
-        onConfirm={runConfirmed}
-      />
     </section>
   )
 }
@@ -695,7 +1024,7 @@ function StaffResultsPage({
       {active === "search" ? (
         <StaffSearchPanel />
       ) : active === "exam" ? (
-        <ExamResultsPanel canGenerate={canGenerate} />
+        <ExamResultsPanel />
       ) : (
         <AnnualActionsPanel canGenerate={canGenerate} />
       )}

@@ -5,12 +5,16 @@
  * the returned figures and flags the UI displays.
  */
 
+import type { PaginationMeta } from "./api"
 import type { ExamType } from "./exam"
+import type { GradingBand } from "./mark"
 
 export interface ResultStudentSummary {
   id: string
   name_en: string | null
   admission_no: string | null
+  father_name?: string | null
+  mother_name?: string | null
   class: string | null
   section: string | null
   roll_no: string | number | null
@@ -54,11 +58,15 @@ export interface ResultSearchParams {
   class_id?: string | null
   section_id?: string | null
   roll_no?: string | number | null
+  /** Screen-local branch filter (super admin); overrides the active branch. */
+  branch_id?: string | null
 }
 
 export interface ExamResultRow {
   enrollment_id: string
   roll_no: string | number | null
+  /** Student `public_id` for linking to the detail page's Results tab. */
+  student_id?: string | null
   name_en: string | null
   total_marks: string | number | null
   gpa: string | number | null
@@ -68,10 +76,29 @@ export interface ExamResultRow {
 
 export type ResultPassFilter = "all" | "passed" | "failed"
 
+/**
+ * Verdict aggregates the exam-results browse returns in `meta.summary`,
+ * describing the whole class/section-scoped cohort regardless of the
+ * `is_passed` filter. `gpa5` counts GPA-5.00 achievers.
+ */
+export interface ExamResultsSummary {
+  examinee: number
+  passed: number
+  failed: number
+  gpa5: number
+}
+
+export interface ExamResultsMeta extends PaginationMeta {
+  summary?: ExamResultsSummary
+}
+
 export interface ExamResultsParams {
   exam_id?: string | null
+  class_id?: string | null
   section_id?: string | null
   is_passed?: ResultPassFilter
+  /** Screen-local branch filter (super admin); overrides the active branch. */
+  branch_id?: string | null
   page?: number
   per_page?: number
 }
@@ -124,9 +151,12 @@ export interface PublicResultSubject {
   subject_name: string | null
   marks: string | number | null
   grade: string | null
+  grade_point: string | number | null
 }
 
 export interface PublicResult {
   student_information: PublicResultStudentInformation | null
   subjects: PublicResultSubject[]
+  /** Global grading scale, bundled so the public sheet can show the legend. */
+  grading_scale?: GradingBand[]
 }

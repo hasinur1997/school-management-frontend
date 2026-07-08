@@ -1,32 +1,25 @@
 "use client"
 
 import * as React from "react"
-import {
-  Award,
-  BookOpen,
-  FileText,
-  GraduationCap,
-  Lock,
-  UserRound,
-} from "lucide-react"
+import { Award, FileText, GraduationCap, Lock } from "lucide-react"
 
 import { Skeleton } from "@workspace/ui/components/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { StatusBadge } from "@/components/status-badge"
+import { useGradingScale } from "@/hooks/marks"
 import { useEnrollmentResults, useMyResults } from "@/hooks/results"
-import { EXAM_TYPE_LABELS } from "@/types/exam"
-import type { AnnualResult, PerExamResult, ResultBundle } from "@/types/result"
+import { EXAM_TYPE_LABELS, type ExamType } from "@/types/exam"
+import type { GradingBand } from "@/types/mark"
+import type {
+  AnnualResult,
+  PerExamResult,
+  ResultBundle,
+  ResultStudentSummary,
+} from "@/types/result"
+import { ResultMarkSheet, type MarkSheetField } from "./result-mark-sheet"
 
 function formatFigure(value: string | number | null | undefined): string {
   if (value == null || value === "") return "-"
@@ -69,36 +62,45 @@ function InfoItem({
   )
 }
 
-function ResultHeader({ bundle }: { bundle: ResultBundle }) {
-  const { student } = bundle
+/** Adapt one per-exam result into the academic-transcript mark sheet. */
+function ExamMarkSheet({
+  result,
+  student,
+  scale,
+}: {
+  result: PerExamResult
+  student: ResultStudentSummary
+  scale: GradingBand[] | undefined
+}) {
+  const label = EXAM_TYPE_LABELS[result.type] ?? result.type
+  const fields: MarkSheetField[] = [
+    { label: "Student Name", value: student.name_en },
+    { label: "Father's Name", value: student.father_name },
+    { label: "Mother's Name", value: student.mother_name },
+    { label: "Admission No", value: student.admission_no, mono: true },
+    { label: "Class", value: student.class },
+    { label: "Section", value: student.section },
+    { label: "Roll No", value: student.roll_no, mono: true },
+    { label: "Examination", value: label },
+  ]
+  const subjects = result.subjects.map((subject) => ({
+    name: subject.name,
+    marks: subject.obtained_marks,
+    grade: subject.grade,
+    point: subject.grade_point,
+  }))
 
+  // School name/logo come from settings (not yet implemented); until then the
+  // sheet renders its default institution from the imported design.
   return (
-    <section className="rounded-xl border border-surface-border bg-surface p-5 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-dim text-brand">
-            <UserRound className="size-5" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold tracking-wide text-brand uppercase">
-              Result sheet
-            </p>
-            <h2 className="truncate text-xl font-bold text-copy-primary">
-              {student.name_en || "Unnamed student"}
-            </h2>
-            <p className="mt-1 text-sm text-copy-muted">
-              {student.admission_no || "No admission no"}
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[34rem]">
-          <InfoItem label="Class" value={student.class} />
-          <InfoItem label="Section" value={student.section} />
-          <InfoItem label="Roll" value={student.roll_no} mono />
-          <InfoItem label="Exams" value={bundle.exams.length} mono />
-        </div>
-      </div>
-    </section>
+    <ResultMarkSheet
+      title={`${label} Result`}
+      fields={fields}
+      scale={scale}
+      subjects={subjects}
+      gpa={result.gpa}
+      grade={result.grade}
+    />
   )
 }
 
@@ -169,131 +171,118 @@ function AnnualResultCard({ annual }: { annual: AnnualResult | null }) {
   )
 }
 
-function ExamResultCard({ result }: { result: PerExamResult }) {
-  return (
-    <section className="overflow-hidden rounded-xl border border-surface-border bg-surface shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-surface-border p-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-subtle text-copy-secondary">
-            <BookOpen className="size-4" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold text-copy-primary">
-              {EXAM_TYPE_LABELS[result.type] ?? result.type}
-            </h3>
-            <p className="text-sm text-copy-muted">
-              GPA {formatFigure(result.gpa)} - Grade {result.grade || "-"}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge
-            status={result.published ? "published" : "pending"}
-            tone={result.published ? "success" : "warning"}
-            label={result.published ? "Published" : "Unpublished"}
-          />
-          <StatusBadge
-            status={verdictLabel(result.is_passed)}
-            tone={resultTone(result.is_passed)}
-            label={verdictLabel(result.is_passed)}
-          />
-        </div>
-      </div>
+export function ResultBundlePanel({
+  bundle,
+  examType,
+  showAnnual,
+}: {
+  bundle: ResultBundle
+  /**
+   * Narrow the bundle to one semester: only that exam's card is shown and the
+   * cross-semester annual card is hidden. Omit for the full bundle.
+   */
+  examType?: ExamType | null
+  /**
+   * Force the annual card on/off regardless of `examType` — the annual sub-tab
+   * pairs the final exam with the annual card. Omit for the default (annual
+   * card only on the full bundle).
+   */
+  showAnnual?: boolean
+}) {
+  const exams = examType
+    ? bundle.exams.filter((result) => result.type === examType)
+    : bundle.exams
+  const annualVisible = showAnnual ?? !examType
 
-      {result.subjects.length === 0 ? (
-        <div className="p-5">
-          <EmptyState
-            icon={FileText}
-            title="No subject marks"
-            description="The API did not return subject marks for this exam result."
-            className="bg-subtle/30"
-          />
-        </div>
-      ) : (
-        <>
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subject</TableHead>
-                  <TableHead className="text-right">Marks</TableHead>
-                  <TableHead className="text-right">Grade</TableHead>
-                  <TableHead className="text-right">Point</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.subjects.map((subject, index) => (
-                  <TableRow key={`${subject.name ?? "subject"}-${index}`}>
-                    <TableCell className="font-medium text-copy-primary">
-                      {subject.name || "-"}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {formatFigure(subject.obtained_marks)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-semibold">
-                      {subject.grade || "-"}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {formatFigure(subject.grade_point)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="grid gap-2 p-4 md:hidden">
-            {result.subjects.map((subject, index) => (
-              <div
-                key={`${subject.name ?? "subject"}-${index}`}
-                className="rounded-lg border border-surface-border bg-subtle p-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="min-w-0 font-medium text-copy-primary">
-                    {subject.name || "-"}
-                  </p>
-                  <p className="font-mono text-sm font-semibold text-copy-primary">
-                    {subject.grade || "-"}
-                  </p>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                  <InfoItem
-                    label="Marks"
-                    value={formatFigure(subject.obtained_marks)}
-                    mono
-                  />
-                  <InfoItem
-                    label="Point"
-                    value={formatFigure(subject.grade_point)}
-                    mono
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </section>
-  )
-}
+  // Server-owned grading scale for the transcript's range/grade/point legend.
+  // Absent (or forbidden for the viewer) → the sheet just hides the legend.
+  const scale = useGradingScale().data
 
-export function ResultBundlePanel({ bundle }: { bundle: ResultBundle }) {
   return (
     <div className="flex flex-col gap-4">
-      <ResultHeader bundle={bundle} />
-      <AnnualResultCard annual={bundle.annual} />
-      {bundle.exams.length === 0 ? (
+      {annualVisible ? <AnnualResultCard annual={bundle.annual} /> : null}
+      {exams.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="No exam results"
-          description="No per-exam results are available for this enrollment yet."
+          description={
+            examType
+              ? `No ${EXAM_TYPE_LABELS[examType].toLowerCase()} result is available for this enrollment yet.`
+              : "No per-exam results are available for this enrollment yet."
+          }
         />
       ) : (
         <div className="grid gap-4">
-          {bundle.exams.map((result) => (
-            <ExamResultCard key={result.type} result={result} />
+          {exams.map((result) => (
+            <ExamMarkSheet
+              key={result.type}
+              result={result}
+              student={bundle.student}
+              scale={scale}
+            />
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * Sub-tab views on the student-detail Results tab. The two semesters map
+ * straight to their exam type; "annual" shows the final exam alongside the
+ * cross-semester annual card.
+ */
+type ResultView = ExamType | "annual"
+
+const RESULT_VIEWS: { value: ResultView; label: string }[] = [
+  { value: "first_semester", label: "First Semester" },
+  { value: "second_semester", label: "Second Semester" },
+  { value: "annual", label: "Annual Exam Result" },
+]
+
+function ResultViewTabs({
+  active,
+  onChange,
+}: {
+  active: ResultView
+  onChange: (view: ResultView) => void
+}) {
+  return (
+    <div className="flex overflow-x-auto rounded-xl bg-track p-1">
+      {RESULT_VIEWS.map((item) => {
+        const selected = active === item.value
+        return (
+          <button
+            key={item.value}
+            type="button"
+            onClick={() => onChange(item.value)}
+            className={cn(
+              "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition-colors",
+              selected
+                ? "bg-surface text-brand shadow-sm"
+                : "text-copy-secondary hover:bg-hover hover:text-copy-primary"
+            )}
+          >
+            {item.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** A result bundle behind semester/annual sub-tabs. */
+function TabbedResultBundle({ bundle }: { bundle: ResultBundle }) {
+  const [view, setView] = React.useState<ResultView>("first_semester")
+
+  return (
+    <div className="flex flex-col gap-4">
+      <ResultViewTabs active={view} onChange={setView} />
+      <ResultBundlePanel
+        bundle={bundle}
+        examType={view === "annual" ? "final" : view}
+        showAnnual={view === "annual"}
+      />
     </div>
   )
 }
@@ -329,7 +318,7 @@ export function MyResultsPanel({
     )
   }
 
-  return <ResultBundlePanel bundle={query.data} />
+  return <TabbedResultBundle bundle={query.data} />
 }
 
 export function EnrollmentResultsPanel({
@@ -360,5 +349,5 @@ export function EnrollmentResultsPanel({
     )
   }
 
-  return <ResultBundlePanel bundle={query.data} />
+  return <TabbedResultBundle bundle={query.data} />
 }

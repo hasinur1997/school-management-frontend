@@ -16,14 +16,6 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form"
 import { Input } from "@workspace/ui/components/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
 import { AcademicSelect } from "@/components/academic/academic-select"
@@ -33,12 +25,18 @@ import { ErrorPanel } from "@/components/error-state"
 import { usePublicSettings } from "@/hooks/admissions"
 import { usePublicResultLookup } from "@/hooks/results"
 import { isNotFoundError, isValidationError } from "@/lib/api"
-import { EMPTY_VALUE, formatDate } from "@/lib/format"
+import { formatDate } from "@/lib/format"
 import { EXAM_TYPE_LABELS, EXAM_TYPES, type ExamType } from "@/types/exam"
+import type { GradingBand } from "@/types/mark"
 import type {
   PublicResult,
   PublicResultLookupParams,
 } from "@/types/result"
+import {
+  ResultMarkSheet,
+  type MarkSheetField,
+  type MarkSheetSubject,
+} from "./result-mark-sheet"
 
 const PUBLIC_RESULTS_ROUTE = "/results/public"
 
@@ -73,6 +71,60 @@ const SEMESTER_OPTIONS = EXAM_TYPES.map((type) => ({
   value: type,
   label: EXAM_TYPE_LABELS[type],
 }))
+
+// Public marksheets use the school's fixed grading legend so the legend shown
+// on-screen and in the generated PDF matches the approved table exactly.
+const PUBLIC_MARKSHEET_SCALE: GradingBand[] = [
+  {
+    min_marks: 80,
+    max_marks: 100,
+    grade: "A+",
+    grade_point: 5,
+    is_fail: false,
+  },
+  {
+    min_marks: 70,
+    max_marks: 79,
+    grade: "A",
+    grade_point: 4,
+    is_fail: false,
+  },
+  {
+    min_marks: 60,
+    max_marks: 69,
+    grade: "A-",
+    grade_point: 3.5,
+    is_fail: false,
+  },
+  {
+    min_marks: 50,
+    max_marks: 59,
+    grade: "B",
+    grade_point: 3,
+    is_fail: false,
+  },
+  {
+    min_marks: 40,
+    max_marks: 49,
+    grade: "C",
+    grade_point: 2,
+    is_fail: false,
+  },
+  {
+    min_marks: 33,
+    max_marks: 39,
+    grade: "D",
+    grade_point: 1,
+    is_fail: false,
+  },
+  {
+    min_marks: 0,
+    max_marks: 32,
+    grade: "F",
+    grade_point: 0,
+    is_fail: true,
+  },
+]
 
 function currentYear() {
   return String(new Date().getFullYear())
@@ -117,11 +169,6 @@ function isFound(data: PublicResult | undefined): data is PublicResult {
   if (!info) return false
 
   return Object.values(info).some((value) => value != null && String(value) !== "")
-}
-
-function display(value: string | number | null | undefined): string {
-  if (value == null || value === "") return EMPTY_VALUE
-  return String(value)
 }
 
 function classPublicId(id: number | string, publicId?: string | null) {
@@ -499,164 +546,43 @@ function PublicResultView({ result }: { result: PublicResult }) {
 
   if (!info) return <NotFoundPanel onReset={() => undefined} />
 
-  const rows: Array<[string, string]> = [
-    ["Roll No", display(info.roll_no)],
-    ["Student Name", display(info.student_name)],
-    ["Father Name", display(info.father_name)],
-    ["Mother Name", display(info.mother_name)],
-    ["Class", display(info.class)],
-    ["Section", display(info.section)],
-    ["Session", display(info.session)],
-    ["Semester", display(info.semester)],
-    ["Date of Birth", formatDate(info.date_of_birth)],
-    ["Result / GPA", display(info.result)],
+  const semesterLabel =
+    (info.semester && EXAM_TYPE_LABELS[info.semester as ExamType]) ||
+    info.semester ||
+    "Result"
+
+  // Mirror the admin / student-detail sheet exactly: same field order, labels,
+  // GPA label, and the default institution/seal (school name/logo will come
+  // from settings once that feature lands). Public-only extras (Session,
+  // Semester, Date of Birth) follow the shared particulars.
+  const fields: MarkSheetField[] = [
+    { label: "Student Name", value: info.student_name },
+    { label: "Father's Name", value: info.father_name },
+    { label: "Mother's Name", value: info.mother_name },
+    { label: "Class", value: info.class },
+    { label: "Section", value: info.section },
+    { label: "Roll No", value: info.roll_no, mono: true },
+    { label: "Session", value: info.session },
+    { label: "Semester", value: semesterLabel },
+    { label: "Date of Birth", value: formatDate(info.date_of_birth), mono: true },
   ]
 
+  const subjects: MarkSheetSubject[] = result.subjects.map((subject) => ({
+    code: subject.subject_code,
+    name: subject.subject_name,
+    marks: subject.marks,
+    grade: subject.grade,
+    point: subject.grade_point,
+  }))
+
   return (
-    <section className="overflow-hidden rounded-[20px] border border-surface-border bg-surface shadow-xl shadow-copy-primary/10">
-      <div className="border-b border-surface-border bg-subtle px-5 py-5 sm:px-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">
-              Published result
-            </p>
-            <h2 className="mt-1 truncate text-2xl font-extrabold text-copy-primary">
-              {display(info.student_name)}
-            </h2>
-            <p className="mt-1 font-mono text-sm text-copy-muted">
-              Roll {display(info.roll_no)} · {display(info.class)}
-            </p>
-          </div>
-          <div className="rounded-xl border border-accent-soft-border bg-accent-dim px-4 py-3">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand">
-              Result / GPA
-            </p>
-            <p className="mt-1 font-mono text-2xl font-extrabold tabular-nums text-copy-primary">
-              {display(info.result)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-5 p-5 sm:p-7">
-        <StudentInformation rows={rows} />
-        <SubjectResults subjects={result.subjects} />
-      </div>
-    </section>
-  )
-}
-
-function StudentInformation({ rows }: { rows: Array<[string, string]> }) {
-  return (
-    <div className="rounded-xl border border-surface-border">
-      <div className="border-b border-surface-border px-4 py-3">
-        <h3 className="text-base font-semibold text-copy-primary">
-          Student Information
-        </h3>
-      </div>
-      <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {rows.map(([label, value]) => (
-          <div
-            key={label}
-            className="min-w-0 border-b border-surface-border px-4 py-3 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:[&:nth-last-child(-n+3)]:border-b-0"
-          >
-            <dt className="text-[11px] font-bold uppercase tracking-wider text-copy-muted">
-              {label}
-            </dt>
-            <dd className="mt-1 min-w-0 break-words text-sm font-semibold text-copy-primary">
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  )
-}
-
-function SubjectResults({ subjects }: { subjects: PublicResult["subjects"] }) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-surface-border">
-      <div className="border-b border-surface-border px-4 py-3">
-        <h3 className="text-base font-semibold text-copy-primary">
-          Subject Wise Grade/Marks
-        </h3>
-      </div>
-
-      {subjects.length === 0 ? (
-        <div className="p-4">
-          <EmptyState
-            icon={FileText}
-            title="No subject marks"
-            description="The API did not return subject-wise marks for this result."
-            className="bg-subtle/30"
-          />
-        </div>
-      ) : (
-        <>
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subject Code</TableHead>
-                  <TableHead>Subject Name</TableHead>
-                  <TableHead className="text-right">Marks</TableHead>
-                  <TableHead className="text-right">Grade</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subjects.map((subject, index) => (
-                  <TableRow
-                    key={`${subject.subject_code ?? "subject"}-${index}`}
-                  >
-                    <TableCell className="font-mono font-semibold text-copy-primary">
-                      {display(subject.subject_code)}
-                    </TableCell>
-                    <TableCell className="font-medium text-copy-primary">
-                      {display(subject.subject_name)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {display(subject.marks)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-semibold">
-                      {display(subject.grade)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="grid gap-3 p-4 md:hidden">
-            {subjects.map((subject, index) => (
-              <div
-                key={`${subject.subject_code ?? "subject"}-${index}`}
-                className="rounded-lg border border-surface-border bg-subtle p-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-mono text-xs font-bold text-brand">
-                      {display(subject.subject_code)}
-                    </p>
-                    <p className="mt-1 break-words font-semibold text-copy-primary">
-                      {display(subject.subject_name)}
-                    </p>
-                  </div>
-                  <p className="rounded-lg bg-surface px-2.5 py-1 font-mono text-sm font-bold text-copy-primary">
-                    {display(subject.grade)}
-                  </p>
-                </div>
-                <p className="mt-3 text-sm text-copy-muted">
-                  Marks:{" "}
-                  <span className="font-mono font-semibold text-copy-primary">
-                    {display(subject.marks)}
-                  </span>
-                </p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    <ResultMarkSheet
+      title={`${semesterLabel} Result`}
+      fields={fields}
+      scale={PUBLIC_MARKSHEET_SCALE}
+      subjects={subjects}
+      gpa={info.result}
+    />
   )
 }
 

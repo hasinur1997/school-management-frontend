@@ -35,7 +35,7 @@ function toParams(params: ExamListParams) {
   return query
 }
 
-export function useExams(params: ExamListParams) {
+export function useExams(params: ExamListParams, enabled = true) {
   const { branchParam } = useBranch()
   const query = toParams(params)
 
@@ -45,6 +45,7 @@ export function useExams(params: ExamListParams) {
       branch: params.branch_id ?? branchParam,
     }),
     queryFn: () => requestPaginated<Exam>("/exams", { params: query }),
+    enabled,
     placeholderData: keepPreviousData,
     staleTime: STALE_TIME.STANDARD,
   })

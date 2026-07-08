@@ -13,6 +13,7 @@ import { api, queryKey, requestPaginated, STALE_TIME } from "@/lib/api"
 import type {
   AnnualResultInput,
   ExamResultRow,
+  ExamResultsMeta,
   ExamResultsParams,
   ResultBundle,
   ResultGenerationSummary,
@@ -32,6 +33,9 @@ function cleanSearchParams(params: ResultSearchParams) {
   if (params.roll_no != null && String(params.roll_no).trim()) {
     query.roll_no = String(params.roll_no).trim()
   }
+  // Screen-local branch filter; wins over the active branch in the request
+  // interceptor.
+  if (params.branch_id) query.branch_id = params.branch_id
   return query
 }
 
@@ -46,9 +50,13 @@ function cleanExamResultParams(params: ExamResultsParams) {
     page: params.page ?? 1,
     per_page: params.per_page ?? RESULTS_PER_PAGE,
   }
+  if (params.class_id) query.class_id = params.class_id
   if (params.section_id) query.section_id = params.section_id
   const isPassed = passFilterValue(params.is_passed)
   if (isPassed !== undefined) query.is_passed = isPassed
+  // Screen-local branch filter; wins over the active branch in the request
+  // interceptor.
+  if (params.branch_id) query.branch_id = params.branch_id
   return query
 }
 
@@ -57,7 +65,10 @@ export function useResultSearch(params: ResultSearchParams, enabled: boolean) {
   const query = cleanSearchParams(params)
 
   return useQuery({
-    queryKey: queryKey("results", "search", { ...query, branch: branchParam }),
+    queryKey: queryKey("results", "search", {
+      ...query,
+      branch: params.branch_id ?? branchParam,
+    }),
     queryFn: () => api.get<ResultBundle>("/results/search", { params: query }),
     enabled: enabled && Object.keys(query).length > 0,
     retry: false,
@@ -109,10 +120,14 @@ export function useExamResults(params: ExamResultsParams, enabled: boolean) {
       ...query,
       branch: branchParam,
     }),
-    queryFn: () =>
-      requestPaginated<ExamResultRow>(`/exams/${params.exam_id}/results`, {
-        params: query,
-      }),
+    queryFn: async () => {
+      const { data, meta } = await requestPaginated<ExamResultRow>(
+        `/exams/${params.exam_id}/results`,
+        { params: query }
+      )
+      // The endpoint's meta carries the cohort `summary` beside pagination.
+      return { data, meta: meta as ExamResultsMeta | undefined }
+    },
     enabled: enabled && Boolean(params.exam_id),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIME.STANDARD,
