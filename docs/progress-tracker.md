@@ -11,6 +11,7 @@ This frontend consumes the Laravel REST API documented in `docs/api/*.md` and `d
 ## Current Goal
 
 - Task 4.4 (`tasks/task-4.4-result-pdfs.md`): Result-sheet PDF download — blocked on backend 8.4.
+- Task 5.1 (`tasks/task-5.1-fee-structures.md`): Fee-structure CRUD implemented (backend 10.1); invoice generation deferred to backend 10.2.
 
 ## How To Work (per session)
 

@@ -17,6 +17,7 @@ List and view monthly invoices with paid/unpaid/partial status, plus the student
 - **Invoices list**: paginated table (student, month, amount right-aligned decimal string, status badge paid/unpaid/partial), filters by class/session/month/status. Mobile → card list.
 - **Detail**: invoice line items, amounts, payment history, and the pay/receipt actions (wired in 5.3).
 - **My invoices** (student/parent): `GET /me/invoices` for own/children; parent child selector.
+- On Student details page on tution fee tab all kinds payable things will be shown and pay
 
 ## Behavior
 - Money as decimal strings; status badge mapping per `ui-context.md`.

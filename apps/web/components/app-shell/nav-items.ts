@@ -249,7 +249,8 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Fees",
         href: "/fees",
         icon: Receipt,
-        permission: "fees.view",
+        permission: "fee.manage",
+        permissions: ["fees.view"],
       },
       {
         label: "Finance",
