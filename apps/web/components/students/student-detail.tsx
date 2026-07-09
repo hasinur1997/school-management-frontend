@@ -28,6 +28,7 @@ import {
   FileText,
   GraduationCap,
   IdCard,
+  ArrowUpCircle,
   ImageUp,
   Mail,
   Power,
@@ -45,6 +46,8 @@ import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
 import { EnrollmentResultsPanel } from "@/components/results"
+import { PromoteStudentDialog } from "@/components/promotions/promote-student-dialog"
+import { PROMOTION_EXECUTE } from "@/components/promotions/permissions"
 import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import {
   DetailActions,
@@ -107,6 +110,7 @@ export function StudentDetail({
   const [statusOpen, setStatusOpen] = React.useState(false)
   const [resendOpen, setResendOpen] = React.useState(false)
   const [deleteOpen, setDeleteOpen] = React.useState(false)
+  const [promoteOpen, setPromoteOpen] = React.useState(false)
 
   // Linked parents reach this detail via `/me/students`; they hold no staff
   // permissions, so the section tabs are exposed by role instead (the API
@@ -121,6 +125,7 @@ export function StudentDetail({
   const canManage = usePermission(STUDENT_UPDATE)
   const canResend = usePermission(STUDENT_CREATE)
   const canDelete = usePermission(STUDENT_DELETE)
+  const canPromote = usePermission(PROMOTION_EXECUTE)
 
   if (isPending) {
     return (
@@ -203,6 +208,17 @@ export function StudentDetail({
           },
         ]
       : []),
+    ...(!tc && active && canPromote
+      ? [
+          {
+            key: "promote",
+            label: "Promote student",
+            icon: ArrowUpCircle,
+            onSelect: () => setPromoteOpen(true),
+            separatorBefore: !tc && canManage,
+          },
+        ]
+      : []),
     ...(canDelete
       ? [
           {
@@ -211,7 +227,9 @@ export function StudentDetail({
             icon: Trash2,
             onSelect: () => setDeleteOpen(true),
             destructive: true,
-            separatorBefore: actionsSeparator(!tc && canManage),
+            separatorBefore: actionsSeparator(
+              !tc && (canManage || (active && canPromote))
+            ),
           },
         ]
       : []),
@@ -380,6 +398,19 @@ export function StudentDetail({
         }
         confirmLabel="Move to trash"
         onConfirm={confirmDelete}
+      />
+      <PromoteStudentDialog
+        student={
+          promoteOpen
+            ? {
+                id: student.id,
+                name: studentDisplayName(student),
+                currentRoll: currentEnrollment?.roll_no ?? null,
+              }
+            : null
+        }
+        onClose={() => setPromoteOpen(false)}
+        onPromoted={() => void refetch()}
       />
     </DetailLayout>
   )

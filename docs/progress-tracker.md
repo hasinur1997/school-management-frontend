@@ -53,7 +53,7 @@ Each feature-spec (`feature-specs/NN-*.md`) is the module overview; the `tasks/*
 - [x] [4.3](tasks/task-4.3-results.md) — Results: search, view, self, generate/publish
 - [x] [4.3.1](tasks/task-4.3.1-public-results.md) — Public result lookup
 - [ ] [4.4](tasks/task-4.4-result-pdfs.md) — Result-sheet PDF download ⚠️ blocked on backend 8.4
-- [ ] [4.5](tasks/task-4.5-promotions.md) — Promotion: preview, bulk, individual
+- [x] [4.5](tasks/task-4.5-promotions.md) — Promotion: preview, bulk, individual
 
 ### Phase 5 — Finance — `feature-specs/15..16`
 - [ ] [5.1](tasks/task-5.1-fee-structures.md) — Fee structures + invoice generation

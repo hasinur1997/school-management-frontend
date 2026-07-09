@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 4 — Exams, Results, Promotion |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 4.3 |
 | Blocks | — |
 | Feature spec | `feature-specs/14-promotions.md` |
