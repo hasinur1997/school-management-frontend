@@ -72,8 +72,9 @@ const SEMESTER_OPTIONS = EXAM_TYPES.map((type) => ({
   label: EXAM_TYPE_LABELS[type],
 }))
 
-// Public marksheets use the school's fixed grading legend so the legend shown
-// on-screen and in the generated PDF matches the approved table exactly.
+// Fallback grading legend, used only when the API omits `grading_scale` (older
+// payloads). The server now bundles the school's live scale with the result, so
+// the legend shown here can't drift from the per-subject grades on the sheet.
 const PUBLIC_MARKSHEET_SCALE: GradingBand[] = [
   {
     min_marks: 80,
@@ -581,12 +582,19 @@ function PublicResultView({ result }: { result: PublicResult }) {
     ? `${semesterLabel} Examination, ${info.session}`
     : `${semesterLabel} Result`
 
+  // Prefer the server's live grading scale; fall back to the fixed legend only
+  // for older payloads that don't carry one.
+  const scale =
+    result.grading_scale && result.grading_scale.length > 0
+      ? result.grading_scale
+      : PUBLIC_MARKSHEET_SCALE
+
   return (
     <ResultMarkSheet
       title={title}
       examMonth={info.held_in}
       fields={fields}
-      scale={PUBLIC_MARKSHEET_SCALE}
+      scale={scale}
       subjects={subjects}
       gpa={info.result}
     />

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
   Award,
+  BadgeCheck,
   BookOpenCheck,
   FileSearch,
   GraduationCap,
@@ -40,7 +41,9 @@ import { useMyStudents } from "@/hooks/parents"
 import {
   useExamResults,
   useGenerateAnnualResults,
+  useGenerateExamResults,
   usePublishAnnualResults,
+  usePublishExamResults,
   useResultSearch,
 } from "@/hooks/results"
 import { toastError, toastSuccess } from "@/lib/toast"
@@ -52,6 +55,7 @@ import {
 } from "@/types/exam"
 import type {
   ExamResultRow,
+  ResultGenerationSummary,
   ResultPassFilter,
   ResultSearchParams,
 } from "@/types/result"
@@ -61,7 +65,7 @@ import { ConfirmDialog } from "@/components/teachers/confirm-dialog"
 import { MyResultsPanel, ResultBundlePanel, ResultsSkeleton } from "./result-bundle-panel"
 import { RESULT_GENERATE, RESULT_VIEW } from "./permissions"
 
-type StaffView = "search" | "exam" | "annual"
+type StaffView = "search" | "exam" | "annual" | "publication"
 type SearchMode = "admission" | "coordinates"
 
 const STAFF_VIEWS: Array<{
@@ -72,6 +76,7 @@ const STAFF_VIEWS: Array<{
   { value: "search", label: "Student search", icon: FileSearch },
   { value: "exam", label: "Exam results", icon: BookOpenCheck },
   { value: "annual", label: "Annual actions", icon: GraduationCap },
+  { value: "publication", label: "Result publication", icon: BadgeCheck },
 ]
 
 function formatFigure(value: string | number | null | undefined): string {
@@ -86,7 +91,12 @@ function useStaffView(): [StaffView, (view: StaffView) => void] {
   const params = useSearchParams()
   const raw = params.get("view")
   const active: StaffView =
-    raw === "exam" || raw === "annual" || raw === "search" ? raw : "search"
+    raw === "exam" ||
+    raw === "annual" ||
+    raw === "publication" ||
+    raw === "search"
+      ? raw
+      : "search"
 
   const setActive = React.useCallback(
     (view: StaffView) => {
@@ -210,6 +220,7 @@ function StaffSearchPanel() {
   const [mode, setMode] = React.useState<SearchMode>("admission")
   const [admissionNo, setAdmissionNo] = React.useState("")
   const [branchId, setBranchId] = React.useState<string | null>(null)
+  const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [examName, setExamName] = React.useState<string | null>(null)
   const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
@@ -222,9 +233,11 @@ function StaffSearchPanel() {
   const [submittedSemester, setSubmittedSemester] =
     React.useState<ExamType | null>(null)
 
+  // Scope the exam list to the chosen session so a same-named exam from another
+  // session can't be resolved (one exam per session/class/type).
   const examsQuery = useExams(
-    { page: 1, per_page: 100, branch_id: branchId },
-    mode === "coordinates"
+    { session_id: sessionId, page: 1, per_page: 100, branch_id: branchId },
+    mode === "coordinates" && Boolean(sessionId)
   )
   const exams = React.useMemo(
     () => examsQuery.data?.data ?? [],
@@ -279,10 +292,18 @@ function StaffSearchPanel() {
   const canSubmit =
     mode === "admission"
       ? admissionNo.trim().length > 0
-      : Boolean(selectedExam?.session_id && classId && rollNo.trim())
+      : Boolean(sessionId && classId && rollNo.trim())
 
   function changeBranch(value: string | null) {
     setBranchId(value)
+    setSessionId(null)
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+    setSectionId(null)
+  }
+  function changeSession(value: string | null) {
+    setSessionId(value)
     setExamName(null)
     setSemester(null)
     setClassId(null)
@@ -318,7 +339,7 @@ function StaffSearchPanel() {
       mode === "admission"
         ? { admission_no: admissionNo }
         : {
-            session_id: selectedExam?.session_id,
+            session_id: sessionId,
             class_id: classId,
             section_id: sectionId,
             roll_no: rollNo,
@@ -385,6 +406,12 @@ function StaffSearchPanel() {
               ) : null}
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+                  Session
+                </span>
+                <SessionSelect value={sessionId} onValueChange={changeSession} />
+              </label>
+              <label className="grid gap-1.5">
+                <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
                   Exam
                 </span>
                 <AcademicSelect
@@ -394,8 +421,10 @@ function StaffSearchPanel() {
                     value: name,
                     label: name,
                   }))}
-                  isLoading={examsQuery.isPending}
+                  isLoading={sessionId != null && examsQuery.isPending}
                   isError={examsQuery.isError}
+                  disabled={sessionId == null}
+                  disabledPlaceholder="Select session first"
                   placeholder="Select exam"
                   emptyPlaceholder="No exams"
                 />
@@ -562,6 +591,7 @@ function ExamResultsPanel() {
   // everyone else is scoped server-side and never sees the field.
   const { isSuperAdmin } = useBranch()
   const [branchId, setBranchId] = React.useState<string | null>(null)
+  const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [examName, setExamName] = React.useState<string | null>(null)
   const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
@@ -575,7 +605,14 @@ function ExamResultsPanel() {
     branch_id: string | null
   } | null>(null)
 
-  const examsQuery = useExams({ page: 1, per_page: 100, branch_id: branchId })
+  // Scope the exam list to the chosen session: an exam name + semester is only
+  // unique within a session (one exam per session/class/type), so without this
+  // a same-named exam from another session could be resolved and its (empty)
+  // result sheet shown instead.
+  const examsQuery = useExams(
+    { session_id: sessionId, page: 1, per_page: 100, branch_id: branchId },
+    Boolean(sessionId)
+  )
   const exams = React.useMemo(
     () => examsQuery.data?.data ?? [],
     [examsQuery.data]
@@ -635,6 +672,13 @@ function ExamResultsPanel() {
 
   function changeBranch(value: string | null) {
     setBranchId(value)
+    setSessionId(null)
+    setExamName(null)
+    setSemester(null)
+    setClassId(null)
+  }
+  function changeSession(value: string | null) {
+    setSessionId(value)
     setExamName(null)
     setSemester(null)
     setClassId(null)
@@ -688,6 +732,12 @@ function ExamResultsPanel() {
           ) : null}
           <label className="grid gap-1.5">
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+              Session
+            </span>
+            <SessionSelect value={sessionId} onValueChange={changeSession} />
+          </label>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
               Exam
             </span>
             <AcademicSelect
@@ -697,8 +747,10 @@ function ExamResultsPanel() {
                 value: name,
                 label: name,
               }))}
-              isLoading={examsQuery.isPending}
+              isLoading={sessionId != null && examsQuery.isPending}
               isError={examsQuery.isError}
+              disabled={sessionId == null}
+              disabledPlaceholder="Select session first"
               placeholder="Select exam"
               emptyPlaceholder="No exams"
             />
@@ -1011,6 +1063,200 @@ function AnnualActionsPanel({ canGenerate }: { canGenerate: boolean }) {
   )
 }
 
+/**
+ * Publish a single exam's results so the search surfaces make them visible to
+ * everyone. The exam is uniquely resolved by the (session, class, type) tuple
+ * within a branch (`types/exam.ts`), so Session + Semester + Class pin exactly
+ * one exam. The button always generates then publishes: generation computes the
+ * result rows from the entered marks (a step the mark-entry "Publish results"
+ * lock does NOT perform), and publish exposes them to the search surfaces.
+ */
+function ResultPublicationPanel({ canGenerate }: { canGenerate: boolean }) {
+  const { isSuperAdmin } = useBranch()
+  const [branchId, setBranchId] = React.useState<string | null>(null)
+  const [sessionId, setSessionId] = React.useState<string | null>(null)
+  const [semester, setSemester] = React.useState<ExamType | null>(null)
+  const [classId, setClassId] = React.useState<string | null>(null)
+  const [confirm, setConfirm] = React.useState(false)
+
+  // Resolve the exam for the chosen tuple. Enabled only once all three fields
+  // are set; the (session, class, type) uniqueness makes this a single row.
+  const examsQuery = useExams(
+    { session_id: sessionId, class_id: classId, type: semester ?? "all", branch_id: branchId },
+    Boolean(sessionId && classId && semester)
+  )
+  const targetExam = React.useMemo(
+    () =>
+      (examsQuery.data?.data ?? []).find(
+        (exam) => exam.type === semester
+      ) ?? null,
+    [examsQuery.data, semester]
+  )
+
+  const generate = useGenerateExamResults()
+  const publish = usePublishExamResults()
+  const busy = generate.isPending || publish.isPending
+  const ready = Boolean(sessionId && semester && classId && targetExam)
+
+  function changeBranch(value: string | null) {
+    setBranchId(value)
+    setClassId(null)
+  }
+
+  async function runConfirmed() {
+    if (!targetExam) return
+    const examId = targetExam.id
+
+    // Result rows are always computed separately from the marks lock: the
+    // mark-entry "Publish results" freezes marks and flips the exam to
+    // `published` but never generates rows, so generate here regardless of
+    // status. A re-generate on an already-released exam is rejected; that's
+    // non-fatal (its rows exist), so remember the error and let publish try —
+    // if publish also fails, the generate error is the real cause to surface.
+    let generation: ResultGenerationSummary | null = null
+    let generateError: unknown = null
+    try {
+      generation = await generate.mutateAsync(examId)
+    } catch (error) {
+      generateError = error
+    }
+
+    // Nothing computed and nothing pre-existing — explain why (e.g. no marks
+    // entered, or students missing subject marks) instead of letting publish
+    // fail with the vaguer "generate results first" message.
+    if (generation != null && generation.generated === 0) {
+      const skipped = generation.skipped.length
+      toastError(
+        new Error(
+          skipped > 0
+            ? `No results generated: ${skipped} student${skipped === 1 ? " is" : "s are"} missing marks for one or more subjects. Enter every subject's marks, then publish.`
+            : "No results generated: enter and save marks for this exam first."
+        ),
+        "Couldn't publish results.",
+        { id: "results-exam-publish" }
+      )
+      return
+    }
+
+    try {
+      const result = await publish.mutateAsync(examId)
+      const skipped = generation?.skipped.length ?? 0
+      toastSuccess(
+        `Published ${result.published} result${result.published === 1 ? "" : "s"}.` +
+          (skipped > 0
+            ? ` ${skipped} student${skipped === 1 ? "" : "s"} skipped for missing subject marks.`
+            : "") +
+          " Results are now searchable.",
+        { id: "results-exam-publish" }
+      )
+    } catch (publishError) {
+      // Prefer the generate error: when publish fails because nothing was
+      // generated, that error (e.g. "No marks entered for this exam") names the
+      // actual blocker.
+      toastError(generateError ?? publishError, "Couldn't publish results.", {
+        id: "results-exam-publish",
+      })
+      throw publishError
+    }
+  }
+
+  if (!canGenerate) {
+    return (
+      <EmptyState
+        icon={Lock}
+        title="Publication is restricted"
+        description="You do not have permission to publish results."
+      />
+    )
+  }
+
+  const noExam =
+    Boolean(sessionId && semester && classId) &&
+    examsQuery.isSuccess &&
+    targetExam == null
+
+  return (
+    <section className="rounded-xl border border-surface-border bg-surface p-5 shadow-sm">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-semibold text-copy-primary">
+          Result publication
+        </h2>
+        <p className="text-sm text-copy-muted">
+          Pick the session, semester, and class, then publish so the exam&apos;s
+          results become searchable for everyone.
+        </p>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {isSuperAdmin ? (
+          <label className="grid gap-1.5">
+            <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+              Branch
+            </span>
+            <BranchSelect
+              value={branchId}
+              onValueChange={changeBranch}
+              clearLabel="All branches"
+              placeholder="All branches"
+            />
+          </label>
+        ) : null}
+        <label className="grid gap-1.5">
+          <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+            Session
+          </span>
+          <SessionSelect value={sessionId} onValueChange={setSessionId} />
+        </label>
+        <label className="grid gap-1.5">
+          <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+            Semester
+          </span>
+          <AcademicSelect
+            value={semester}
+            onValueChange={setSemester}
+            options={EXAM_TYPES.map((type) => ({
+              value: type,
+              label: EXAM_TYPE_LABELS[type],
+            }))}
+            placeholder="Select semester"
+          />
+        </label>
+        <label className="grid gap-1.5">
+          <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
+            Class
+          </span>
+          <ClassSelect
+            value={classId}
+            onValueChange={setClassId}
+            branchId={branchId}
+          />
+        </label>
+        <div className="flex items-end">
+          <Button type="button" disabled={!ready || busy} onClick={() => setConfirm(true)}>
+            <ShieldCheck className="size-4" aria-hidden />
+            Publish results
+          </Button>
+        </div>
+      </div>
+
+      {noExam ? (
+        <p className="mt-3 text-sm text-error">
+          No exam exists for this session, semester, and class.
+        </p>
+      ) : null}
+
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={(open) => !open && setConfirm(false)}
+        title="Publish results?"
+        description="This generates the result rows from the entered marks and publishes them, making them searchable for everyone."
+        confirmLabel="Publish results"
+        pendingLabel="Publishing..."
+        onConfirm={runConfirmed}
+      />
+    </section>
+  )
+}
+
 function StaffResultsPage({
   canGenerate,
 }: {
@@ -1025,8 +1271,10 @@ function StaffResultsPage({
         <StaffSearchPanel />
       ) : active === "exam" ? (
         <ExamResultsPanel />
-      ) : (
+      ) : active === "annual" ? (
         <AnnualActionsPanel canGenerate={canGenerate} />
+      ) : (
+        <ResultPublicationPanel canGenerate={canGenerate} />
       )}
     </div>
   )
