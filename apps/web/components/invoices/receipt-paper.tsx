@@ -1,47 +1,50 @@
 /**
- * Printable invoice document (task F-5.2) — recreates the imported "Invoice"
- * Claude Design handoff as an A4 paper document bound to the real
- * `InvoiceResource`/`PaymentResource` contract.
+ * Printable money-receipt document (task F-5.3) — recreates the imported
+ * "Money Receipt" Claude Design handoff as an A4 paper document bound to the
+ * real `PaymentResource`/`InvoiceResource` contract.
  *
- * Like the BTEB mark sheet (`result-mark-sheet-paper.tsx`), this is a
- * fixed-palette paper: it deliberately ignores the app's light/dark theme so
- * the invoice looks identical on screen and in print. The `.invoice-paper-root`
- * class is the isolation hook for the print stylesheet in `globals.css`.
+ * A receipt acknowledges one recorded `Payment` against its `Invoice`. Like the
+ * sibling `invoice-paper.tsx`, this is a fixed-palette paper: it deliberately
+ * ignores the app's light/dark theme so the receipt looks identical on screen
+ * and in print, and reuses the shared `.invoice-paper-root` isolation hook so
+ * the print stylesheet in `globals.css` hides the app shell for both papers.
  *
- * The invoice carries one or more described line items (e.g. tuition, exam,
- * transport) whose amounts sum to the total; the mock's discount and issue date
- * are still dropped rather than fabricated. It renders the item table, a
- * Total / Paid / Outstanding summary, and the real payment history. Money is
- * rendered from the API's decimal strings via `formatMoney`/`subtractMoney`
- * (no float math).
+ * The receipt reprints the invoice's described line items (tuition, exam, …) for
+ * context, then states the amount actually received in this payment. As in the
+ * invoice paper, the mock's fabricated fields — the flat "Discount / waiver"
+ * line — are dropped rather than invented, since the contract carries no
+ * discount concept. The "Amount in words" band is a faithful integer-based
+ * transformation of the real `payment.amount` (no float math). Money is
+ * rendered from the API's decimal strings via `formatMoney`.
  */
 
 import * as React from "react"
 
-import { formatDate, formatMoney, subtractMoney } from "@/lib/format"
+import { formatDate, formatMoney } from "@/lib/format"
 import {
-  INVOICE_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
   invoiceMonthLabel,
   invoiceStudentName,
   type Invoice,
   type InvoiceEnrollmentRef,
+  type Payment,
+  type PaymentStatus,
 } from "@/types/invoice"
 
 /** A4 page width the paper renders at (matches the design handoff). */
-export const INVOICE_PAPER_WIDTH = 794
+export const RECEIPT_PAPER_WIDTH = 794
 
-/** Fixed default institution — no settings feature yet (mirrors the mark sheet). */
+/** Fixed default institution — no settings feature yet (mirrors the invoice). */
 const SCHOOL_NAME = "Hazi Jabed Ali Memorial School"
 const SCHOOL_NAME_BN = "হাজী জাবেদ আলী মেমোরিয়াল স্কুল"
 const SCHOOL_ADDRESS = "Lakshmipur, Dhanuyaghata, Chatmohor, Pabna · Estd. 2017"
 const SCHOOL_LOGO = "/branding/hjams-school-seal.svg"
 const SCHOOL_MOTTO = "পড়, তোমার প্রভুর নামে"
 
-const PAYMENT_NOTE =
-  "Cash at the school office, or bKash / Nagad (ref: student ID). Please clear " +
-  "dues before the due date to avoid a late fee. Contact the office for any discrepancy."
+const RECEIPT_NOTE =
+  "This receipt confirms the payment recorded above. Please retain it for your " +
+  "records and contact the office for any discrepancy."
 
 const FONT_SANS =
   "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
@@ -55,20 +58,21 @@ const HAIRLINE = "#ececef"
 const NAVY = "#1b3a63"
 const ACCENT = "#7c3aed"
 
-/** Status pill palette. The three real statuses map onto the mock's tones. */
+/** Status pill palette — the four payment statuses map onto the mock's tones. */
 const STATUS_STYLE: Record<
-  Invoice["status"],
+  PaymentStatus,
   { color: string; bg: string; border: string; dot: string }
 > = {
   paid: { color: "#15803d", bg: "#e9f8ee", border: "#cdeed7", dot: "#22c55e" },
-  partial: { color: "#b45309", bg: "#fffbeb", border: "#fce7ad", dot: "#f59e0b" },
-  unpaid: { color: "#c2410c", bg: "#fff2e8", border: "#fbdcc4", dot: "#f97316" },
+  pending: { color: "#b45309", bg: "#fffbeb", border: "#fce7ad", dot: "#f59e0b" },
+  failed: { color: "#c2410c", bg: "#fff2e8", border: "#fbdcc4", dot: "#f97316" },
+  cancelled: { color: "#71717a", bg: "#f4f4f5", border: "#e4e4e7", dot: "#a1a1aa" },
 }
 
 /**
  * "Class Eight, Section B, Roll 17" from the enrollment snapshot, dropping any
  * part the API didn't carry (so a missing section/roll never prints a stray
- * comma). Returns null when nothing is known.
+ * comma). Returns null when nothing is known. Mirrors `invoice-paper.tsx`.
  */
 function formatEnrollmentLine(
   enrollment: InvoiceEnrollmentRef | null | undefined
@@ -79,6 +83,72 @@ function formatEnrollmentLine(
   if (enrollment.section) parts.push(`Section ${enrollment.section}`)
   if (enrollment.roll_no != null) parts.push(`Roll ${enrollment.roll_no}`)
   return parts.length > 0 ? parts.join(", ") : null
+}
+
+const ONES = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+  "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+  "sixteen", "seventeen", "eighteen", "nineteen",
+]
+const TENS = [
+  "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty",
+  "ninety",
+]
+
+/** Words for an integer 0–999 (no leading/trailing spaces). */
+function belowThousandToWords(n: number): string {
+  const parts: string[] = []
+  if (n >= 100) {
+    parts.push(`${ONES[Math.floor(n / 100)] ?? ""} hundred`)
+    n %= 100
+  }
+  if (n >= 20) {
+    const tens = TENS[Math.floor(n / 10)] ?? ""
+    parts.push(tens + (n % 10 ? ` ${ONES[n % 10] ?? ""}` : ""))
+  } else if (n > 0) {
+    parts.push(ONES[n] ?? "")
+  }
+  return parts.join(" ")
+}
+
+/**
+ * Render an integer taka amount in English words using the South-Asian scale
+ * (thousand / lakh / crore) standard for Bangladeshi money receipts, e.g.
+ * `6000 → "six thousand"`. Operates on an integer count of taka only — no float
+ * math — so it pairs with the string-based `payment.amount`.
+ */
+function integerToWords(n: number): string {
+  if (n === 0) return "zero"
+  const crore = Math.floor(n / 10000000)
+  const lakh = Math.floor((n % 10000000) / 100000)
+  const thousand = Math.floor((n % 100000) / 1000)
+  const rest = n % 1000
+
+  const segments: string[] = []
+  if (crore) segments.push(`${integerToWords(crore)} crore`)
+  if (lakh) segments.push(`${belowThousandToWords(lakh)} lakh`)
+  if (thousand) segments.push(`${belowThousandToWords(thousand)} thousand`)
+  if (rest) segments.push(belowThousandToWords(rest))
+  return segments.join(" ")
+}
+
+/**
+ * A decimal money string (`"6000.00"`) as a receipt-style words line, e.g.
+ * "Six thousand taka only" or "One thousand two hundred taka and fifty paisa
+ * only". Parses the string directly (no `Number` on the whole value) so large
+ * amounts keep full precision; returns null for a non-numeric amount.
+ */
+function amountInWords(value: string): string | null {
+  const raw = value.trim()
+  if (!/^-?\d+(\.\d+)?$/.test(raw)) return null
+  const [intPart = "0", decRaw = ""] = raw.replace(/^-/, "").split(".")
+  const taka = Number(intPart)
+  const paisa = Number(decRaw.slice(0, 2).padEnd(2, "0"))
+
+  let words = `${integerToWords(taka)} taka`
+  if (paisa > 0) words += ` and ${belowThousandToWords(paisa)} paisa`
+  words += " only"
+  return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 const labelCap: React.CSSProperties = {
@@ -112,19 +182,19 @@ function InfoRow({
   )
 }
 
-export function InvoicePaper({
+export function ReceiptPaper({
   invoice,
+  payment,
   className,
 }: {
   invoice: Invoice
+  payment: Payment
   className?: string
 }) {
-  const status = STATUS_STYLE[invoice.status] ?? STATUS_STYLE.unpaid
-  const outstanding = subtractMoney(invoice.amount, invoice.paid_amount)
-  const settled = invoice.status === "paid"
+  const status = STATUS_STYLE[payment.status] ?? STATUS_STYLE.pending
   const period = invoiceMonthLabel(invoice.month, invoice.year)
-  const payments = invoice.payments ?? []
   const enrollmentLine = formatEnrollmentLine(invoice.enrollment)
+  const words = amountInWords(payment.amount)
   // The invoice's line items, or a single synthesized line from the total for
   // an older invoice loaded without items (so the table never renders empty).
   const lineItems =
@@ -136,20 +206,21 @@ export function InvoicePaper({
     <div
       className={`invoice-paper-root${className ? ` ${className}` : ""}`}
       style={{
-        width: INVOICE_PAPER_WIDTH,
+        width: RECEIPT_PAPER_WIDTH,
         maxWidth: "100%",
         background: "#ffffff",
         border: `1px solid ${HAIRLINE}`,
         borderRadius: 14,
         boxShadow:
           "0 1px 3px rgba(16,16,20,0.05), 0 1px 1px rgba(16,16,20,0.03)",
-        padding: "clamp(28px, 5vw, 52px) clamp(20px, 5vw, 56px) clamp(28px, 5vw, 44px)",
+        padding:
+          "clamp(28px, 5vw, 52px) clamp(20px, 5vw, 56px) clamp(28px, 5vw, 44px)",
         boxSizing: "border-box",
         color: INK,
         fontFamily: FONT_SANS,
       }}
     >
-      {/* Header: school identity + invoice title */}
+      {/* Header: school identity + receipt title */}
       <div
         style={{
           display: "flex",
@@ -203,9 +274,9 @@ export function InvoicePaper({
               color: NAVY,
             }}
           >
-            INVOICE
+            MONEY RECEIPT
           </div>
-          {invoice.invoice_no ? (
+          {payment.receipt_no ? (
             <div
               style={{
                 fontFamily: FONT_MONO,
@@ -214,13 +285,13 @@ export function InvoicePaper({
                 marginTop: 4,
               }}
             >
-              #{invoice.invoice_no}
+              #{payment.receipt_no}
             </div>
           ) : null}
         </div>
       </div>
 
-      {/* Meta grid: bill-to + invoice info */}
+      {/* Meta grid: received-from + receipt info */}
       <div
         style={{
           display: "grid",
@@ -230,7 +301,7 @@ export function InvoicePaper({
         }}
       >
         <div>
-          <div style={labelCap}>Billed to</div>
+          <div style={labelCap}>Received from</div>
           <div
             style={{
               fontSize: 16,
@@ -278,10 +349,24 @@ export function InvoicePaper({
             gap: 10,
           }}
         >
-          <InfoRow label="Billing period">{period}</InfoRow>
-          <InfoRow label="Due date">
-            {invoice.due_date ? formatDate(invoice.due_date) : "—"}
+          <InfoRow label="Receipt date">
+            {payment.paid_at ? formatDate(payment.paid_at) : "—"}
           </InfoRow>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              fontSize: 13.5,
+            }}
+          >
+            <span style={{ color: MUTED }}>Against invoice</span>
+            <span style={{ fontWeight: 600, fontFamily: FONT_MONO }}>
+              {invoice.invoice_no ? `#${invoice.invoice_no}` : "—"}
+            </span>
+          </div>
+          <InfoRow label="Billing period">{period}</InfoRow>
           <div
             style={{
               display: "flex",
@@ -313,14 +398,14 @@ export function InvoicePaper({
                   background: status.dot,
                 }}
               />
-              {INVOICE_STATUS_LABELS[invoice.status]}
+              {PAYMENT_STATUS_LABELS[payment.status]}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Line items — the described charges whose amounts sum to the total. An
-          older invoice loaded without items falls back to a single line. */}
+      {/* Line items — the invoice's described charges, for context. An older
+          invoice loaded without items falls back to a single line. */}
       <div
         style={{
           marginTop: 30,
@@ -330,7 +415,11 @@ export function InvoicePaper({
         }}
       >
         <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 160px", background: "#fafafa" }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 160px",
+            background: "#fafafa",
+          }}
         >
           <div
             style={{
@@ -381,15 +470,12 @@ export function InvoicePaper({
         ))}
       </div>
 
-      {/* Totals: Subtotal / Paid / Outstanding */}
+      {/* Totals: invoice subtotal + the amount received in this payment. The
+          mock's flat discount/waiver line is dropped — the contract has no
+          discount concept (mirrors invoice-paper.tsx). */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
         <div
-          style={{
-            width: 300,
-            display: "flex",
-            flexDirection: "column",
-            gap: 9,
-          }}
+          style={{ width: 300, display: "flex", flexDirection: "column", gap: 9 }}
         >
           <div
             style={{
@@ -399,22 +485,9 @@ export function InvoicePaper({
               color: MUTED,
             }}
           >
-            <span>Subtotal</span>
+            <span>Invoice subtotal</span>
             <span style={{ fontFamily: FONT_MONO, color: INK }}>
               {formatMoney(invoice.amount)}
-            </span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 14,
-              color: MUTED,
-            }}
-          >
-            <span>Paid</span>
-            <span style={{ fontFamily: FONT_MONO, color: INK }}>
-              &minus; {formatMoney(invoice.paid_amount)}
             </span>
           </div>
           <div style={{ height: 1, background: HAIRLINE, margin: "2px 0" }} />
@@ -425,101 +498,97 @@ export function InvoicePaper({
               alignItems: "baseline",
             }}
           >
-            <span style={{ fontSize: 15, fontWeight: 700 }}>
-              {settled ? "Total paid" : "Outstanding"}
-            </span>
+            <span style={{ fontSize: 15, fontWeight: 700 }}>Amount received</span>
             <span
               style={{
                 fontSize: 22,
                 fontWeight: 800,
                 fontFamily: FONT_MONO,
-                color: settled ? "#15803d" : ACCENT,
+                color: ACCENT,
               }}
             >
-              {settled ? formatMoney(invoice.amount) : formatMoney(outstanding)}
+              {formatMoney(payment.amount)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Payment history */}
-      {payments.length > 0 ? (
+      {/* Amount in words — a faithful transform of the real amount received. */}
+      {words ? (
         <div
           style={{
-            marginTop: 34,
-            paddingTop: 22,
-            borderTop: `1px solid ${HAIRLINE}`,
+            marginTop: 22,
+            background: "#f3effe",
+            border: "1px solid #e7defb",
+            borderRadius: 12,
+            padding: "14px 18px",
           }}
         >
-          <div style={labelCap}>Payment history</div>
-          <div style={{ marginTop: 12, display: "flex", flexDirection: "column" }}>
-            {payments.map((payment, i) => (
-              <div
-                key={payment.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 16,
-                  padding: "11px 0",
-                  borderTop: i === 0 ? "none" : `1px solid ${HAIRLINE}`,
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>
-                    {formatMoney(payment.amount)}
-                  </div>
-                  <div style={{ fontSize: 12.5, color: MUTED, marginTop: 2 }}>
-                    {PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}
-                    {payment.receipt_no ? ` · ${payment.receipt_no}` : ""}
-                    {payment.paid_at ? ` · ${formatDate(payment.paid_at)}` : ""}
-                  </div>
-                </div>
-                <span
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color:
-                      payment.status === "paid"
-                        ? "#15803d"
-                        : payment.status === "failed"
-                          ? "#dc2626"
-                          : MUTED,
-                  }}
-                >
-                  {PAYMENT_STATUS_LABELS[payment.status] ?? payment.status}
-                </span>
-              </div>
-            ))}
+          <div style={{ ...labelCap, color: ACCENT }}>Amount in words</div>
+          <div
+            style={{
+              fontSize: 14.5,
+              marginTop: 6,
+              fontWeight: 600,
+              color: INK,
+            }}
+          >
+            {words}
           </div>
         </div>
       ) : null}
 
-      {/* Payment method note */}
+      {/* Payment method + notes */}
       <div
         style={{
-          marginTop: 34,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 24,
+          marginTop: 26,
           paddingTop: 22,
           borderTop: `1px solid ${HAIRLINE}`,
         }}
       >
-        <div style={labelCap}>Payment method</div>
-        <div
-          style={{ fontSize: 13, marginTop: 8, lineHeight: 1.7, color: MUTED }}
-        >
-          {PAYMENT_NOTE}
+        <div>
+          <div style={labelCap}>Payment method</div>
+          <div
+            style={{ fontSize: 14, marginTop: 8, lineHeight: 1.7, color: INK }}
+          >
+            {PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}
+          </div>
+        </div>
+        <div>
+          <div style={labelCap}>Notes</div>
+          <div
+            style={{ fontSize: 13, marginTop: 8, lineHeight: 1.7, color: MUTED }}
+          >
+            {RECEIPT_NOTE}
+          </div>
         </div>
       </div>
 
-      {/* Footer: motto + signature */}
+      {/* Footer: guardian + office signatures with the school motto between */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-end",
-          marginTop: 56,
+          marginTop: 52,
         }}
       >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 180,
+              borderTop: `1px solid ${INK}`,
+              paddingTop: 6,
+              fontSize: 12.5,
+              color: MUTED,
+            }}
+          >
+            Guardian signature
+          </div>
+        </div>
         <div style={{ fontFamily: FONT_BN, fontSize: 13, color: FAINT }}>
           {SCHOOL_MOTTO}
         </div>
@@ -533,7 +602,7 @@ export function InvoicePaper({
               color: MUTED,
             }}
           >
-            Authorized signature
+            Received by (office)
           </div>
         </div>
       </div>

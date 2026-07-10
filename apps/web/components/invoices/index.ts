@@ -7,6 +7,7 @@
 export { InvoicesList } from "./invoices-list"
 export { InvoiceDetail } from "./invoice-detail"
 export { InvoicePaper } from "./invoice-paper"
+export { ReceiptPaper } from "./receipt-paper"
 export { InvoicePayments } from "./invoice-payments"
 export { InvoiceFormDialog } from "./invoice-form-dialog"
 export { StudentInvoicesPanel } from "./student-invoices-panel"

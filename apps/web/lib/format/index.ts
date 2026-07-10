@@ -9,5 +9,6 @@ export {
   formatMoney,
   isNumericValue,
   subtractMoney,
+  sumMoney,
 } from "./number"
 export { formatDate, formatDateRange, formatTime } from "./date"

@@ -17,10 +17,18 @@
  */
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, GraduationCap, Loader2, Receipt, Search } from "lucide-react"
+import {
+  Check,
+  GraduationCap,
+  Loader2,
+  Plus,
+  Receipt,
+  Search,
+  Trash2,
+} from "lucide-react"
 
 import {
   Avatar,
@@ -54,14 +62,14 @@ import {
 import { Button } from "@/components/button"
 import { isValidationError } from "@/lib/api"
 import { toastError, toastSuccess } from "@/lib/toast"
-import { DEFAULT_CURRENCY } from "@/lib/format"
+import { DEFAULT_CURRENCY, formatMoney, sumMoney } from "@/lib/format"
 import {
   FormBanner,
   applyFieldErrors,
 } from "@/components/academic/management/form-helpers"
 import { useStudents } from "@/hooks/students"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
-import { useCreateInvoice, useUpdateInvoice } from "@/hooks/invoices"
+import { useCreateInvoice, useInvoice, useUpdateInvoice } from "@/hooks/invoices"
 import {
   studentDisplayName,
   studentInitials,
@@ -78,22 +86,34 @@ import {
 // Money: a non-negative decimal string with at most 2 fractional digits.
 const AMOUNT_RE = /^\d+(\.\d{1,2})?$/
 
-const schema = z.object({
-  student_id: z.string().min(1, "Student is required"),
-  month: z.string().min(1, "Month is required"),
-  year: z.string().min(1, "Year is required"),
+const itemSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(255, "Keep the description under 255 characters"),
   amount: z
     .string()
     .trim()
     .min(1, "Amount is required")
     .regex(AMOUNT_RE, "Enter a valid amount (up to 2 decimals)"),
+})
+
+const schema = z.object({
+  student_id: z.string().min(1, "Student is required"),
+  month: z.string().min(1, "Month is required"),
+  year: z.string().min(1, "Year is required"),
+  items: z.array(itemSchema).min(1, "Add at least one item"),
   due_date: z.string().optional(),
 })
 
 type InvoiceFormValues = z.infer<typeof schema>
 
 // 422 field names that map to an input.
-const FIELD_NAMES = ["student_id", "month", "year", "amount", "due_date"] as const
+const FIELD_NAMES = ["student_id", "month", "year", "items", "due_date"] as const
+
+/** An empty line-item row (used for the initial row and each "Add item"). */
+const EMPTY_ITEM = { description: "", amount: "" }
 
 /** Recent years offered in the period selector (current − 4 … current + 1). */
 function selectableYears(): number[] {
@@ -103,11 +123,24 @@ function selectableYears(): number[] {
 
 function toDefaults(invoice: Invoice | undefined): InvoiceFormValues {
   const now = new Date()
+  // Prefer the invoice's stored line items; fall back to a single row from its
+  // total for an older invoice loaded without items, and to one empty row on
+  // create.
+  const items =
+    invoice?.items && invoice.items.length > 0
+      ? invoice.items.map((item) => ({
+          description: item.description,
+          amount: item.amount,
+        }))
+      : invoice
+        ? [{ description: "", amount: invoice.amount }]
+        : [{ ...EMPTY_ITEM }]
+
   return {
     student_id: invoice?.student?.id ?? "",
     month: String(invoice?.month ?? now.getMonth() + 1),
     year: String(invoice?.year ?? now.getFullYear()),
-    amount: invoice?.amount ?? "",
+    items,
     due_date: invoice?.due_date ?? "",
   }
 }
@@ -134,21 +167,37 @@ export function InvoiceFormDialog({
   const createMutation = useCreateInvoice()
   const updateMutation = useUpdateInvoice()
 
+  // The list-row invoice carries no line items (they're on the detail read), so
+  // fetch the detail while editing to seed the item rows — otherwise saving
+  // would collapse a multi-item invoice into a single line.
+  const needsDetail = open && isEdit && invoice.items === undefined
+  const { data: detail } = useInvoice(
+    needsDetail ? invoice.id : undefined,
+    needsDetail
+  )
+  // The freshest edit source: the fetched detail once it arrives, else the prop.
+  const editTarget = isEdit ? (detail ?? invoice) : undefined
+
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(schema),
     defaultValues: toDefaults(undefined),
   })
+  const itemFields = useFieldArray({ control: form.control, name: "items" })
   const [banner, setBanner] = React.useState<string | null>(null)
 
-  // Reset the form whenever the dialog opens for a (possibly different) target.
+  // Live invoice total — the sum of the item amounts, recomputed as they type.
+  const total = sumMoney((form.watch("items") ?? []).map((item) => item.amount))
+
+  // Reset the form whenever the dialog opens for a (possibly different) target,
+  // and again once the edit detail (with its items) loads.
   // `form.reset` isn't React state, so this stays a plain sync effect.
   React.useEffect(() => {
     if (!open) return
     form.reset({
-      ...toDefaults(invoice),
-      student_id: invoice?.student?.id ?? presetStudent?.id ?? "",
+      ...toDefaults(editTarget),
+      student_id: editTarget?.student?.id ?? presetStudent?.id ?? "",
     })
-  }, [open, invoice, presetStudent, form])
+  }, [open, editTarget, presetStudent, form])
 
   // The student is fixed in edit mode, and locked when a preset is supplied. Its
   // label comes straight from the props (no state to sync).
@@ -165,10 +214,14 @@ export function InvoiceFormDialog({
 
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
+    const items = values.items.map((item) => ({
+      description: item.description.trim(),
+      amount: item.amount.trim(),
+    }))
     try {
       if (isEdit) {
         const payload: InvoiceUpdateInput = {
-          amount: values.amount.trim(),
+          items,
           due_date: values.due_date?.trim() || null,
           month: Number(values.month),
           year: Number(values.year),
@@ -180,7 +233,7 @@ export function InvoiceFormDialog({
           student_id: values.student_id,
           month: Number(values.month),
           year: Number(values.year),
-          amount: values.amount.trim(),
+          items,
           due_date: values.due_date?.trim() || null,
         }
         await createMutation.mutateAsync(payload)
@@ -210,8 +263,8 @@ export function InvoiceFormDialog({
           <DialogTitle>{isEdit ? "Edit invoice" : "New invoice"}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update this invoice's amount, due date, or period. Paid amount and status follow the recorded payments."
-              : "Create an invoice for a student's current enrolment. The invoice number is generated automatically."}
+              ? "Update this invoice's items, due date, or period. The total is the sum of the items; paid amount and status follow the recorded payments."
+              : "Create an invoice for a student's current enrolment. Add a line for each charge — the total is their sum. The invoice number is generated automatically."}
           </DialogDescription>
         </DialogHeader>
 
@@ -311,58 +364,124 @@ export function InvoiceFormDialog({
               />
             </div>
 
-            {/* Amount + due date */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Amount</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span
-                          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-copy-muted"
-                          aria-hidden
-                        >
-                          {DEFAULT_CURRENCY}
-                        </span>
-                        <Input
-                          {...field}
-                          disabled={submitting}
-                          inputMode="decimal"
-                          placeholder="0.00"
-                          autoComplete="off"
-                          className="pl-7 tabular-nums"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="due_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Due date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                        disabled={submitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Line items */}
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <FormLabel required className="mb-0">
+                  Items
+                </FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={submitting}
+                  onClick={() => itemFields.append({ ...EMPTY_ITEM })}
+                >
+                  <Plus className="size-4" aria-hidden />
+                  Add item
+                </Button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {itemFields.fields.map((row, index) => (
+                  <div key={row.id} className="flex items-start gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.description`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={submitting}
+                              placeholder="Description (e.g. Tuition fee)"
+                              autoComplete="off"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.amount`}
+                      render={({ field }) => (
+                        <FormItem className="w-32 shrink-0">
+                          <FormControl>
+                            <div className="relative">
+                              <span
+                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-copy-muted"
+                                aria-hidden
+                              >
+                                {DEFAULT_CURRENCY}
+                              </span>
+                              <Input
+                                {...field}
+                                disabled={submitting}
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                autoComplete="off"
+                                className="pl-7 tabular-nums"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-0.5 shrink-0 text-copy-muted hover:text-destructive"
+                      disabled={submitting || itemFields.fields.length === 1}
+                      aria-label="Remove item"
+                      onClick={() => itemFields.remove(index)}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Array-level error (e.g. no items) surfaces here. */}
+              {form.formState.errors.items?.message ? (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.items.message}
+                </p>
+              ) : null}
+
+              {/* Live total — the sum of the item amounts. */}
+              <div className="mt-1 flex items-center justify-between border-t border-surface-border pt-2.5">
+                <span className="text-sm text-copy-muted">Total</span>
+                <span className="text-base font-semibold tabular-nums text-copy-primary">
+                  {formatMoney(total)}
+                </span>
+              </div>
             </div>
+
+            {/* Due date */}
+            <FormField
+              control={form.control}
+              name="due_date"
+              render={({ field }) => (
+                <FormItem className="sm:max-w-[50%]">
+                  <FormLabel>Due date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      disabled={submitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <DialogFooter>
               <Button

@@ -90,6 +90,25 @@ export function subtractMoney(
 }
 
 /**
+ * Sum money values into a plain 2dp decimal string (no currency), operating on
+ * integer cents so no float precision is lost — used for an invoice's total
+ * (the sum of its line items). Non-numeric entries contribute 0 so a partially
+ * typed line never blanks the running total.
+ */
+export function sumMoney(values: Array<string | number>): string {
+  let cents = 0
+  for (const value of values) {
+    cents += toCents(value) ?? 0
+  }
+
+  const negative = cents < 0
+  const abs = Math.abs(cents)
+  const intPart = Math.floor(abs / 100)
+  const decPart = String(abs % 100).padStart(2, "0")
+  return `${negative ? "-" : ""}${intPart}.${decPart}`
+}
+
+/**
  * Format a count for display with thousands grouping. Counts are integers, so
  * `Intl.NumberFormat` is safe here. Non-numeric input falls back to the empty
  * marker rather than `NaN`.

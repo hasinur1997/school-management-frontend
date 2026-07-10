@@ -107,9 +107,20 @@ export interface Payment {
 }
 
 /**
- * `GET /invoices` (list) / `GET /invoices/{id}` (detail). `payments` is present
- * only on the detail read. `month` is 1–12 and `year` is a full year — both are
- * integers, not a `YYYY-MM` string.
+ * One described charge on an invoice (e.g. "Tuition fee", "Admission fee"). The
+ * invoice's `amount` is the sum of its items. Present only on the detail read
+ * (`GET /invoices/{id}`); the list reads omit it. Money is a decimal string.
+ */
+export interface InvoiceItem {
+  description: string
+  /** Decimal string, e.g. `"1500.00"`. Never a float. */
+  amount: string
+}
+
+/**
+ * `GET /invoices` (list) / `GET /invoices/{id}` (detail). `payments` and `items`
+ * are present only on the detail read. `month` is 1–12 and `year` is a full year
+ * — both are integers, not a `YYYY-MM` string.
  */
 export interface Invoice {
   id: string
@@ -122,7 +133,9 @@ export interface Invoice {
   month: number
   /** Billing year, e.g. 2026. */
   year: number
-  /** Invoice total — a decimal string, e.g. `"1500.00"`. */
+  /** Line items behind the total (detail read only), in entry order. */
+  items?: InvoiceItem[]
+  /** Invoice total (sum of `items`) — a decimal string, e.g. `"1500.00"`. */
   amount: string
   /** Amount settled so far — a decimal string. */
   paid_amount: string
@@ -158,8 +171,9 @@ export interface InvoiceListParams {
 /**
  * `POST /invoices` body (manual create, `fee.manage`). The branch, enrollment,
  * invoice number, and initial status are derived server-side; the client sends
- * only the student, period, amount, and an optional due date. `student_id` is a
- * `public_id` hash the API resolves. Amount is a decimal string.
+ * the student, period, one or more line items, and an optional due date. The
+ * total is the sum of the items (server-computed). `student_id` is a `public_id`
+ * hash the API resolves. Item amounts are decimal strings.
  */
 export interface InvoiceInput {
   student_id: string
@@ -167,20 +181,21 @@ export interface InvoiceInput {
   month: number
   /** Billing year. */
   year: number
-  /** Decimal string, ≥ 0, 2dp. */
-  amount: string
+  /** One or more described charges; the total is their sum. */
+  items: InvoiceItem[]
   /** `YYYY-MM-DD`; omitted → the branch's configured due day. */
   due_date?: string | null
 }
 
 /**
- * `PUT /invoices/{id}` body. Only the amount, due date, and period are editable
- * — the student/branch/enrollment/invoice number identify the record and stay
- * fixed, and `paid_amount`/`status` are payment-derived (never client-set). A
- * changed amount re-derives the status against what's already been paid.
+ * `PUT /invoices/{id}` body. Only the line items, due date, and period are
+ * editable — the student/branch/enrollment/invoice number identify the record
+ * and stay fixed, and `paid_amount`/`status` are payment-derived (never
+ * client-set). Sending `items` replaces the list and re-derives the total and
+ * status against what's already been paid.
  */
 export interface InvoiceUpdateInput {
-  amount?: string
+  items?: InvoiceItem[]
   due_date?: string | null
   month?: number
   year?: number
