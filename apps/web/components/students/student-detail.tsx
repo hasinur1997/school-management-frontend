@@ -20,7 +20,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   BadgeCheck,
   CalendarCheck,
@@ -46,6 +46,7 @@ import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
 import { EnrollmentResultsPanel } from "@/components/results"
+import { StudentInvoicesPanel } from "@/components/invoices"
 import { PromoteStudentDialog } from "@/components/promotions/promote-student-dialog"
 import { PROMOTION_EXECUTE } from "@/components/promotions/permissions"
 import { DeleteDialog } from "@/components/academic/management/delete-dialog"
@@ -249,7 +250,7 @@ export function StudentDetail({
       ? [{ key: "leaves", label: "Leaves", icon: CalendarOff }]
       : []),
     ...(canViewFees
-      ? [{ key: "fees", label: "Tuition fees", icon: Wallet }]
+      ? [{ key: "fees", label: "Billing", icon: Wallet }]
       : []),
     ...(canIdCard ? [{ key: "idcard", label: "ID card", icon: IdCard }] : []),
     ...(canViewTc ? [{ key: "tc", label: "TC", icon: ScrollText }] : []),
@@ -435,6 +436,7 @@ function StudentDetailTabs({
   student: Student
 }) {
   const { active, setActive } = useDetailTab(tabs)
+  const pathname = usePathname()
 
   return (
     <div>
@@ -463,10 +465,10 @@ function StudentDetailTabs({
           description="This student's leave applications and approvals will appear here once the leaves module is live."
         />
       ) : active === "fees" ? (
-        <ComingSoonPanel
-          icon={Wallet}
-          title="Tuition fees aren't available yet"
-          description="This student's invoices and fee payments will appear here once the finance module is live."
+        <StudentInvoicesPanel
+          studentId={student.id}
+          studentName={studentDisplayName(student)}
+          backHref={`${pathname}?tab=fees`}
         />
       ) : active === "idcard" ? (
         <ComingSoonPanel

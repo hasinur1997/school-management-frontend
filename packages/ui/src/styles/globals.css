@@ -297,3 +297,28 @@
         font-variant-numeric: tabular-nums;
     }
 }
+
+/*
+ * Print isolation for paper documents (e.g. the invoice). When printing, hide
+ * the whole app shell and show only the `.invoice-paper-root` document, laid
+ * flat at the top of the page with no card chrome.
+ */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .invoice-paper-root,
+    .invoice-paper-root * {
+        visibility: visible;
+    }
+    .invoice-paper-root {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+}

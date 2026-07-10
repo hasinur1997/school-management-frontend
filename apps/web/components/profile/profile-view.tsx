@@ -23,7 +23,6 @@ import {
   ScrollText,
   ShieldCheck,
   UserRound,
-  Wallet,
   type LucideIcon,
 } from "lucide-react"
 
@@ -59,6 +58,7 @@ import {
 } from "@/types/student"
 import { StudentEnrollments } from "@/components/students/student-enrollments"
 import { MyResultsPanel } from "@/components/results"
+import { StudentInvoicesPanel } from "@/components/invoices"
 import {
   StudentAddressCards,
   StudentGuardiansCard,
@@ -351,13 +351,7 @@ function StudentSelfPanel({ student }: { student: Student }) {
   }
 
   if (active === "fees") {
-    return (
-      <ComingSoonPanel
-        icon={Wallet}
-        title="Tuition fees aren't available yet"
-        description="Your invoices and fee payments will appear here once the finance module is live."
-      />
-    )
+    return <StudentInvoicesPanel backHref="/profile?tab=fees" />
   }
 
   if (active === "idcard") {

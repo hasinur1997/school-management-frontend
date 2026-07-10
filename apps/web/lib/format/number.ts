@@ -53,6 +53,43 @@ export function formatMoney(
 }
 
 /**
+ * Convert a 2dp decimal money string (`"1500.00"`) to a signed integer count of
+ * cents using only string operations, so no float rounding is applied. Returns
+ * `null` for non-numeric input.
+ */
+function toCents(value: string | number): number | null {
+  const raw = (typeof value === "number" ? String(value) : value).trim()
+  if (!isNumericValue(raw)) return null
+  const negative = raw.startsWith("-")
+  const unsigned = negative ? raw.slice(1) : raw
+  const [intPart = "0", decPart = ""] = unsigned.split(".")
+  const cents = Number(intPart) * 100 + Number(decPart.slice(0, 2).padEnd(2, "0"))
+  return negative ? -cents : cents
+}
+
+/**
+ * Subtract one money value from another, returning a plain 2dp decimal string
+ * (no currency) suitable for `formatMoney`. Operates on integer cents so no
+ * float precision is lost — used for an invoice's outstanding balance
+ * (`amount − paid_amount`). Non-numeric input falls back to the empty marker.
+ */
+export function subtractMoney(
+  minuend: string | number,
+  subtrahend: string | number
+): string {
+  const a = toCents(minuend)
+  const b = toCents(subtrahend)
+  if (a === null || b === null) return EMPTY_VALUE
+
+  const diff = a - b
+  const negative = diff < 0
+  const abs = Math.abs(diff)
+  const intPart = Math.floor(abs / 100)
+  const decPart = String(abs % 100).padStart(2, "0")
+  return `${negative ? "-" : ""}${intPart}.${decPart}`
+}
+
+/**
  * Format a count for display with thousands grouping. Counts are integers, so
  * `Intl.NumberFormat` is safe here. Non-numeric input falls back to the empty
  * marker rather than `NaN`.

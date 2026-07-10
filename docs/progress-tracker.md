@@ -12,6 +12,7 @@ This frontend consumes the Laravel REST API documented in `docs/api/*.md` and `d
 
 - Task 4.4 (`tasks/task-4.4-result-pdfs.md`): Result-sheet PDF download — blocked on backend 8.4.
 - Task 5.1 (`tasks/task-5.1-fee-structures.md`): Fee-structure CRUD implemented (backend 10.1); invoice generation deferred to backend 10.2.
+- Task 5.2 (`tasks/task-5.2-invoices.md`): Invoices list/detail/my-invoices implemented (backend 10.2/10.3). Next: 5.3 payments.
 
 ## How To Work (per session)
 
@@ -58,7 +59,7 @@ Each feature-spec (`feature-specs/NN-*.md`) is the module overview; the `tasks/*
 
 ### Phase 5 — Finance — `feature-specs/15..16`
 - [ ] [5.1](tasks/task-5.1-fee-structures.md) — Fee structures + invoice generation
-- [ ] [5.2](tasks/task-5.2-invoices.md) — Invoices: list, detail, my-invoices
+- [x] [5.2](tasks/task-5.2-invoices.md) — Invoices: list, detail, my-invoices
 - [ ] [5.3](tasks/task-5.3-payments.md) — Payments: online (SSLCommerz), local, receipt
 - [ ] [5.4](tasks/task-5.4-finance-income-expenses.md) — Finance: income + expenses
 - [ ] [5.5](tasks/task-5.5-finance-assets.md) — Finance: assets + summary

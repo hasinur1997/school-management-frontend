@@ -8,5 +8,6 @@ export {
   formatCount,
   formatMoney,
   isNumericValue,
+  subtractMoney,
 } from "./number"
 export { formatDate, formatDateRange, formatTime } from "./date"
