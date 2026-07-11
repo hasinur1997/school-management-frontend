@@ -5,6 +5,7 @@
  */
 
 export { InvoicesList } from "./invoices-list"
+export { PaymentsList } from "./payments-list"
 export { InvoiceDetail } from "./invoice-detail"
 export { ReceiptView } from "./receipt-view"
 export { InvoicePaper } from "./invoice-paper"

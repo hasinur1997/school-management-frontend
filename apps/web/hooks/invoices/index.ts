@@ -5,6 +5,7 @@
  */
 
 export { useInvoices, INVOICES_PER_PAGE } from "./use-invoices"
+export { usePayments, PAYMENTS_PER_PAGE } from "./use-payments"
 export { useInvoice } from "./use-invoice"
 export { useMyInvoices, MY_INVOICES_PER_PAGE } from "./use-my-invoices"
 export {

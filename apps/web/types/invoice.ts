@@ -69,6 +69,42 @@ export const PAYMENT_STATUS_TONE: Record<PaymentStatus, StatusTone> = {
   cancelled: "neutral",
 }
 
+/** Methods in selector order (payment list filter). */
+export const PAYMENT_METHODS: PaymentMethod[] = ["cash", "sslcommerz"]
+
+/** Statuses in selector order (payment list filter). */
+export const PAYMENT_STATUSES: PaymentStatus[] = [
+  "paid",
+  "pending",
+  "failed",
+  "cancelled",
+]
+
+/** Filter for method, with an `all` pass-through (no filter sent). */
+export type PaymentMethodFilter = PaymentMethod | "all"
+
+/** Filter for status, with an `all` pass-through (no filter sent). */
+export type PaymentStatusFilter = PaymentStatus | "all"
+
+/**
+ * The invoice a payment settles, denormalised onto a payment row for the
+ * payments browse list (`GET /payments`). Carries just enough to identify and
+ * link the invoice (number, billing period, the billed student). Present only
+ * on the list read — the per-invoice detail already knows its own invoice.
+ */
+export interface PaymentInvoiceRef {
+  id: string
+  invoice_no: string | null
+  /** Billing month, 1–12. */
+  month: number
+  /** Billing year, e.g. 2026. */
+  year: number
+  status: InvoiceStatus
+  paid_amount: string
+  /** The billed student — null only if the student was hard-deleted. */
+  student: InvoiceStudentRef | null
+}
+
 /** The student an invoice bills — `id` is a `public_id` hash. */
 export interface InvoiceStudentRef {
   id: string
@@ -105,6 +141,12 @@ export interface Payment {
   paid_at: string | null
   /** Relative API path streaming the receipt PDF. */
   receipt_url: string
+  /**
+   * The invoice this payment settled — present only on the payments browse list
+   * (`GET /payments`), so the row can name the student and link the invoice. The
+   * per-invoice payment history omits it (the invoice is the parent).
+   */
+  invoice?: PaymentInvoiceRef
 }
 
 /**
@@ -227,6 +269,34 @@ export interface MyInvoiceParams {
   year?: number | null
   page?: number
   per_page?: number
+}
+
+/**
+ * Params the staff payments list (`GET /payments`) folds into the query (and
+ * cache key). Branch isolation is automatic; `branch_id` here only scopes the
+ * key for super-admin branch switching. `from`/`to` bound the settlement date
+ * (`paid_at`), inclusive.
+ */
+export interface PaymentListParams {
+  status?: PaymentStatusFilter
+  method?: PaymentMethodFilter
+  /** Inclusive settlement-date lower bound, `YYYY-MM-DD`. */
+  from?: string | null
+  /** Inclusive settlement-date upper bound, `YYYY-MM-DD`. */
+  to?: string | null
+  /** Free-text across receipt no + invoice no + student name. */
+  search?: string | null
+  /** Super-admin cache scope; mirrors the active branch. */
+  branch_id?: string | null
+  page?: number
+  per_page?: number
+}
+
+/** Display name for the student a payment's invoice bills, never blank. */
+export function paymentStudentName(payment: Payment): string {
+  const student = payment.invoice?.student
+  if (!student) return "Unknown student"
+  return student.name_en || `Student ${student.id}`
 }
 
 /** Full month names, indexed 1–12 (index 0 unused). */

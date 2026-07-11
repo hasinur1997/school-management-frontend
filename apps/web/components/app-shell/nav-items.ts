@@ -7,6 +7,7 @@ import {
   CalendarOff,
   ClipboardList,
   ClipboardPen,
+  CreditCard,
   FileSpreadsheet,
   FileText,
   GraduationCap,
@@ -257,6 +258,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Invoices",
         href: "/invoices",
         icon: FileSpreadsheet,
+        permission: "invoice.view",
+      },
+      {
+        label: "Payments",
+        href: "/payments",
+        icon: CreditCard,
         permission: "invoice.view",
       },
       {
