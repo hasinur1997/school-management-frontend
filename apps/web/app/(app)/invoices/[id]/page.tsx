@@ -9,8 +9,10 @@
  *
  * `params` and `searchParams` are promises, unwrapped with `React.use`. An
  * optional `?from=` names where the back link returns to (the fees tab that
- * linked here); it falls back to the staff list. `?paid=1` marks a return from
- * the SSLCommerz checkout so the detail refetches to reflect the API result.
+ * linked here); it falls back to the staff list. `?payment=success|fail|cancel`
+ * marks a return from the SSLCommerz checkout: the detail refetches to reflect
+ * the API result and shows the result popup. (`?paid=1` is the legacy marker,
+ * still honoured as a plain refetch.)
  */
 
 import * as React from "react"
@@ -22,20 +24,27 @@ export default function InvoiceDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ from?: string; paid?: string }>
+  searchParams: Promise<{ from?: string; paid?: string; payment?: string }>
 }) {
   const { id } = React.use(params)
-  const { from, paid } = React.use(searchParams)
+  const { from, paid, payment } = React.use(searchParams)
 
   // Only accept an in-app absolute path as the return target (guards against an
   // open-redirect via a crafted `from`); anything else falls back to the list.
   const backHref = from && from.startsWith("/") ? from : "/invoices"
 
+  // The SSLCommerz landing redirects here as `?payment=success|fail|cancel`.
+  const paymentResult =
+    payment === "success" || payment === "fail" || payment === "cancel"
+      ? payment
+      : undefined
+
   return (
     <InvoiceDetail
       id={String(id)}
       backHref={backHref}
-      justReturnedFromGateway={paid === "1"}
+      justReturnedFromGateway={paid === "1" || paymentResult !== undefined}
+      paymentResult={paymentResult}
     />
   )
 }

@@ -39,22 +39,33 @@ import { invoiceHasReceipt } from "@/types/invoice"
 import { InvoicePaper } from "./invoice-paper"
 import { InvoiceActions } from "./invoice-actions"
 import { downloadInvoicePdf, printInvoicePdf } from "./invoice-document"
+import {
+  PaymentResultDialog,
+  type PaymentResult,
+} from "./payment-result-dialog"
 
 export function InvoiceDetail({
   id,
   backHref = "/invoices",
   backLabel = "Back to invoices",
   justReturnedFromGateway = false,
+  paymentResult,
 }: {
   id: string
   /** Where the back link points (staff → list; self/parent → their view). */
   backHref?: string
   backLabel?: string
-  /** True when the browser just returned from the SSLCommerz checkout (`?paid=1`). */
+  /** True when the browser just returned from the SSLCommerz checkout. */
   justReturnedFromGateway?: boolean
+  /** SSLCommerz landing outcome, when the browser returned via `?payment=`. */
+  paymentResult?: PaymentResult
 }) {
   const { data: invoice, isPending, isError, error, refetch } = useInvoice(id)
   const [busy, setBusy] = React.useState<"download" | "print" | null>(null)
+
+  // The result popup opens when we arrive with a `?payment=` outcome, and stays
+  // controlled from here so closing it (X / Done) can strip the URL marker.
+  const [resultOpen, setResultOpen] = React.useState(Boolean(paymentResult))
 
   // Reconcile once on return from the gateway: the API is the source of truth,
   // so refetch and clear the marker rather than trust the redirect.
@@ -63,13 +74,17 @@ export function InvoiceDetail({
     if (!justReturnedFromGateway || reconciled.current) return
     reconciled.current = true
     void refetch()
-    toast("Updating payment status…", { id: "invoice-pay-return" })
+    if (!paymentResult) {
+      // Legacy `?paid=1` path — no popup, just a quiet status refresh.
+      toast("Updating payment status…", { id: "invoice-pay-return" })
+    }
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href)
       url.searchParams.delete("paid")
+      url.searchParams.delete("payment")
       window.history.replaceState(window.history.state, "", url.toString())
     }
-  }, [justReturnedFromGateway, refetch])
+  }, [justReturnedFromGateway, paymentResult, refetch])
 
   if (isPending) {
     return (
@@ -188,6 +203,14 @@ export function InvoiceDetail({
       </div>
 
       <InvoiceActions invoice={invoice} />
+
+      {paymentResult ? (
+        <PaymentResultDialog
+          result={paymentResult}
+          open={resultOpen}
+          onOpenChange={setResultOpen}
+        />
+      ) : null}
     </DetailLayout>
   )
 }
