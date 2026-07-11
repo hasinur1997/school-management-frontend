@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 5 — Finance |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 5.6 (categories) |
 | Blocks | — |
 | Feature spec | `feature-specs/16-finance.md` |
@@ -26,7 +26,7 @@ List and manage income and expense entries per branch, with category + date filt
 - Permission-gated; super admin sees all branches / consolidated.
 
 ## Check When Done
-- [ ] Income + expenses listed, filtered, created/edited/deleted (with permission).
-- [ ] System-generated fee income shown read-only.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Income + expenses listed, filtered, created/edited/deleted (with permission).
+- [x] System-generated fee income shown read-only.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

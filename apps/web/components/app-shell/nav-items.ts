@@ -260,10 +260,14 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: "invoice.view",
       },
       {
+        // The backend guards the ledgers per-type; the module is visible to
+        // anyone who can manage income, expenses, or assets. No `finance.view`
+        // slug exists — gating on the real permissions keeps the item reachable.
         label: "Finance",
         href: "/finance",
         icon: Wallet,
-        permission: "finance.view",
+        permission: "income.manage",
+        permissions: ["expense.manage", "asset.manage"],
       },
     ],
   },
