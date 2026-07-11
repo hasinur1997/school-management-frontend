@@ -10,17 +10,19 @@
  * the print stylesheet in `globals.css` hides the app shell for both papers.
  *
  * The receipt reprints the invoice's described line items (tuition, exam, …) for
- * context, then states the amount actually received in this payment. As in the
- * invoice paper, the mock's fabricated fields — the flat "Discount / waiver"
- * line — are dropped rather than invented, since the contract carries no
- * discount concept. The "Amount in words" band is a faithful integer-based
- * transformation of the real `payment.amount` (no float math). Money is
- * rendered from the API's decimal strings via `formatMoney`.
+ * context, then states the amount actually received in this payment. The mock's
+ * "Discount / waiver" line is kept, but bound to a real derived value — the gap
+ * between the invoice subtotal and the amount received (`invoice.amount −
+ * payment.amount`) — rather than an invented discount field, so it stays honest
+ * to the contract while matching the imported layout. The "Amount in words" band
+ * is a faithful integer-based transformation of the real `payment.amount` (no
+ * float math). Money is rendered from the API's decimal strings via
+ * `formatMoney`/`subtractMoney`.
  */
 
 import * as React from "react"
 
-import { formatDate, formatMoney } from "@/lib/format"
+import { formatDate, formatMoney, subtractMoney } from "@/lib/format"
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -49,7 +51,8 @@ const RECEIPT_NOTE =
 const FONT_SANS =
   "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 const FONT_MONO = "var(--font-mono), monospace"
-const FONT_BN = "'Noto Sans Bengali', var(--font-sans), sans-serif"
+const FONT_BN =
+  "var(--font-bengali), 'Noto Sans Bengali', var(--font-sans), sans-serif"
 
 const INK = "#1b1b1f"
 const MUTED = "#71717a"
@@ -185,16 +188,22 @@ function InfoRow({
 export function ReceiptPaper({
   invoice,
   payment,
+  methodLabel,
   className,
 }: {
   invoice: Invoice
   payment: Payment
+  /** Overrides the displayed payment method (e.g. a combined "Cash, Online"). */
+  methodLabel?: string
   className?: string
 }) {
   const status = STATUS_STYLE[payment.status] ?? STATUS_STYLE.pending
   const period = invoiceMonthLabel(invoice.month, invoice.year)
   const enrollmentLine = formatEnrollmentLine(invoice.enrollment)
   const words = amountInWords(payment.amount)
+  // The mock's "Discount / waiver" line, bound to a real derived value: how much
+  // of the billed subtotal was not collected in this payment. Never invented.
+  const waiver = subtractMoney(invoice.amount, payment.amount)
   // The invoice's line items, or a single synthesized line from the total for
   // an older invoice loaded without items (so the table never renders empty).
   const lineItems =
@@ -213,8 +222,7 @@ export function ReceiptPaper({
         borderRadius: 14,
         boxShadow:
           "0 1px 3px rgba(16,16,20,0.05), 0 1px 1px rgba(16,16,20,0.03)",
-        padding:
-          "clamp(28px, 5vw, 52px) clamp(20px, 5vw, 56px) clamp(28px, 5vw, 44px)",
+        padding: "52px 56px 44px",
         boxSizing: "border-box",
         color: INK,
         fontFamily: FONT_SANS,
@@ -236,7 +244,13 @@ export function ReceiptPaper({
           <img
             src={SCHOOL_LOGO}
             alt=""
-            style={{ width: 76, height: 76, objectFit: "contain", flex: "none" }}
+            style={{
+              width: 76,
+              height: 76,
+              borderRadius: "50%",
+              objectFit: "cover",
+              flex: "none",
+            }}
           />
           <div>
             <div
@@ -417,13 +431,14 @@ export function ReceiptPaper({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 160px",
+            gridTemplateColumns: "1fr 140px",
             background: "#fafafa",
           }}
         >
           <div
             style={{
               ...labelCap,
+              letterSpacing: "0.06em",
               padding: "12px 18px",
               borderBottom: `1px solid ${HAIRLINE}`,
             }}
@@ -433,24 +448,25 @@ export function ReceiptPaper({
           <div
             style={{
               ...labelCap,
+              letterSpacing: "0.06em",
               textAlign: "right",
               padding: "12px 18px",
               borderBottom: `1px solid ${HAIRLINE}`,
             }}
           >
-            Amount
+            Amount (৳)
           </div>
         </div>
         {lineItems.map((item, i) => (
           <div
             key={i}
-            style={{ display: "grid", gridTemplateColumns: "1fr 160px" }}
+            style={{ display: "grid", gridTemplateColumns: "1fr 140px" }}
           >
             <div
               style={{
                 padding: "13px 18px",
                 fontSize: 14.5,
-                borderTop: i === 0 ? "none" : `1px solid ${HAIRLINE}`,
+                borderBottom: `1px solid ${HAIRLINE}`,
               }}
             >
               {item.description}
@@ -461,10 +477,10 @@ export function ReceiptPaper({
                 fontSize: 14.5,
                 textAlign: "right",
                 fontFamily: FONT_MONO,
-                borderTop: i === 0 ? "none" : `1px solid ${HAIRLINE}`,
+                borderBottom: `1px solid ${HAIRLINE}`,
               }}
             >
-              {formatMoney(item.amount)}
+              {formatMoney(item.amount, "")}
             </div>
           </div>
         ))}
@@ -475,7 +491,7 @@ export function ReceiptPaper({
           discount concept (mirrors invoice-paper.tsx). */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
         <div
-          style={{ width: 300, display: "flex", flexDirection: "column", gap: 9 }}
+          style={{ width: 280, display: "flex", flexDirection: "column", gap: 9 }}
         >
           <div
             style={{
@@ -485,9 +501,22 @@ export function ReceiptPaper({
               color: MUTED,
             }}
           >
-            <span>Invoice subtotal</span>
+            <span>Subtotal</span>
             <span style={{ fontFamily: FONT_MONO, color: INK }}>
-              {formatMoney(invoice.amount)}
+              {formatMoney(invoice.amount, "৳ ")}
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: 14,
+              color: MUTED,
+            }}
+          >
+            <span>Discount / waiver</span>
+            <span style={{ fontFamily: FONT_MONO, color: INK }}>
+              &minus; {formatMoney(waiver, "৳ ")}
             </span>
           </div>
           <div style={{ height: 1, background: HAIRLINE, margin: "2px 0" }} />
@@ -507,7 +536,7 @@ export function ReceiptPaper({
                 color: ACCENT,
               }}
             >
-              {formatMoney(payment.amount)}
+              {formatMoney(payment.amount, "৳ ")}
             </span>
           </div>
         </div>
@@ -554,7 +583,7 @@ export function ReceiptPaper({
           <div
             style={{ fontSize: 14, marginTop: 8, lineHeight: 1.7, color: INK }}
           >
-            {PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}
+            {methodLabel ?? PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}
           </div>
         </div>
         <div>

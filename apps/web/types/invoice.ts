@@ -15,6 +15,7 @@
  * status only.
  */
 
+import { EMPTY_VALUE, subtractMoney, sumMoney } from "@/lib/format"
 import type { StatusTone } from "@/components/status-badge"
 
 /** Settlement status of an invoice (`App\Enums\InvoiceStatus`). */
@@ -147,6 +148,21 @@ export interface Invoice {
 }
 
 /**
+ * `POST /invoices/{id}/payments/local` body (task F-5.3) — a counter payment a
+ * permitted staffer records against an invoice (`fee.collect`). The amount is a
+ * decimal **string** (never a float); `method` is always `cash` for a counter
+ * payment (the online path posts `sslcommerz`). The API derives the receipt
+ * number, settlement time, and the invoice's new `paid_amount`/`status` — the
+ * client never marks an invoice paid.
+ */
+export interface LocalPaymentInput {
+  /** Decimal string, e.g. `"1500.00"`. */
+  amount: string
+  /** Always `cash` for a counter payment. */
+  method?: PaymentMethod
+}
+
+/**
  * Params the staff list screen (`GET /invoices`) folds into the query (and
  * key). Branch isolation is automatic; `branch_id` here only scopes the cache
  * key for super-admin branch switching (the request interceptor forwards the
@@ -246,4 +262,82 @@ export function invoiceMonthLabel(month: number, year: number): string {
 export function invoiceStudentName(invoice: Invoice): string {
   if (invoice.student === null) return "Unknown student"
   return invoice.student.name_en || `Student ${invoice.student.id}`
+}
+
+/**
+ * The invoice's outstanding balance (`amount − paid_amount`) as a plain 2dp
+ * decimal string — the amount a payment would settle. Uses integer-cents string
+ * math (`subtractMoney`), never a float.
+ */
+export function invoiceOutstanding(invoice: Invoice): string {
+  return subtractMoney(invoice.amount, invoice.paid_amount)
+}
+
+/** True while the invoice still has a positive balance left to collect. */
+export function invoiceHasOutstanding(invoice: Invoice): boolean {
+  const outstanding = invoiceOutstanding(invoice)
+  return (
+    outstanding !== EMPTY_VALUE &&
+    !outstanding.startsWith("-") &&
+    !/^0+(\.0+)?$/.test(outstanding)
+  )
+}
+
+/**
+ * True when the invoice has at least one settled payment, so a money receipt
+ * exists. Derived from `status` (present on list reads too), so the receipt
+ * entry point can be gated without loading the payment history.
+ */
+export function invoiceHasReceipt(invoice: Invoice): boolean {
+  return invoice.status !== "unpaid"
+}
+
+/**
+ * Roll all of an invoice's **settled** payments into a single money receipt
+ * (task F-5.3). Amounts are summed with integer-cents string math (`sumMoney`),
+ * never a float; the receipt date is the most recent settlement; `receipt_no`
+ * is the latest payment's number; and `methodLabel` names the distinct methods
+ * used (e.g. "Cash" or "Cash, Online"). Returns `null` when nothing is settled.
+ *
+ * The synthetic `Payment` reuses the real `Payment` shape so `ReceiptPaper` can
+ * render it unchanged; `methodLabel` is passed alongside for the combined
+ * method text (which the single-payment `method` enum can't express).
+ */
+export function buildCombinedReceipt(
+  invoice: Invoice
+): { payment: Payment; methodLabel: string } | null {
+  const paid = (invoice.payments ?? []).filter((p) => p.status === "paid")
+  if (paid.length === 0) return null
+
+  // Most recent settlement (payments arrive newest-first, but don't rely on it).
+  const latest = paid.reduce((a, b) => {
+    const ta = a.paid_at ? Date.parse(a.paid_at) : 0
+    const tb = b.paid_at ? Date.parse(b.paid_at) : 0
+    return tb > ta ? b : a
+  })
+
+  const seen = new Set<PaymentMethod>()
+  const methods: PaymentMethod[] = []
+  for (const p of paid) {
+    if (!seen.has(p.method)) {
+      seen.add(p.method)
+      methods.push(p.method)
+    }
+  }
+  const methodLabel = methods
+    .map((m) => PAYMENT_METHOD_LABELS[m] ?? m)
+    .join(", ")
+
+  return {
+    payment: {
+      id: `${invoice.id}-combined`,
+      receipt_no: latest.receipt_no,
+      amount: sumMoney(paid.map((p) => p.amount)),
+      method: latest.method,
+      status: "paid",
+      paid_at: latest.paid_at,
+      receipt_url: "",
+    },
+    methodLabel,
+  }
 }

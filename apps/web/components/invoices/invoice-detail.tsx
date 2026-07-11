@@ -13,13 +13,19 @@
  * `403`) for staff, the student, or a linked parent alike.
  *
  * Print uses the browser dialog; the `.invoice-paper-root` isolation rules in
- * `globals.css` hide the app shell so only the document prints. The pay /
- * receipt actions are wired in task 5.3.
+ * `globals.css` hide the app shell so only the document prints. Below the
+ * document, `InvoiceActions` (print-hidden) carries the pay / record / receipt
+ * actions (task 5.3).
+ *
+ * On return from the SSLCommerz checkout the browser lands back here with
+ * `?paid=1` (`justReturnedFromGateway`); the invoice is **refetched** so its
+ * status reflects the API/IPN result (never trusted from the redirect), and the
+ * marker is stripped from the URL.
  */
 
 import * as React from "react"
 import Link from "next/link"
-import { Printer, Receipt } from "lucide-react"
+import { Download, Printer, Receipt } from "lucide-react"
 
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
@@ -28,19 +34,42 @@ import { DetailSkeleton } from "@/components/skeletons"
 import { DetailBackLink, DetailLayout } from "@/components/detail/detail-ui"
 import { useInvoice } from "@/hooks/invoices"
 import { isNotFoundError } from "@/lib/api"
+import { toast, toastError, toastSuccess } from "@/lib/toast"
+import { invoiceHasReceipt } from "@/types/invoice"
 import { InvoicePaper } from "./invoice-paper"
+import { InvoiceActions } from "./invoice-actions"
+import { downloadInvoicePdf, printInvoicePdf } from "./invoice-document"
 
 export function InvoiceDetail({
   id,
   backHref = "/invoices",
   backLabel = "Back to invoices",
+  justReturnedFromGateway = false,
 }: {
   id: string
   /** Where the back link points (staff → list; self/parent → their view). */
   backHref?: string
   backLabel?: string
+  /** True when the browser just returned from the SSLCommerz checkout (`?paid=1`). */
+  justReturnedFromGateway?: boolean
 }) {
   const { data: invoice, isPending, isError, error, refetch } = useInvoice(id)
+  const [busy, setBusy] = React.useState<"download" | "print" | null>(null)
+
+  // Reconcile once on return from the gateway: the API is the source of truth,
+  // so refetch and clear the marker rather than trust the redirect.
+  const reconciled = React.useRef(false)
+  React.useEffect(() => {
+    if (!justReturnedFromGateway || reconciled.current) return
+    reconciled.current = true
+    void refetch()
+    toast("Updating payment status…", { id: "invoice-pay-return" })
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.delete("paid")
+      window.history.replaceState(window.history.state, "", url.toString())
+    }
+  }, [justReturnedFromGateway, refetch])
 
   if (isPending) {
     return (
@@ -80,24 +109,85 @@ export function InvoiceDetail({
     )
   }
 
+  const docData = {
+    invoice,
+    fileName: `invoice-${invoice.invoice_no ?? invoice.id}`,
+  }
+
+  async function handleDownload() {
+    if (busy) return
+    setBusy("download")
+    const ok = await downloadInvoicePdf(docData)
+    setBusy(null)
+    if (ok) {
+      toastSuccess("Invoice downloaded.", { id: "invoice-pdf" })
+    } else {
+      toastError(null, "Couldn't generate the PDF. Please try again.", {
+        id: "invoice-pdf",
+      })
+    }
+  }
+
+  async function handlePrint() {
+    if (busy) return
+    setBusy("print")
+    const ok = await printInvoicePdf(docData)
+    setBusy(null)
+    if (!ok) {
+      toastError(null, "Couldn't open the print dialog. Please try again.", {
+        id: "invoice-print",
+      })
+    }
+  }
+
   return (
     <DetailLayout>
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <DetailBackLink href={backHref}>{backLabel}</DetailBackLink>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-        >
-          <Printer className="size-4" aria-hidden />
-          Print / Save as PDF
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {invoiceHasReceipt(invoice) ? (
+            <Link
+              href={`/invoices/${invoice.id}/receipt?from=${encodeURIComponent(
+                `/invoices/${invoice.id}`
+              )}`}
+            >
+              <Button type="button" variant="outline" size="sm">
+                <Receipt className="size-4" aria-hidden />
+                View money receipt
+              </Button>
+            </Link>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            loading={busy === "print"}
+            disabled={busy !== null}
+          >
+            {busy === "print" ? null : <Printer className="size-4" aria-hidden />}
+            Print
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleDownload}
+            loading={busy === "download"}
+            disabled={busy !== null}
+          >
+            {busy === "download" ? null : (
+              <Download className="size-4" aria-hidden />
+            )}
+            Download
+          </Button>
+        </div>
       </div>
 
       <div className="flex w-full justify-center">
         <InvoicePaper invoice={invoice} />
       </div>
+
+      <InvoiceActions invoice={invoice} />
     </DetailLayout>
   )
 }

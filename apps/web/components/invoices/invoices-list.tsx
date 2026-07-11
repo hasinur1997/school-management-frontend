@@ -18,7 +18,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Pencil, Plus, Receipt, Search, Trash2, X } from "lucide-react"
+import { Eye, Pencil, Plus, Receipt, Search, Trash2, X } from "lucide-react"
 
 import {
   Table,
@@ -46,7 +46,6 @@ import { ListPager } from "@/components/list-pager"
 import { ClassSelect } from "@/components/academic/class-select"
 import { DeleteDialog } from "@/components/academic/management/delete-dialog"
 import { useInvoices, useDeleteInvoice } from "@/hooks/invoices"
-import { usePermission } from "@/hooks/auth/use-permission"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { toastError, toastSuccess } from "@/lib/toast"
 import { formatMoney } from "@/lib/format"
@@ -55,6 +54,7 @@ import {
   INVOICE_STATUS_LABELS,
   INVOICE_STATUS_TONE,
   INVOICE_STATUSES,
+  invoiceHasReceipt,
   invoiceMonthLabel,
   invoiceStudentName,
   type Invoice,
@@ -113,7 +113,6 @@ export function InvoicesList() {
     page,
   })
 
-  const canManage = usePermission(INVOICE_MANAGE)
   const deleteInvoice = useDeleteInvoice()
 
   const [formOpen, setFormOpen] = React.useState(false)
@@ -174,8 +173,36 @@ export function InvoicesList() {
   )
 
   const rowActions = (invoice: Invoice) => (
-    <Can permission={INVOICE_MANAGE}>
-      <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-1">
+      <Link
+        href={`/invoices/${invoice.id}`}
+        onClick={(e) => e.stopPropagation()}
+        title="View invoice"
+      >
+        <Button variant="ghost" size="sm">
+          <Eye className="size-4" aria-hidden />
+          <span className="hidden sm:inline">View</span>
+          <span className="sr-only">
+            View invoice {invoice.invoice_no ?? ""}
+          </span>
+        </Button>
+      </Link>
+      {invoiceHasReceipt(invoice) ? (
+        <Link
+          href={`/invoices/${invoice.id}/receipt`}
+          onClick={(e) => e.stopPropagation()}
+          title="View money receipt"
+        >
+          <Button variant="ghost" size="sm">
+            <Receipt className="size-4" aria-hidden />
+            <span className="hidden sm:inline">Receipt</span>
+            <span className="sr-only">
+              View money receipt for {invoice.invoice_no ?? ""}
+            </span>
+          </Button>
+        </Link>
+      ) : null}
+      <Can permission={INVOICE_MANAGE}>
         <Button
           variant="ghost"
           size="sm"
@@ -201,8 +228,8 @@ export function InvoicesList() {
           <Trash2 className="size-4" aria-hidden />
           <span className="sr-only">Delete invoice {invoice.invoice_no ?? ""}</span>
         </Button>
-      </div>
-    </Can>
+      </Can>
+    </div>
   )
 
   return (
@@ -326,7 +353,7 @@ export function InvoicesList() {
       </div>
 
       {isPending ? (
-        <TableSkeleton rows={8} columns={5} />
+        <TableSkeleton rows={8} columns={6} />
       ) : isError ? (
         <ErrorPanel
           description="We couldn't load the invoices."
@@ -357,9 +384,7 @@ export function InvoicesList() {
                   <TableHead>Month</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
-                  {canManage ? (
-                    <TableHead className="w-px text-right">Actions</TableHead>
-                  ) : null}
+                  <TableHead className="w-px text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -393,11 +418,9 @@ export function InvoicesList() {
                     <TableCell className="text-right font-medium tabular-nums text-copy-primary">
                       {formatMoney(invoice.amount)}
                     </TableCell>
-                    {canManage ? (
-                      <TableCell className="text-right">
-                        {rowActions(invoice)}
-                      </TableCell>
-                    ) : null}
+                    <TableCell className="text-right">
+                      {rowActions(invoice)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

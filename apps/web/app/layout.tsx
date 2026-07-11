@@ -3,6 +3,7 @@ import {
   EB_Garamond,
   Geist,
   Geist_Mono,
+  Noto_Sans_Bengali,
   Playfair_Display,
 } from "next/font/google"
 
@@ -47,6 +48,17 @@ const fontScript = Caveat({
   variable: "--font-script",
 })
 
+// Bengali face for the paper documents (invoice / money receipt), which print
+// the school name and motto in Bangla. Loaded app-wide as a CSS variable so the
+// on-screen paper and its rasterized PDF resolve the *same* font — previously
+// the papers referenced a bare "Noto Sans Bengali" family that was never loaded,
+// so the browser substituted a system fallback that didn't survive PDF export.
+const fontBengali = Noto_Sans_Bengali({
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-bengali",
+})
+
 // Applies the persisted accent to <html> before paint to avoid a flash,
 // mirroring how next-themes restores the color mode. Kept inline and tiny.
 const accentScript = `(function(){try{var a=localStorage.getItem("accent");if(a&&a!=="purple"){document.documentElement.setAttribute("data-accent",a);}}catch(e){}})();`
@@ -67,7 +79,8 @@ export default function RootLayout({
         fontMono.variable,
         fontSerifDisplay.variable,
         fontSerif.variable,
-        fontScript.variable
+        fontScript.variable,
+        fontBengali.variable
       )}
     >
       <head>

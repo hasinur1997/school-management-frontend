@@ -9,7 +9,8 @@
  *
  * `params` and `searchParams` are promises, unwrapped with `React.use`. An
  * optional `?from=` names where the back link returns to (the fees tab that
- * linked here); it falls back to the staff list.
+ * linked here); it falls back to the staff list. `?paid=1` marks a return from
+ * the SSLCommerz checkout so the detail refetches to reflect the API result.
  */
 
 import * as React from "react"
@@ -21,14 +22,20 @@ export default function InvoiceDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ from?: string }>
+  searchParams: Promise<{ from?: string; paid?: string }>
 }) {
   const { id } = React.use(params)
-  const { from } = React.use(searchParams)
+  const { from, paid } = React.use(searchParams)
 
   // Only accept an in-app absolute path as the return target (guards against an
   // open-redirect via a crafted `from`); anything else falls back to the list.
   const backHref = from && from.startsWith("/") ? from : "/invoices"
 
-  return <InvoiceDetail id={String(id)} backHref={backHref} />
+  return (
+    <InvoiceDetail
+      id={String(id)}
+      backHref={backHref}
+      justReturnedFromGateway={paid === "1"}
+    />
+  )
 }

@@ -3,26 +3,23 @@
 /**
  * One student's billing, embedded in the student-detail "Billing" tab and the
  * student's own profile fees tab (task F-5.2). Lists every invoice for the
- * student (month, amount, paid/partial/unpaid status); each row expands inline
- * to reveal that invoice as the printable invoice document (`InvoicePaper`, the
- * same design as the standalone `/invoices/{id}` detail), so all of a student's
- * invoices and payments live on the one page. A row also links out to the full
- * invoice detail, where payment happens (wired in 5.3).
+ * student (month, invoice no, paid/partial/unpaid status, amount) as compact
+ * rows — the same shape as the main invoices list — each with **View invoice**
+ * and **View money receipt** actions that open the single invoice detail
+ * (`/invoices/{id}`) or the money-receipt page (`/invoices/{id}/receipt`), where
+ * viewing, paying, and printing/downloading happen. Nothing expands inline.
  *
  * The read endpoint depends on the caller: staff (`invoice.view`) read the
  * student via `GET /invoices?student_id=`; a student or linked parent — who hold
  * no `invoice.view` — read via `GET /me/invoices` (own for a student, the linked
- * child for a parent). Each invoice's payments are loaded on expand via
- * `GET /invoices/{id}` (`useInvoice`), which the API authorizes per-record.
- * Money is rendered from the API's decimal strings via `formatMoney` (no float
- * math).
+ * child for a parent). Money is rendered from the API's decimal strings via
+ * `formatMoney` (no float math).
  */
 
 import * as React from "react"
 import Link from "next/link"
-import { ChevronDown, ExternalLink, Plus, Receipt } from "lucide-react"
+import { Eye, Plus, Receipt, Wallet } from "lucide-react"
 
-import { cn } from "@workspace/ui/lib/utils"
 import {
   Select,
   SelectContent,
@@ -30,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select"
-import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Button } from "@/components/button"
 import { Can } from "@/components/auth/can"
 import { EmptyState } from "@/components/empty-state"
@@ -39,17 +35,18 @@ import { StatusBadge } from "@/components/status-badge"
 import { CardGridSkeleton } from "@/components/skeletons"
 import { ListPager } from "@/components/list-pager"
 import { usePermission } from "@/hooks/auth/use-permission"
-import { useInvoice, useInvoices, useMyInvoices } from "@/hooks/invoices"
+import { useInvoices, useMyInvoices } from "@/hooks/invoices"
 import { formatMoney } from "@/lib/format"
 import {
   INVOICE_STATUS_LABELS,
   INVOICE_STATUS_TONE,
+  invoiceHasReceipt,
   invoiceMonthLabel,
   type Invoice,
 } from "@/types/invoice"
-import { INVOICE_MANAGE, INVOICE_VIEW } from "./permissions"
-import { InvoicePaper } from "./invoice-paper"
+import { FEE_COLLECT, INVOICE_MANAGE, INVOICE_VIEW } from "./permissions"
 import { InvoiceFormDialog } from "./invoice-form-dialog"
+import { CollectPaymentDialog } from "./collect-payment-dialog"
 
 /** Recent years offered in the year filter (current + the four prior). */
 function recentYears(): number[] {
@@ -66,7 +63,7 @@ export function StudentInvoicesPanel({
   studentId?: string
   /** The viewed student's name — presets the create form (staff). */
   studentName?: string
-  /** Where the invoice detail's back link returns to. */
+  /** Where the invoice detail / receipt back link returns to. */
   backHref: string
 }) {
   const canViewAll = usePermission(INVOICE_VIEW)
@@ -74,13 +71,12 @@ export function StudentInvoicesPanel({
 
   const [year, setYear] = React.useState<number | null>(null)
   const [page, setPage] = React.useState(1)
-  const [expandedId, setExpandedId] = React.useState<string | null>(null)
   const [createOpen, setCreateOpen] = React.useState(false)
+  const [collectOpen, setCollectOpen] = React.useState(false)
 
   function changeYear(value: number | null) {
     setYear(value)
     setPage(1)
-    setExpandedId(null)
   }
 
   const staff = useInvoices(
@@ -96,16 +92,12 @@ export function StudentInvoicesPanel({
   const lastPage = meta?.last_page ?? 1
   const years = React.useMemo(() => recentYears(), [])
 
-  function toggle(id: string) {
-    setExpandedId((current) => (current === id ? null : id))
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="min-w-0 text-sm text-copy-muted">
-          Invoices and payment history. Expand an invoice to see its payments, or
-          open it to pay.
+          Invoices and payment history. Open an invoice to view or pay it, or
+          view its money receipt.
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <div className="w-32">
@@ -130,6 +122,18 @@ export function StudentInvoicesPanel({
               </SelectContent>
             </Select>
           </div>
+          {studentId && useStaffPath ? (
+            <Can permission={FEE_COLLECT}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCollectOpen(true)}
+              >
+                <Wallet className="size-4" aria-hidden />
+                Collect payment
+              </Button>
+            </Can>
+          ) : null}
           {studentId ? (
             <Can permission={INVOICE_MANAGE}>
               <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -165,8 +169,6 @@ export function StudentInvoicesPanel({
               <InvoiceRow
                 key={invoice.id}
                 invoice={invoice}
-                expanded={expandedId === invoice.id}
-                onToggle={() => toggle(invoice.id)}
                 backHref={backHref}
               />
             ))}
@@ -190,114 +192,72 @@ export function StudentInvoicesPanel({
           presetStudent={{ id: studentId, name: studentName ?? "This student" }}
         />
       ) : null}
-    </div>
-  )
-}
 
-/** A single invoice: a summary header that toggles an inline payment history. */
-function InvoiceRow({
-  invoice,
-  expanded,
-  onToggle,
-  backHref,
-}: {
-  invoice: Invoice
-  expanded: boolean
-  onToggle: () => void
-  backHref: string
-}) {
-  return (
-    <li className="overflow-hidden rounded-xl border border-surface-border bg-surface">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={expanded}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-subtle"
-      >
-        <div className="min-w-0">
-          <p className="truncate font-medium text-copy-primary">
-            {invoiceMonthLabel(invoice.month, invoice.year)}
-          </p>
-          <p className="truncate text-xs text-copy-muted">
-            {invoice.invoice_no ?? ""}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <StatusBadge
-            status={INVOICE_STATUS_LABELS[invoice.status]}
-            tone={INVOICE_STATUS_TONE[invoice.status]}
-          />
-          <span className="font-medium tabular-nums text-copy-primary">
-            {formatMoney(invoice.amount)}
-          </span>
-          <ChevronDown
-            className={cn(
-              "size-4 shrink-0 text-copy-muted transition-transform",
-              expanded && "rotate-180"
-            )}
-            aria-hidden
-          />
-        </div>
-      </button>
-
-      {expanded ? (
-        <div className="border-t border-surface-border-subtle p-4">
-          <InvoiceExpanded invoiceId={invoice.id} backHref={backHref} />
-        </div>
+      {studentId && useStaffPath ? (
+        <CollectPaymentDialog
+          studentId={studentId}
+          studentName={studentName}
+          open={collectOpen}
+          onOpenChange={setCollectOpen}
+        />
       ) : null}
-    </li>
+    </div>
   )
 }
 
 /**
- * The expanded body of an invoice row: the invoice rendered as the printable
- * paper document (`InvoicePaper`), fetched on demand (`useInvoice` →
- * `GET /invoices/{id}`) so the paper carries the same payment history the
- * standalone detail shows, plus a link to that full detail where the
- * pay/receipt actions live (5.3).
+ * One invoice as a compact list row — month/invoice no, status, amount — with
+ * **View invoice** and (for a settled invoice) **View money receipt** actions
+ * that navigate to the standalone single pages. `backHref` is threaded through
+ * as `?from=` so those pages' back link returns to this student.
  */
-function InvoiceExpanded({
-  invoiceId,
+function InvoiceRow({
+  invoice,
   backHref,
 }: {
-  invoiceId: string
+  invoice: Invoice
   backHref: string
 }) {
-  const { data: invoice, isPending, isError, refetch } = useInvoice(invoiceId)
-
-  if (isPending) {
-    return (
-      <div className="flex flex-col gap-2" aria-busy>
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-2/3" />
-      </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <ErrorPanel
-        description="We couldn't load this invoice's payments."
-        onRetry={() => void refetch()}
-        className="border-0 bg-transparent p-0"
-      />
-    )
-  }
-
-  const detailHref = `/invoices/${invoice.id}?from=${encodeURIComponent(backHref)}`
+  const fromParam = encodeURIComponent(backHref)
+  const detailHref = `/invoices/${invoice.id}?from=${fromParam}`
+  const receiptHref = `/invoices/${invoice.id}/receipt?from=${fromParam}`
 
   return (
-    <div className="flex flex-col gap-4">
-      <InvoicePaper invoice={invoice} />
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface p-4">
+      <div className="min-w-0">
+        <p className="truncate font-medium text-copy-primary">
+          {invoiceMonthLabel(invoice.month, invoice.year)}
+        </p>
+        <p className="truncate font-mono text-xs text-copy-muted">
+          {invoice.invoice_no ?? ""}
+        </p>
+      </div>
 
-      <Link
-        href={detailHref}
-        className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-brand hover:underline"
-      >
-        <ExternalLink className="size-4" aria-hidden />
-        Open invoice
-      </Link>
-    </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusBadge
+          status={INVOICE_STATUS_LABELS[invoice.status]}
+          tone={INVOICE_STATUS_TONE[invoice.status]}
+        />
+        <span className="min-w-20 text-right font-medium tabular-nums text-copy-primary">
+          {formatMoney(invoice.amount)}
+        </span>
+        <div className="flex items-center gap-2">
+          <Link href={detailHref}>
+            <Button variant="outline" size="sm">
+              <Eye className="size-4" aria-hidden />
+              View invoice
+            </Button>
+          </Link>
+          {invoiceHasReceipt(invoice) ? (
+            <Link href={receiptHref}>
+              <Button variant="outline" size="sm">
+                <Receipt className="size-4" aria-hidden />
+                View money receipt
+              </Button>
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </li>
   )
 }

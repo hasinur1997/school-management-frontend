@@ -46,7 +46,8 @@ const PAYMENT_NOTE =
 const FONT_SANS =
   "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 const FONT_MONO = "var(--font-mono), monospace"
-const FONT_BN = "'Noto Sans Bengali', var(--font-sans), sans-serif"
+const FONT_BN =
+  "var(--font-bengali), 'Noto Sans Bengali', var(--font-sans), sans-serif"
 
 const INK = "#1b1b1f"
 const MUTED = "#71717a"
