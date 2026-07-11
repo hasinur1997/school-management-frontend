@@ -24,6 +24,7 @@ import {
 import { usePermission } from "@/hooks/auth/use-permission"
 import { IncomesList } from "./incomes-list"
 import { ExpensesList } from "./expenses-list"
+import { CategoriesList } from "./categories-list"
 import { INCOME_MANAGE, EXPENSE_MANAGE } from "./permissions"
 
 // Segmented-control tab styling shared with the other tabbed screens (Academic,
@@ -39,9 +40,14 @@ export function FinanceManagement() {
   const router = useRouter()
   const pathname = usePathname()
 
+  // Category CRUD is gated on income.manage OR expense.manage (backend
+  // accounting routes), so the tab shows whenever either ledger is available.
+  const canCategories = canIncome || canExpense
+
   const values: string[] = []
   if (canIncome) values.push("income")
   if (canExpense) values.push("expenses")
+  if (canCategories) values.push("categories")
 
   const fromUrl = params.get("tab")
   const fallback = values[0] ?? "income"
@@ -79,6 +85,11 @@ export function FinanceManagement() {
               Expenses
             </TabsTrigger>
           ) : null}
+          {canCategories ? (
+            <TabsTrigger value="categories" className={tabTriggerClass}>
+              Categories
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         {canIncome ? (
@@ -89,6 +100,11 @@ export function FinanceManagement() {
         {canExpense ? (
           <TabsContent value="expenses">
             <ExpensesList />
+          </TabsContent>
+        ) : null}
+        {canCategories ? (
+          <TabsContent value="categories">
+            <CategoriesList />
           </TabsContent>
         ) : null}
       </Tabs>

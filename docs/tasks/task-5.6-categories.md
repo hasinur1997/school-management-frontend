@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 5 — Finance |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.5 |
 | Blocks | 5.4, 5.5 |
 | Feature spec | `feature-specs/16-finance.md` |
@@ -24,7 +24,7 @@ Manage income/expense categories used as the dropdown source for finance entries
 - Permission-gated; super admin per branch.
 
 ## Check When Done
-- [ ] Categories listed by type, created/edited/deleted (with permission).
-- [ ] `CategorySelect` reused by income/expense/asset forms.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Categories listed by type, created/edited/deleted (with permission).
+- [x] `CategorySelect` reused by income/expense/asset forms.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

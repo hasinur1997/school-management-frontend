@@ -5,6 +5,10 @@
  */
 
 export { useCategories, CATEGORIES_PER_PAGE } from "./use-categories"
+export {
+  useCategoriesList,
+  CATEGORIES_LIST_PER_PAGE,
+} from "./use-categories-list"
 export { useIncomes, INCOMES_PER_PAGE } from "./use-incomes"
 export { useExpenses, EXPENSES_PER_PAGE } from "./use-expenses"
 export {
@@ -17,3 +21,8 @@ export {
   useUpdateExpense,
   useDeleteExpense,
 } from "./use-expense-mutations"
+export {
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from "./use-category-mutations"

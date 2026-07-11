@@ -30,7 +30,18 @@ export interface Category {
 /** Params the `CategorySelect`/category list folds into its query. */
 export interface CategoryListParams {
   type?: CategoryType
+  page?: number
   per_page?: number
+}
+
+/**
+ * `POST /categories` / `PUT /categories/{id}` body. `branch_id` is stamped
+ * server-side and never sent. The `(branch, name, type)` tuple must stay unique
+ * within the branch (validated server-side → `422` on `name`).
+ */
+export interface CategoryInput {
+  name: string
+  type: CategoryType
 }
 
 /**

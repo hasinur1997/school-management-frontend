@@ -6,5 +6,6 @@
 export { FinanceManagement } from "./finance-management"
 export { IncomesList } from "./incomes-list"
 export { ExpensesList } from "./expenses-list"
+export { CategoriesList } from "./categories-list"
 export { CategorySelect } from "./category-select"
 export { INCOME_MANAGE, EXPENSE_MANAGE } from "./permissions"
