@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 6 — Documents, Reports, Settings |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 2.7 |
 | Blocks | — |
 | Feature spec | `feature-specs/17-documents.md` |
@@ -25,6 +25,6 @@ Generate and download student ID cards — single (streamed) and class batch (qu
 - Permission-gated. Don't render PDFs client-side.
 
 ## Check When Done
-- [ ] Single ID card downloads as a streamed PDF.
-- [ ] Batch generates, polls to done, and downloads the merged PDF; progress + error states present.
-- [ ] `npm run build` passes.
+- [x] Single ID card downloads as a streamed PDF.
+- [x] Batch generates, polls to done, and downloads the merged PDF; progress + error states present.
+- [x] `npm run build` passes.

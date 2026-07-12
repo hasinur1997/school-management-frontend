@@ -282,10 +282,14 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Administration",
     items: [
       {
+        // No `documents.view` slug exists; the module gates on the real
+        // document permissions — ID card generation today, TC issuance/view as
+        // the module grows (mirrors the finance nav fix in 5.4).
         label: "Documents",
         href: "/documents",
         icon: FileText,
-        permission: "documents.view",
+        permission: "idcard.generate",
+        permissions: ["tc.issue", "tc.view"],
       },
       {
         label: "Reports",

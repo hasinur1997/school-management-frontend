@@ -147,10 +147,16 @@ async function renderPaperPdf(
     // trailing white space.
     const contentW = PAGE_WIDTH_PT - PAGE_MARGIN_PT * 2
     const contentH = (contentW * canvas.height) / canvas.width
+    // Derive the page orientation from the actual content aspect. A tall paper
+    // (receipts, mark sheets) stays portrait; a wide paper (the side-by-side ID
+    // card) is landscape. Hardcoding "portrait" made jsPDF swap a wide page's
+    // dimensions to enforce portrait, shrinking the page narrower than the
+    // embedded image and clipping its right edge.
+    const pageH = contentH + PAGE_MARGIN_PT * 2
     const doc = new jsPDF({
       unit: "pt",
-      format: [PAGE_WIDTH_PT, contentH + PAGE_MARGIN_PT * 2],
-      orientation: "portrait",
+      format: [PAGE_WIDTH_PT, pageH],
+      orientation: PAGE_WIDTH_PT >= pageH ? "landscape" : "portrait",
     })
     // Paint the page white so the margin band matches the paper's background
     // instead of showing the viewer's default gray.

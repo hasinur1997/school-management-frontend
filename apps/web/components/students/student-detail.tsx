@@ -47,6 +47,7 @@ import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
 import { EnrollmentResultsPanel } from "@/components/results"
 import { StudentInvoicesPanel } from "@/components/invoices"
+import { IdCardPanel } from "@/components/documents"
 import { PromoteStudentDialog } from "@/components/promotions/promote-student-dialog"
 import { PROMOTION_EXECUTE } from "@/components/promotions/permissions"
 import { DeleteDialog } from "@/components/academic/management/delete-dialog"
@@ -471,11 +472,7 @@ function StudentDetailTabs({
           backHref={`${pathname}?tab=fees`}
         />
       ) : active === "idcard" ? (
-        <ComingSoonPanel
-          icon={IdCard}
-          title="ID cards aren't available yet"
-          description="Generate and download this student's ID card here once the documents module is live."
-        />
+        <IdCardPanel student={student} />
       ) : active === "tc" ? (
         <ComingSoonPanel
           icon={ScrollText}
