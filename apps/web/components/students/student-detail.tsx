@@ -47,7 +47,7 @@ import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
 import { EnrollmentResultsPanel } from "@/components/results"
 import { StudentInvoicesPanel } from "@/components/invoices"
-import { IdCardPanel } from "@/components/documents"
+import { IdCardPanel, StudentTcPanel } from "@/components/documents"
 import { PromoteStudentDialog } from "@/components/promotions/promote-student-dialog"
 import { PROMOTION_EXECUTE } from "@/components/promotions/permissions"
 import { DeleteDialog } from "@/components/academic/management/delete-dialog"
@@ -474,11 +474,7 @@ function StudentDetailTabs({
       ) : active === "idcard" ? (
         <IdCardPanel student={student} />
       ) : active === "tc" ? (
-        <ComingSoonPanel
-          icon={ScrollText}
-          title="Transfer certificates aren't available yet"
-          description="Issue and view this student's transfer certificate here once the documents module is live."
-        />
+        <StudentTcPanel student={student} />
       ) : null}
     </div>
   )
