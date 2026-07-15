@@ -19,6 +19,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@workspace/ui/components/popover"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
+import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { cn } from "@workspace/ui/lib/utils"
 import { toastSuccess } from "@/lib/toast"
@@ -51,6 +60,8 @@ export function BranchSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [createOpen, setCreateOpen] = React.useState(false)
+  // The branch awaiting confirmation before the switch is applied.
+  const [pendingBranch, setPendingBranch] = React.useState<Branch | null>(null)
 
   const canCreate = hasPermission("branch.manage")
 
@@ -68,6 +79,14 @@ export function BranchSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   function handleSelect(branch: Branch) {
     setOpen(false)
     if (branch.id === activeBranchId) return
+    // Confirm before re-scoping all data to the newly selected branch.
+    setPendingBranch(branch)
+  }
+
+  function confirmSwitch() {
+    if (!pendingBranch) return
+    const branch = pendingBranch
+    setPendingBranch(null)
     setActiveBranch(branch.id)
     toastSuccess(`Switched to ${branch.name} — all data now shows this branch`, {
       id: "branch-switch",
@@ -211,6 +230,34 @@ export function BranchSwitcher({ collapsed = false }: { collapsed?: boolean }) {
           ) : null}
         </PopoverContent>
       </Popover>
+
+      <Dialog
+        open={pendingBranch !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingBranch(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader
+            icon={pendingBranch ? <BranchAvatar branch={pendingBranch} /> : undefined}
+          >
+            <DialogTitle>Switch branch?</DialogTitle>
+            <DialogDescription>
+              This will re-scope all data to{" "}
+              <span className="font-semibold text-copy-primary">
+                {pendingBranch?.name}
+              </span>
+              . Any unsaved work in the current branch view may be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingBranch(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmSwitch}>Switch branch</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {canCreate ? (
         <CreateBranchModal
