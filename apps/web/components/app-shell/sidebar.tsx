@@ -13,7 +13,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
-import { Brand } from "@/components/app-shell/brand"
+import { BranchSwitcher } from "@/components/branch/branch-switcher"
 import { SidebarNav } from "@/components/app-shell/sidebar-nav"
 
 export function Sidebar({
@@ -30,14 +30,14 @@ export function Sidebar({
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Brand header — aligned to the topbar height. */}
+      {/* Branch switcher — the imported design places it at the sidebar top. */}
       <div
         className={cn(
-          "flex h-16 shrink-0 items-center border-b border-surface-border",
-          collapsed ? "justify-center px-2" : "px-4"
+          "flex shrink-0 items-center border-b border-surface-border py-3",
+          collapsed ? "justify-center px-2" : "px-3"
         )}
       >
-        <Brand iconOnly={collapsed} />
+        <BranchSwitcher collapsed={collapsed} />
       </div>
 
       <div className="flex-1 overflow-y-auto">

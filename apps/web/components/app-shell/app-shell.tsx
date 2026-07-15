@@ -19,7 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@workspace/ui/components/sheet"
-import { Brand } from "@/components/app-shell/brand"
+import { BranchSwitcher } from "@/components/branch/branch-switcher"
 import { Sidebar } from "@/components/app-shell/sidebar"
 import { SidebarNav } from "@/components/app-shell/sidebar-nav"
 import { Topbar } from "@/components/app-shell/topbar"
@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SheetContent side="left" className="w-72 p-0">
           <SheetHeader className="border-b border-surface-border">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <Brand />
+            <BranchSwitcher />
           </SheetHeader>
           <div className="overflow-y-auto">
             <React.Suspense fallback={null}>

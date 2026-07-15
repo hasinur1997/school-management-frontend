@@ -42,8 +42,10 @@ The frontend owns **no** database, ORM, or background workers. All persistence, 
 
 ## Branch Scoping Model
 
-- Every non-super-admin user belongs to exactly one branch; the API scopes all data to that branch automatically. The client sends no `branch_id` for these users.
-- Super admin can switch branch context. The client exposes a branch switcher and forwards the selected branch (header or query param) only for super-admin sessions; the API ignores client-supplied branch scoping for everyone else.
+- Every user has a **home branch** (`users.branch_id`) and may be granted **additional branches** via the `branch_user` pivot; `User::accessibleBranches()` returns the set a user may operate in (super admin → every active branch). `/auth/me` returns this set as `user.branches`, which drives the **global branch switcher** (sidebar) and the **post-login branch picker**.
+- The request's active branch is resolved by `App\Support\BranchContext` (reset per request by `ResolveBranchContext` middleware): super admin → the requested `branch_id` (or null = consolidated); everyone else → the requested branch **if they may access it**, otherwise their home branch. A single-branch user therefore always resolves to their own branch. `BranchScope` and the `BelongsToBranch` create-stamp both read `BranchContext::current()`.
+- The client forwards the selected branch as the `branch_id` query param on every request (for **all** users, not only super admin); the API honors it only for branches the user may access and silently falls back to home otherwise — so a stale/forbidden selection can never leak another branch's data.
+- Allowed branches are assigned to a user via `PUT /users/{user}/branches` (super-admin only).
 - Out-of-branch records surface as 404 from the API; the UI renders a not-found state, not a permission error.
 
 ## Module Surfaces

@@ -7,6 +7,8 @@
  * permissions, never role names (`architecture-context.md`, Auth model).
  */
 
+import type { Branch } from "@/types/branch"
+
 /** Branch a user belongs to; only super admin can switch context. */
 export interface AuthBranch {
   id: number | string
@@ -32,6 +34,13 @@ export interface AuthUser {
   /** Owning branch (single-branch users); `null`/absent for super admin. */
   branch_id?: number | string | null
   branch?: AuthBranch | null
+  /**
+   * Branches this user may switch between (super admin → all active branches;
+   * others → their home branch plus any explicitly granted). Drives the global
+   * branch switcher and the post-login branch picker. Absent on responses that
+   * describe a user other than the signed-in one.
+   */
+  branches?: Branch[]
   /**
    * Student self-service needs the linked student public id to open the full
    * `GET /students/{id}` profile. Current backend builds may expose either a

@@ -13,6 +13,7 @@ import { redirect } from "next/navigation"
 
 import { AuthProvider } from "@/components/auth/auth-provider"
 import { BranchProvider } from "@/components/branch/branch-provider"
+import { BranchSelectDialog } from "@/components/branch/branch-select-dialog"
 import { AppShell } from "@/components/app-shell/app-shell"
 import { getSessionToken } from "@/lib/auth/session"
 
@@ -30,6 +31,7 @@ export default async function AppLayout({
   return (
     <AuthProvider token={token}>
       <BranchProvider>
+        <BranchSelectDialog />
         <AppShell>{children}</AppShell>
       </BranchProvider>
     </AuthProvider>

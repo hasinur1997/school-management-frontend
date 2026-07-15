@@ -12,7 +12,6 @@ import { Bell, Menu } from "lucide-react"
 
 import { Button } from "@workspace/ui/components/button"
 import { ThemeSwitcher } from "@/components/theme-switcher"
-import { BranchSwitcher } from "@/components/app-shell/branch-switcher"
 import { GlobalSearch } from "@/components/app-shell/global-search"
 import { UserMenu } from "@/components/app-shell/user-menu"
 
@@ -37,10 +36,9 @@ export function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => void }) {
         <GlobalSearch />
       </div>
 
-      {/* Right: theme, branch, notifications, user. */}
+      {/* Right: theme, notifications, user. */}
       <div className="flex flex-1 items-center justify-end gap-1 sm:gap-1.5">
         <ThemeSwitcher />
-        <BranchSwitcher />
         <Button
           variant="outline"
           size="icon"
