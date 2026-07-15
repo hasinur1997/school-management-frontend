@@ -55,8 +55,6 @@ import {
   ClassSelect,
   SectionSelect,
 } from "@/components/academic"
-import { BranchSelect } from "@/components/branch/branch-select"
-import { useBranch } from "@/components/branch/branch-provider"
 import { useExams } from "@/hooks/exams"
 import {
   useGradingScale,
@@ -240,13 +238,8 @@ function summarize(
 }
 
 export function MarkEntryGrid() {
-  // Screen-local branch filter (super admin only — everyone else is scoped
-  // server-side and never sees the field). Deliberately *not* wired to the
-  // shared active-branch context so narrowing marks here never re-scopes the
-  // navbar switcher or other screens; `null` inherits the navbar's scope.
-  const { isSuperAdmin } = useBranch()
-  const [branchId, setBranchId] = React.useState<string | null>(null)
-
+  // Marks are scoped to the globally-active branch (attached as a query param by
+  // the API interceptor); switching the navbar branch re-scopes this grid.
   const [examName, setExamName] = React.useState<string | null>(null)
   const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
@@ -265,7 +258,6 @@ export function MarkEntryGrid() {
   const examsQuery = useExams({
     page: 1,
     per_page: EXAM_OPTIONS_LIMIT,
-    branch_id: branchId,
   })
   const exams = React.useMemo(
     () => examsQuery.data?.data ?? [],
@@ -307,7 +299,6 @@ export function MarkEntryGrid() {
     exam_id: examId,
     class_id: classId,
     section_id: sectionId,
-    branch_id: branchId,
   })
   const matrix = matrixQuery.data
 
@@ -368,14 +359,6 @@ export function MarkEntryGrid() {
     setBanner(null)
     setQuery("")
     setPage(1)
-  }
-  function changeBranch(value: string | null) {
-    setBranchId(value)
-    setExamName(null)
-    setSemester(null)
-    setClassId(null)
-    setSectionId(null)
-    resetSelection()
   }
   function changeExam(value: string | null) {
     setExamName(value)
@@ -623,25 +606,7 @@ export function MarkEntryGrid() {
           </p>
         </div>
 
-        <div
-          className={cn(
-            "grid grid-cols-1 gap-3 sm:grid-cols-2",
-            isSuperAdmin
-              ? "lg:max-w-[950px] lg:grid-cols-5"
-              : "lg:max-w-[760px] lg:grid-cols-4"
-          )}
-        >
-          {isSuperAdmin ? (
-            <Field label="Branch">
-              <BranchSelect
-                value={branchId}
-                onValueChange={changeBranch}
-                clearLabel="All branches"
-                placeholder="All branches"
-                aria-label="Select branch"
-              />
-            </Field>
-          ) : null}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[760px] lg:grid-cols-4">
           <Field label="Exam">
             <AcademicSelect
               value={examName}
@@ -675,7 +640,6 @@ export function MarkEntryGrid() {
           <Field label="Class">
             <ClassPicker
               exam={selectedExam}
-              branchId={branchId}
               value={classId}
               onValueChange={changeClass}
             />
@@ -1720,13 +1684,10 @@ function Field({
  */
 function ClassPicker({
   exam,
-  branchId,
   value,
   onValueChange,
 }: {
   exam: Exam | null
-  /** Screen-local branch filter, forwarded to the all-classes `ClassSelect`. */
-  branchId: string | null
   value: string | null
   onValueChange: (value: string | null) => void
 }) {
@@ -1751,7 +1712,6 @@ function ClassPicker({
     <ClassSelect
       value={value}
       onValueChange={onValueChange}
-      branchId={branchId}
       disabled={exam == null}
       aria-label="Select class"
     />

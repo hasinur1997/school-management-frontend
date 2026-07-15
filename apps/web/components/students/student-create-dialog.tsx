@@ -53,8 +53,6 @@ import {
 import { Button } from "@/components/button"
 import { ClassSelect, SectionSelect, SessionSelect } from "@/components/academic"
 import { AddressFieldset } from "./address-fieldset"
-import { BranchSelect } from "@/components/branch/branch-select"
-import { useBranch } from "@/components/branch/branch-provider"
 import { isValidationError } from "@/lib/api"
 import { toastError, toastSuccess } from "@/lib/toast"
 import {
@@ -129,8 +127,6 @@ const schema = z
     parent_email: z
       .union([z.literal(""), z.email("Enter a valid email").max(150, "Maximum 150 characters")])
       .optional(),
-
-    branch_id: z.string().min(1).nullable(),
   })
   .superRefine((values, ctx) => {
     if (values.session_id == null) {
@@ -200,10 +196,9 @@ const FIELD_NAMES = [
   "create_parent_account",
   "parent_relation",
   "parent_email",
-  "branch_id",
 ] as const
 
-function emptyDefaults(branchId: string | null): CreateFormValues {
+function emptyDefaults(): CreateFormValues {
   return {
     name_bn: "",
     name_en: "",
@@ -242,7 +237,6 @@ function emptyDefaults(branchId: string | null): CreateFormValues {
     create_parent_account: false,
     parent_relation: null,
     parent_email: "",
-    branch_id: branchId,
   }
 }
 
@@ -252,19 +246,18 @@ export interface StudentCreateDialogProps {
 }
 
 export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogProps) {
-  const { isSuperAdmin, activeBranchId } = useBranch()
   const createMutation = useCreateStudent()
 
   const form = useForm<CreateFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: emptyDefaults(activeBranchId),
+    defaultValues: emptyDefaults(),
   })
   const [banner, setBanner] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (!open) return
-    form.reset(emptyDefaults(activeBranchId))
-  }, [open, activeBranchId, form])
+    form.reset(emptyDefaults())
+  }, [open, form])
 
   const submitting = form.formState.isSubmitting
   const classId = form.watch("class_id")
@@ -306,13 +299,6 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
 
-    // Super admin must scope the new student to a branch (the API requires it
-    // in the body; everyone else is auto-scoped server-side).
-    if (isSuperAdmin && values.branch_id == null) {
-      form.setError("branch_id", { message: "Select a branch" })
-      return
-    }
-
     const payload: StudentCreateInput = {
       name_bn: values.name_bn,
       name_en: values.name_en,
@@ -353,7 +339,6 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
         values.create_parent_account && values.parent_email?.trim()
           ? values.parent_email.trim()
           : null,
-      ...(isSuperAdmin && values.branch_id != null ? { branch_id: values.branch_id } : {}),
     }
 
     try {
@@ -384,30 +369,6 @@ export function StudentCreateDialog({ open, onOpenChange }: StudentCreateDialogP
         <Form {...form}>
           <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
             <FormBanner message={banner} />
-
-            {isSuperAdmin ? (
-              <Section title="Branch">
-                <FormField
-                  control={form.control}
-                  name="branch_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Branch</FormLabel>
-                      <FormControl>
-                        <BranchSelect
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          disabled={submitting}
-                          aria-label="Branch"
-                        />
-                      </FormControl>
-                      <FormDescription>The branch this student belongs to.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </Section>
-            ) : null}
 
             {/* Identity */}
             <Section title="Student">

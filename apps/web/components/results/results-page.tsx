@@ -31,8 +31,6 @@ import { ClassSelect } from "@/components/academic/class-select"
 import { SectionSelect } from "@/components/academic/section-select"
 import { SessionSelect } from "@/components/academic/session-select"
 import { useAuth } from "@/components/auth/auth-provider"
-import { BranchSelect } from "@/components/branch/branch-select"
-import { useBranch } from "@/components/branch/branch-provider"
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
@@ -177,13 +175,10 @@ function StaffViewTabs({
  */
 function SearchClassPicker({
   exam,
-  branchId,
   value,
   onValueChange,
 }: {
   exam: Exam | null
-  /** Screen-local branch filter, forwarded to the all-classes `ClassSelect`. */
-  branchId: string | null
   value: string | null
   onValueChange: (value: string | null) => void
 }) {
@@ -204,22 +199,13 @@ function SearchClassPicker({
   }
 
   return (
-    <ClassSelect
-      value={value}
-      onValueChange={onValueChange}
-      branchId={branchId}
-      disabled={exam == null}
-    />
+    <ClassSelect value={value} onValueChange={onValueChange} disabled={exam == null} />
   )
 }
 
 function StaffSearchPanel() {
-  // Screen-local branch filter (super admin only — everyone else is scoped
-  // server-side and never sees the field), mirroring the mark entry grid.
-  const { isSuperAdmin } = useBranch()
   const [mode, setMode] = React.useState<SearchMode>("admission")
   const [admissionNo, setAdmissionNo] = React.useState("")
-  const [branchId, setBranchId] = React.useState<string | null>(null)
   const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [examName, setExamName] = React.useState<string | null>(null)
   const [semester, setSemester] = React.useState<ExamType | null>(null)
@@ -236,7 +222,7 @@ function StaffSearchPanel() {
   // Scope the exam list to the chosen session so a same-named exam from another
   // session can't be resolved (one exam per session/class/type).
   const examsQuery = useExams(
-    { session_id: sessionId, page: 1, per_page: 100, branch_id: branchId },
+    { session_id: sessionId, page: 1, per_page: 100 },
     mode === "coordinates" && Boolean(sessionId)
   )
   const exams = React.useMemo(
@@ -294,14 +280,6 @@ function StaffSearchPanel() {
       ? admissionNo.trim().length > 0
       : Boolean(sessionId && classId && rollNo.trim())
 
-  function changeBranch(value: string | null) {
-    setBranchId(value)
-    setSessionId(null)
-    setExamName(null)
-    setSemester(null)
-    setClassId(null)
-    setSectionId(null)
-  }
   function changeSession(value: string | null) {
     setSessionId(value)
     setExamName(null)
@@ -343,7 +321,6 @@ function StaffSearchPanel() {
             class_id: classId,
             section_id: sectionId,
             roll_no: rollNo,
-            branch_id: branchId,
           }
     )
   }
@@ -391,19 +368,6 @@ function StaffSearchPanel() {
             </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {isSuperAdmin ? (
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-                    Branch
-                  </span>
-                  <BranchSelect
-                    value={branchId}
-                    onValueChange={changeBranch}
-                    clearLabel="All branches"
-                    placeholder="All branches"
-                  />
-                </label>
-              ) : null}
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
                   Session
@@ -452,7 +416,6 @@ function StaffSearchPanel() {
                 </span>
                 <SearchClassPicker
                   exam={selectedExam}
-                  branchId={branchId}
                   value={classId}
                   onValueChange={changeClass}
                 />
@@ -587,10 +550,6 @@ function ResultSummaryCard({
 }
 
 function ExamResultsPanel() {
-  // Screen-local branch filter (super admin only), mirroring the search panel:
-  // everyone else is scoped server-side and never sees the field.
-  const { isSuperAdmin } = useBranch()
-  const [branchId, setBranchId] = React.useState<string | null>(null)
   const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [examName, setExamName] = React.useState<string | null>(null)
   const [semester, setSemester] = React.useState<ExamType | null>(null)
@@ -602,7 +561,6 @@ function ExamResultsPanel() {
   const [submitted, setSubmitted] = React.useState<{
     exam_id: string
     class_id: string
-    branch_id: string | null
   } | null>(null)
 
   // Scope the exam list to the chosen session: an exam name + semester is only
@@ -610,7 +568,7 @@ function ExamResultsPanel() {
   // a same-named exam from another session could be resolved and its (empty)
   // result sheet shown instead.
   const examsQuery = useExams(
-    { session_id: sessionId, page: 1, per_page: 100, branch_id: branchId },
+    { session_id: sessionId, page: 1, per_page: 100 },
     Boolean(sessionId)
   )
   const exams = React.useMemo(
@@ -670,13 +628,6 @@ function ExamResultsPanel() {
   const totalFailed = summary?.failed ?? null
   const totalGpa5 = summary?.gpa5 ?? null
 
-  function changeBranch(value: string | null) {
-    setBranchId(value)
-    setSessionId(null)
-    setExamName(null)
-    setSemester(null)
-    setClassId(null)
-  }
   function changeSession(value: string | null) {
     setSessionId(value)
     setExamName(null)
@@ -706,7 +657,6 @@ function ExamResultsPanel() {
     setSubmitted({
       exam_id: selectedExam.id,
       class_id: classId,
-      branch_id: branchId,
     })
   }
 
@@ -717,19 +667,6 @@ function ExamResultsPanel() {
         className="rounded-xl border border-surface-border bg-surface p-4 shadow-sm"
       >
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {isSuperAdmin ? (
-            <label className="grid gap-1.5">
-              <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-                Branch
-              </span>
-              <BranchSelect
-                value={branchId}
-                onValueChange={changeBranch}
-                clearLabel="All branches"
-                placeholder="All branches"
-              />
-            </label>
-          ) : null}
           <label className="grid gap-1.5">
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
               Session
@@ -778,7 +715,6 @@ function ExamResultsPanel() {
             </span>
             <SearchClassPicker
               exam={selectedExam}
-              branchId={branchId}
               value={classId}
               onValueChange={setClassId}
             />
@@ -1072,8 +1008,6 @@ function AnnualActionsPanel({ canGenerate }: { canGenerate: boolean }) {
  * lock does NOT perform), and publish exposes them to the search surfaces.
  */
 function ResultPublicationPanel({ canGenerate }: { canGenerate: boolean }) {
-  const { isSuperAdmin } = useBranch()
-  const [branchId, setBranchId] = React.useState<string | null>(null)
   const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [semester, setSemester] = React.useState<ExamType | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
@@ -1082,7 +1016,7 @@ function ResultPublicationPanel({ canGenerate }: { canGenerate: boolean }) {
   // Resolve the exam for the chosen tuple. Enabled only once all three fields
   // are set; the (session, class, type) uniqueness makes this a single row.
   const examsQuery = useExams(
-    { session_id: sessionId, class_id: classId, type: semester ?? "all", branch_id: branchId },
+    { session_id: sessionId, class_id: classId, type: semester ?? "all" },
     Boolean(sessionId && classId && semester)
   )
   const targetExam = React.useMemo(
@@ -1097,11 +1031,6 @@ function ResultPublicationPanel({ canGenerate }: { canGenerate: boolean }) {
   const publish = usePublishExamResults()
   const busy = generate.isPending || publish.isPending
   const ready = Boolean(sessionId && semester && classId && targetExam)
-
-  function changeBranch(value: string | null) {
-    setBranchId(value)
-    setClassId(null)
-  }
 
   async function runConfirmed() {
     if (!targetExam) return
@@ -1187,19 +1116,6 @@ function ResultPublicationPanel({ canGenerate }: { canGenerate: boolean }) {
         </p>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {isSuperAdmin ? (
-          <label className="grid gap-1.5">
-            <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-              Branch
-            </span>
-            <BranchSelect
-              value={branchId}
-              onValueChange={changeBranch}
-              clearLabel="All branches"
-              placeholder="All branches"
-            />
-          </label>
-        ) : null}
         <label className="grid gap-1.5">
           <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
             Session
@@ -1224,11 +1140,7 @@ function ResultPublicationPanel({ canGenerate }: { canGenerate: boolean }) {
           <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
             Class
           </span>
-          <ClassSelect
-            value={classId}
-            onValueChange={setClassId}
-            branchId={branchId}
-          />
+          <ClassSelect value={classId} onValueChange={setClassId} />
         </label>
         <div className="flex items-end">
           <Button type="button" disabled={!ready || busy} onClick={() => setConfirm(true)}>

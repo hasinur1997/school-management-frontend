@@ -50,8 +50,6 @@ import {
   FormBanner,
   applyFieldErrors,
 } from "@/components/academic/management/form-helpers"
-import { useBranch } from "@/components/branch/branch-provider"
-import { BranchSelect } from "@/components/branch/branch-select"
 import { useCreateTeacher, useUpdateTeacher } from "@/hooks/teachers"
 import {
   isTeacherActive,
@@ -85,7 +83,6 @@ const schema = z
     gender: z.string().optional(),
     address: z.string().trim().optional(),
     is_active: z.boolean(),
-    branch_id: z.string().min(1).nullable(),
     assignments: z.array(assignmentSchema),
   })
   .superRefine((values, ctx) => {
@@ -110,13 +107,9 @@ const FIELD_NAMES = [
   "gender",
   "address",
   "is_active",
-  "branch_id",
 ] as const
 
-function toDefaults(
-  teacher: Teacher | undefined,
-  defaultBranchId: string | null
-): TeacherFormValues {
+function toDefaults(teacher: Teacher | undefined): TeacherFormValues {
   return {
     name: teacher ? teacherDisplayName(teacher).replace(/ #\d+$/, "") : "",
     email: teacher?.email ?? "",
@@ -126,7 +119,6 @@ function toDefaults(
     gender: teacher?.gender ?? "",
     address: teacher?.address ?? "",
     is_active: teacher ? isTeacherActive(teacher) : true,
-    branch_id: teacher?.branch_id ?? defaultBranchId,
     // Resolve ids defensively: the API may expand relations as nested objects
     // (`class`/`section`/`subject`) rather than flat `*_id` fields.
     assignments: (teacher?.assignments ?? []).map((a) => ({
@@ -150,20 +142,19 @@ export function TeacherFormDialog({
   teacher,
 }: TeacherFormDialogProps) {
   const isEdit = teacher != null
-  const { isSuperAdmin, activeBranchId } = useBranch()
   const createMutation = useCreateTeacher()
   const updateMutation = useUpdateTeacher()
 
   const form = useForm<TeacherFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: toDefaults(undefined, activeBranchId),
+    defaultValues: toDefaults(undefined),
   })
   const [banner, setBanner] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (!open) return
-    form.reset(toDefaults(teacher, activeBranchId))
-  }, [open, teacher, activeBranchId, form])
+    form.reset(toDefaults(teacher))
+  }, [open, teacher, form])
 
   function handleOpenChange(next: boolean) {
     if (form.formState.isSubmitting) return
@@ -174,15 +165,8 @@ export function TeacherFormDialog({
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
 
-    // Super admin must scope a new teacher to a branch (the API requires it in
-    // the body; the active branch is only attached as a query param).
-    if (!isEdit && isSuperAdmin && values.branch_id == null) {
-      form.setError("branch_id", { message: "Select a branch" })
-      return
-    }
-
     // Fields common to create and update. Email belongs to the linked login user;
-    // branch is create-only.
+    // branch is scoped from the globally-active branch (attached as a query param).
     const base: TeacherUpdateInput = {
       name: values.name,
       email: values.email,
@@ -206,12 +190,7 @@ export function TeacherFormDialog({
         await updateMutation.mutateAsync({ id: teacher.id, ...base })
         toastSuccess("Teacher updated.", { id: "teacher-form" })
       } else {
-        const payload: TeacherInput = {
-          ...base,
-          ...(isSuperAdmin && values.branch_id != null
-            ? { branch_id: values.branch_id }
-            : {}),
-        }
+        const payload: TeacherInput = { ...base }
         const created = await createMutation.mutateAsync(payload)
         const email = created?.email || payload.email
         toastSuccess(
@@ -398,29 +377,6 @@ export function TeacherFormDialog({
                   </FormItem>
                 )}
               />
-              {isSuperAdmin && !isEdit ? (
-                <FormField
-                  control={form.control}
-                  name="branch_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Branch</FormLabel>
-                      <FormControl>
-                        <BranchSelect
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          disabled={submitting}
-                          aria-label="Branch"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The branch this teacher belongs to.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : null}
             </div>
 
             <FormField

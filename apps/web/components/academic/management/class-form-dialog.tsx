@@ -40,8 +40,6 @@ import {
   useUpdateClass,
   type ClassInput,
 } from "@/hooks/academic"
-import { useBranch } from "@/components/branch/branch-provider"
-import { BranchSelect } from "@/components/branch/branch-select"
 import type { SchoolClass } from "@/types/academic"
 import { FormBanner, applyFieldErrors } from "./form-helpers"
 
@@ -56,13 +54,11 @@ const schema = z.object({
       const n = Number(v)
       return n >= 1 && n <= 12
     }, "Level must be between 1 and 12"),
-  // Target branch for a super-admin create/edit; auto-scoped users keep it `null`.
-  branch_id: z.string().min(1).nullable(),
 })
 
 type ClassFormValues = z.infer<typeof schema>
 
-const FIELD_NAMES = ["name", "numeric_level", "branch_id"] as const
+const FIELD_NAMES = ["name", "numeric_level"] as const
 
 export interface ClassFormDialogProps {
   open: boolean
@@ -77,13 +73,12 @@ export function ClassFormDialog({
   schoolClass,
 }: ClassFormDialogProps) {
   const isEdit = schoolClass != null
-  const { isSuperAdmin, activeBranchId } = useBranch()
   const createMutation = useCreateClass()
   const updateMutation = useUpdateClass()
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", numeric_level: "", branch_id: activeBranchId },
+    defaultValues: { name: "", numeric_level: "" },
   })
   const [banner, setBanner] = React.useState<string | null>(null)
 
@@ -95,9 +90,8 @@ export function ClassFormDialog({
         schoolClass?.numeric_level != null
           ? String(schoolClass.numeric_level)
           : "",
-      branch_id: schoolClass?.branch_id ?? activeBranchId,
     })
-  }, [open, schoolClass, activeBranchId, form])
+  }, [open, schoolClass, form])
 
   // Clear the banner on close (kept out of the open effect to avoid a
   // synchronous setState during render).
@@ -110,20 +104,11 @@ export function ClassFormDialog({
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
 
-    // Super admin must scope the class to a branch on both create and edit
-    // (the API requires it in the body when no branch is active). Auto-scoped
-    // users never send it.
-    if (isSuperAdmin && values.branch_id == null) {
-      form.setError("branch_id", { message: "Select a branch" })
-      return
-    }
-
+    // The class is scoped to the globally-active branch (attached as a query
+    // param by the API interceptor).
     const payload: ClassInput = {
       name: values.name.trim(),
       numeric_level: Number(values.numeric_level),
-      ...(isSuperAdmin && values.branch_id != null
-        ? { branch_id: values.branch_id }
-        : {}),
     }
 
     try {
@@ -209,30 +194,6 @@ export function ClassFormDialog({
                 </FormItem>
               )}
             />
-
-            {isSuperAdmin ? (
-              <FormField
-                control={form.control}
-                name="branch_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Branch</FormLabel>
-                    <FormControl>
-                      <BranchSelect
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={submitting}
-                        aria-label="Branch"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The branch this class belongs to.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ) : null}
 
             <DialogFooter>
               <Button

@@ -6,8 +6,9 @@
  * banner, success toast + close, no double submit (`code-standards.md`, Forms).
  *
  * Create sets session/type/name/dates and the class targeting: an explicit set
- * of classes or every class in the branch (`all_classes`). Super admin also picks
- * the branch (`branch_id`); everyone else is scoped server-side. No field is
+ * of classes or every class in the branch (`all_classes`). The exam is scoped to
+ * the globally-active branch (attached as a query param by the API interceptor);
+ * there is no per-form branch picker. No field is
  * disabled on edit, but the API treats session and type as immutable and rejects
  * the `published` status on a generic update — so the edit payload simply omits
  * session/type and only sends a status the API accepts. The exam type drives the
@@ -55,8 +56,6 @@ import {
   applyFieldErrors,
 } from "@/components/academic/management/form-helpers"
 import { SessionSelect } from "@/components/academic/session-select"
-import { BranchSelect } from "@/components/branch/branch-select"
-import { useBranch } from "@/components/branch/branch-provider"
 import { useCreateExam, useUpdateExam } from "@/hooks/exams"
 import {
   EXAM_EDITABLE_STATUSES,
@@ -78,8 +77,6 @@ const schema = z
     name: z.string().trim().min(1, "Name is required").max(100, "Keep it under 100 characters"),
     all_classes: z.boolean(),
     class_ids: z.array(z.string()),
-    // Super-admin only — required at submit; null/omitted for everyone else.
-    branch_id: z.string().nullable(),
     start_date: z.string().optional(),
     end_date: z.string().optional(),
     status: z.string().optional(),
@@ -114,25 +111,18 @@ const FIELD_NAMES = [
   "name",
   "all_classes",
   "class_ids",
-  "branch_id",
   "start_date",
   "end_date",
   "status",
 ] as const
 
-function toDefaults(
-  exam: Exam | undefined,
-  activeBranchId: string | null
-): ExamFormValues {
+function toDefaults(exam: Exam | undefined): ExamFormValues {
   return {
     session_id: exam?.session_id ?? "",
     type: exam?.type ?? "",
     name: exam?.name ?? "",
     all_classes: exam?.all_classes ?? false,
     class_ids: exam?.class_ids ?? [],
-    // Pre-fill the exam's own branch on edit; otherwise default super admin to
-    // the active branch. Non-super-admin stays null and never sends it.
-    branch_id: exam?.branch_id ?? activeBranchId,
     start_date: exam?.start_date ?? "",
     end_date: exam?.end_date ?? "",
     status: exam?.status ?? "upcoming",
@@ -152,21 +142,20 @@ export function ExamFormDialog({
   exam,
 }: ExamFormDialogProps) {
   const isEdit = exam != null
-  const { isSuperAdmin, activeBranchId } = useBranch()
   const createMutation = useCreateExam()
   const updateMutation = useUpdateExam()
 
   const form = useForm<ExamFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: toDefaults(undefined, activeBranchId),
+    defaultValues: toDefaults(undefined),
   })
   const [banner, setBanner] = React.useState<string | null>(null)
   const allClasses = useWatch({ control: form.control, name: "all_classes" })
 
   React.useEffect(() => {
     if (!open) return
-    form.reset(toDefaults(exam, activeBranchId))
-  }, [open, exam, activeBranchId, form])
+    form.reset(toDefaults(exam))
+  }, [open, exam, form])
 
   function handleOpenChange(next: boolean) {
     if (form.formState.isSubmitting) return
@@ -176,13 +165,6 @@ export function ExamFormDialog({
 
   const onSubmit = form.handleSubmit(async (values) => {
     setBanner(null)
-
-    // Super admin must scope the exam to a branch (the API needs it to place an
-    // all-classes exam; everyone else is auto-scoped server-side).
-    if (isSuperAdmin && !values.branch_id) {
-      form.setError("branch_id", { message: "Select a branch" })
-      return
-    }
 
     try {
       if (isEdit) {
@@ -198,9 +180,6 @@ export function ExamFormDialog({
           ...(EXAM_EDITABLE_STATUSES.includes(status) ? { status } : {}),
           start_date: values.start_date || null,
           end_date: values.end_date || null,
-          ...(isSuperAdmin && values.branch_id
-            ? { branch_id: values.branch_id }
-            : {}),
         }
         await updateMutation.mutateAsync({ id: exam.id, ...payload })
         toastSuccess("Exam updated.", { id: "exam-form" })
@@ -212,10 +191,6 @@ export function ExamFormDialog({
           all_classes: values.all_classes,
           // Omit the explicit list for an all-classes exam.
           ...(values.all_classes ? {} : { class_ids: values.class_ids }),
-          // Super admin scopes the exam to a branch; everyone else omits it.
-          ...(isSuperAdmin && values.branch_id
-            ? { branch_id: values.branch_id }
-            : {}),
           start_date: values.start_date || null,
           end_date: values.end_date || null,
         }
@@ -258,30 +233,6 @@ export function ExamFormDialog({
         <Form {...form}>
           <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <FormBanner message={banner} />
-
-            {isSuperAdmin ? (
-              <FormField
-                control={form.control}
-                name="branch_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Branch</FormLabel>
-                    <FormControl>
-                      <BranchSelect
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={submitting}
-                        aria-label="Branch"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The branch this exam belongs to.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ) : null}
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField

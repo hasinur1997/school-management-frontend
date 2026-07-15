@@ -40,8 +40,6 @@ import { ClassSelect } from "@/components/academic/class-select"
 import { SectionSelect } from "@/components/academic/section-select"
 import { SessionSelect } from "@/components/academic/session-select"
 import { useAuth } from "@/components/auth/auth-provider"
-import { BranchSelect } from "@/components/branch/branch-select"
-import { useBranch } from "@/components/branch/branch-provider"
 import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
@@ -415,8 +413,6 @@ function PreviewTable({
 }
 
 function PromoteView({ canOverride }: { canOverride: boolean }) {
-  const { isSuperAdmin } = useBranch()
-  const [branchId, setBranchId] = React.useState<string | null>(null)
   const [sessionId, setSessionId] = React.useState<string | null>(null)
   const [classId, setClassId] = React.useState<string | null>(null)
   const [rowFilter, setRowFilter] = React.useState<RowFilter>("all")
@@ -435,7 +431,6 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
   const [submitted, setSubmitted] = React.useState<{
     session_id: string
     class_id: string
-    branch_id: string | null
   } | null>(null)
   const [confirmBulk, setConfirmBulk] = React.useState(false)
   const [confirmSelected, setConfirmSelected] = React.useState(false)
@@ -461,7 +456,7 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
   // hashed ClassSelect can't preselect). The user can still change it. This is
   // the "adjust state during render" pattern — once `toClassId` is set the guard
   // stops it re-entering.
-  const classesQuery = useClasses(branchId)
+  const classesQuery = useClasses()
   const nextClassName = data?.to_class?.name ?? null
   if (nextClassName && toClassId == null && classesQuery.data) {
     const match = classesQuery.data.find(
@@ -561,12 +556,6 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
   const sameSession = Boolean(toSessionId && toSessionId === submitted?.session_id)
   const targetReady = Boolean(toSessionId && toClassId && toSectionId && !sameSession)
 
-  function changeBranch(value: string | null) {
-    setBranchId(value)
-    setClassId(null)
-    setToClassId(null)
-    setToSectionId(null)
-  }
   function changeToClass(value: string | null) {
     setToClassId(value)
     setToSectionId(null)
@@ -580,7 +569,7 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
     setToClassId(null)
     setToSectionId(null)
     setSelected(new Set())
-    setSubmitted({ session_id: sessionId, class_id: classId, branch_id: branchId })
+    setSubmitted({ session_id: sessionId, class_id: classId })
   }
 
   async function runBulk() {
@@ -641,19 +630,6 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
       >
         <p className="mb-3 text-sm font-semibold text-copy-primary">Source class</p>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {isSuperAdmin ? (
-            <label className="grid gap-1.5">
-              <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
-                Branch
-              </span>
-              <BranchSelect
-                value={branchId}
-                onValueChange={changeBranch}
-                clearLabel="All branches"
-                placeholder="All branches"
-              />
-            </label>
-          ) : null}
           <label className="grid gap-1.5">
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
               Session
@@ -664,11 +640,7 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
             <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
               Class
             </span>
-            <ClassSelect
-              value={classId}
-              onValueChange={setClassId}
-              branchId={branchId}
-            />
+            <ClassSelect value={classId} onValueChange={setClassId} />
           </label>
           <div className="flex items-end">
             <Button type="submit" disabled={!canSubmit}>
@@ -745,11 +717,7 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
                   Target class
                 </span>
-                <ClassSelect
-                  value={toClassId}
-                  onValueChange={changeToClass}
-                  branchId={submitted.branch_id}
-                />
+                <ClassSelect value={toClassId} onValueChange={changeToClass} />
               </label>
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
@@ -918,7 +886,6 @@ function PromoteView({ canOverride }: { canOverride: boolean }) {
 
       <PromoteStudentDialog
         student={individualStudent}
-        branchId={submitted?.branch_id ?? null}
         defaultClassName={nextClass?.name ?? null}
         onClose={() => setIndividualRow(null)}
       />

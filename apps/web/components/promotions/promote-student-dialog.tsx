@@ -41,13 +41,11 @@ export interface PromoteStudentTarget {
 
 function PromoteStudentForm({
   student,
-  branchId,
   defaultClassName,
   onClose,
   onPromoted,
 }: {
   student: PromoteStudentTarget
-  branchId: string | null
   defaultClassName: string | null
   onClose: () => void
   onPromoted?: () => void
@@ -64,7 +62,7 @@ function PromoteStudentForm({
   // Default the target class to the resolved next class by matching its name
   // against the options (adjust-state-during-render; the guard stops it
   // re-entering once set). Callers that don't know the next class pass null.
-  const classesQuery = useClasses(branchId)
+  const classesQuery = useClasses()
   if (toClassId == null && defaultClassName && classesQuery.data) {
     const match = classesQuery.data.find(
       (schoolClass) => schoolClass.name === defaultClassName
@@ -134,11 +132,7 @@ function PromoteStudentForm({
           <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
             Target class
           </span>
-          <ClassSelect
-            value={toClassId}
-            onValueChange={changeClass}
-            branchId={branchId}
-          />
+          <ClassSelect value={toClassId} onValueChange={changeClass} />
         </label>
         <label className="grid gap-1.5">
           <span className="text-xs font-semibold tracking-wide text-copy-muted uppercase">
@@ -195,13 +189,11 @@ function PromoteStudentForm({
  */
 export function PromoteStudentDialog({
   student,
-  branchId = null,
   defaultClassName = null,
   onClose,
   onPromoted,
 }: {
   student: PromoteStudentTarget | null
-  branchId?: string | null
   /** The API-resolved next class name, to default the target class. */
   defaultClassName?: string | null
   onClose: () => void
@@ -213,7 +205,6 @@ export function PromoteStudentDialog({
         <PromoteStudentForm
           key={String(student.id)}
           student={student}
-          branchId={branchId}
           defaultClassName={defaultClassName}
           onClose={onClose}
           onPromoted={onPromoted}
