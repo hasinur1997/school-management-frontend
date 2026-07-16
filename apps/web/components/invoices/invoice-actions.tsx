@@ -66,7 +66,7 @@ export function InvoiceActions({ invoice }: { invoice: Invoice }) {
   if (!hasOutstanding) return null
 
   return (
-    <section className="mx-auto w-full max-w-[794px] rounded-2xl border border-surface-border bg-surface p-5 print:hidden">
+    <section className="mx-auto w-full max-w-[794px] rounded-2xl border border-surface-border bg-surface mt-3 p-5 print:hidden">
       <h2 className="text-sm font-semibold text-copy-primary">Payments</h2>
 
       {hasOutstanding ? (

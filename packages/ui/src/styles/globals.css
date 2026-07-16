@@ -102,6 +102,13 @@
     /* Type scale — ui-context §1.6 */
     --text-section: 17px; /* section / card / sheet title */
     --text-eyebrow: 11.5px; /* table header / eyebrow */
+
+    /* Report / data-viz tokens — ui-context §10. Bars and meters resolve to the
+       active accent so charts recolor with the theme; the track sits on the
+       row-divider neutral so it reads the same in light and dark. */
+    --color-chart-bar: var(--accent-primary);
+    --color-chart-bar-soft: var(--accent-soft-border);
+    --color-chart-track: var(--row-divider);
 }
 
 :root {
@@ -320,5 +327,19 @@
         border: none !important;
         border-radius: 0 !important;
         box-shadow: none !important;
+    }
+    /* Reports dashboard: print only the active tab's content, flat at the top
+       of the page (the header actions, filters and tab strip carry
+       `print:hidden`). */
+    .reports-print-root,
+    .reports-print-root * {
+        visibility: visible;
+    }
+    .reports-print-root {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
     }
 }

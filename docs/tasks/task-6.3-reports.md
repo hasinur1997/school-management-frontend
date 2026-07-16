@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | 6 — Documents, Reports, Settings |
-| Status | `todo` |
+| Status | `done` |
 | Depends on | 1.5, 2.1 |
 | Blocks | — |
 | Feature spec | `feature-specs/18-reports.md` |
@@ -26,7 +26,7 @@ A unified reports surface with a shared filter bar driving each report and PDF e
 - Permission-gated; only super admin gets consolidated/branch switching.
 
 ## Check When Done
-- [ ] Each report renders correct figures for weekly/monthly/yearly/custom filters.
-- [ ] Branch vs consolidated works for super admin; PDF export downloads as a streamed file.
-- [ ] Loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Each report renders correct figures for weekly/monthly/yearly/custom filters.
+- [x] Branch vs consolidated works for super admin; PDF export downloads as a streamed file.
+- [x] Loading/empty/error states present.
+- [x] `npm run build` passes.

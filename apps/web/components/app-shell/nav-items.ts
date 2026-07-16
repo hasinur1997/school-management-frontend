@@ -295,7 +295,11 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Reports",
         href: "/reports",
         icon: BarChart3,
-        permission: "reports.view",
+        // Backend guards every report endpoint with `report.view`
+        // (`routes/api/v1/reports.php`); the old `reports.view` slug never
+        // existed, so the item was hidden for everyone (mirrors the earlier
+        // finance/documents nav fixes).
+        permission: "report.view",
       },
       {
         label: "Settings",

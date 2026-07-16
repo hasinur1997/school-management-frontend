@@ -314,3 +314,22 @@ Tweakable props demonstrated on the mark-entry screens:
 | `accent` | color | `#7c3aed` | Purple / Blue / Teal / Rose |
 
 View modes: density switch (Spreadsheet / Comfortable / Focus) and Matrix-grid / By-subject. Keyboard: arrows move between mark cells, Enter → next student; focused cell raises `z-index` above sticky columns.
+
+---
+
+# 10. Data visualization (Reports)
+
+The Reports surface layers charts over the neutral card/table system. Charts are decorative geometry only — **every figure a user reads is still the API's string, never a client-summed value** (`code-standards.md`, Reports); bar heights and meter widths are ratios computed for layout, not displayed numbers.
+
+**Chart tokens** (themed, recolor with the active accent):
+
+| Token | Utility | Role |
+| --- | --- | --- |
+| `--color-chart-bar` → `{accent}` | `bg-chart-bar` | Primary bar / meter fill (income, collected, present) |
+| `--color-chart-bar-soft` → `{accent-soft-border}` | `bg-chart-bar-soft` | Backdrop / secondary bar (billed behind collected) |
+| `--color-chart-track` → `{row-divider}` | `bg-chart-track` | Empty track behind a bar or meter |
+
+- **KPI card:** surface card, radius 14, padding `16px 18px`; 12.5px/500 muted label + `22–23px`/700 mono value; tint the value by meaning (success / accent / error). No mock deltas — only show a trend line when the API provides one.
+- **Column bars:** grid of equal columns, `align-items:end`, fixed height (≈170–190px); each bar `bg-chart-bar`, radius `6px 6px 3px 3px`, grows from the bottom. Overlay variant nests a `bg-chart-bar` fill inside a `bg-chart-bar-soft` backdrop (collected within billed); grouped variant sets two bars per period. Muted x-axis label under each; legend as accent/soft dots.
+- **Meter list:** row of label + right-aligned mono value over a `bg-chart-track` pill (h `7–8px`, radius 999) with a `bg-chart-bar` (or status-tinted) fill. Used for category spend, attendance rate, and inline collection-rate cells in tables.
+- **Panel:** every chart/table sits in a titled card (§3.9) — 15px/700 title + optional muted description, structural divider before a table body.
