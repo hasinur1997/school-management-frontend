@@ -305,7 +305,9 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Settings",
         href: "/settings",
         icon: Settings,
-        permission: "settings.view",
+        // Global settings reads/writes are guarded by `setting.manage`
+        // (`routes/api/v1/settings.php`); no `settings.view` permission exists.
+        permission: "setting.manage",
       },
     ],
   },

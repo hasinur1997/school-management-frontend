@@ -36,7 +36,7 @@ export function UserMenu() {
   const { user, hasPermission, roles } = useAuth()
   const [changeOpen, setChangeOpen] = React.useState(false)
   const isStudent = roles.includes("student")
-  const canViewSettings = hasPermission("settings.view")
+  const canViewSettings = hasPermission("setting.manage")
   const showAccountActions = !isStudent || canViewSettings
 
   return (

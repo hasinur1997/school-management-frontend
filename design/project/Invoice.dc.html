@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      body { background: #fff !important; }
+      .no-print { display: none !important; }
+      .page { box-shadow: none !important; margin: 0 !important; }
+    }
+    a { color: #7c3aed; }
+    a:hover { color: #6d28d9; }
+  </style>
+</helmet>
+
+<div style="background:#f7f7f8; min-height:100vh; padding:40px 20px; font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; display:flex; flex-direction:column; align-items:center; gap:16px;">
+
+  <!-- Print button -->
+  <div class="no-print" style="width:794px; max-width:100%; display:flex; justify-content:flex-end;">
+    <button onclick="{{ onPrint }}" style="height:40px; padding:0 18px; border-radius:10px; border:1px solid #e2e2e6; background:#fff; color:#1b1b1f; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 1px 2px rgba(16,16,20,0.04);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      Print / Save as PDF
+    </button>
+  </div>
+
+  <!-- Page -->
+  <div class="page" data-screen-label="Invoice" style="width:794px; max-width:100%; min-height:1123px; background:#ffffff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05), 0 1px 1px rgba(16,16,20,0.03); padding:52px 56px 44px; box-sizing:border-box; color:#1b1b1f;">
+
+    <!-- Header: school identity -->
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px; border-bottom:2px solid #1b3a63; padding-bottom:22px;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <img src="logo.jpeg" alt="School logo" style="width:76px; height:76px; border-radius:50%; object-fit:cover; flex:none;">
+        <div>
+          <div style="font-size:21px; font-weight:800; letter-spacing:-0.01em; line-height:1.2;">Hazi Jabed Ali Memorial School</div>
+          <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:15px; font-weight:600; color:#1b3a63; margin-top:2px;">হাজী জাবেদ আলী মেমোরিয়াল স্কুল</div>
+          <div style="font-size:13px; color:#71717a; margin-top:6px;">Lakshmipur, Dhanuyaghata, Chatmohor, Pabna · Estd. 2017</div>
+        </div>
+      </div>
+      <div style="text-align:right; flex:none;">
+        <div style="font-size:26px; font-weight:800; letter-spacing:-0.02em; color:#1b3a63;">INVOICE</div>
+        <div style="font-family:'Geist Mono',monospace; font-size:13px; color:#71717a; margin-top:4px;">#{{ invoiceNo }}</div>
+      </div>
+    </div>
+
+    <!-- Meta grid: bill-to + invoice info -->
+    <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:24px; margin-top:26px;">
+      <div>
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Billed to</div>
+        <div style="font-size:16px; font-weight:700; margin-top:8px; letter-spacing:-0.01em;">{{ studentName }}</div>
+        <div style="font-size:13.5px; color:#71717a; margin-top:4px; line-height:1.6;">
+          Class {{ className }}, Roll {{ roll }}<br>
+          Student ID: <span style="font-family:'Geist Mono',monospace;">{{ studentId }}</span><br>
+          Guardian: {{ guardianName }}
+        </div>
+      </div>
+      <div style="background:#fafafa; border:1px solid #ececef; border-radius:12px; padding:16px 18px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:13.5px;"><span style="color:#71717a;">Issue date</span><span style="font-weight:600;">{{ issueDate }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13.5px;"><span style="color:#71717a;">Due date</span><span style="font-weight:600;">{{ dueDate }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13.5px;"><span style="color:#71717a;">Billing period</span><span style="font-weight:600;">{{ billingPeriod }}</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:13.5px;">
+          <span style="color:#71717a;">Status</span>
+          <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border-radius:999px; font-size:12.5px; font-weight:600; border:1px solid {{ statusBorder }}; color:{{ statusColor }}; background:{{ statusBg }};">
+            <span style="width:7px; height:7px; border-radius:50%; background:{{ statusDot }};"></span>{{ statusLabel }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line items -->
+    <div style="margin-top:30px; border:1px solid #ececef; border-radius:12px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:1fr 140px; background:#fafafa;">
+        <div style="text-align:left; font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#9a9aa3; padding:12px 18px; border-bottom:1px solid #ececef;">Description</div>
+        <div style="text-align:right; font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#9a9aa3; padding:12px 18px; border-bottom:1px solid #ececef;">Amount (৳)</div>
+      </div>
+      <sc-for list="{{ lineItems }}" as="item" hint-placeholder-count="6">
+        <div style="display:grid; grid-template-columns:1fr 140px;">
+          <div style="padding:13px 18px; border-bottom:1px solid #ececef; font-size:14.5px;">{{ item.label }}</div>
+          <div style="padding:13px 18px; border-bottom:1px solid #ececef; font-size:14.5px; text-align:right; font-family:'Geist Mono',monospace;">{{ item.amount }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Totals -->
+    <div style="display:flex; justify-content:flex-end; margin-top:18px;">
+      <div style="width:280px; display:flex; flex-direction:column; gap:9px;">
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:#71717a;">
+          <span>Subtotal</span>
+          <span style="font-family:'Geist Mono',monospace; color:#1b1b1f;">৳ {{ subtotal }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:#71717a;">
+          <span>Discount / waiver</span>
+          <span style="font-family:'Geist Mono',monospace; color:#1b1b1f;">− ৳ {{ discount }}</span>
+        </div>
+        <div style="height:1px; background:#ececef; margin:2px 0;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:15px; font-weight:700;">Total due</span>
+          <span style="font-size:22px; font-weight:800; font-family:'Geist Mono',monospace; color:#7c3aed;">৳ {{ total }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment method + notes -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:34px; padding-top:22px; border-top:1px solid #ececef;">
+      <div>
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Payment method</div>
+        <div style="font-size:14px; margin-top:8px; line-height:1.7; color:#1b1b1f;">{{ paymentMethod }}</div>
+      </div>
+      <div>
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Notes</div>
+        <div style="font-size:13px; margin-top:8px; line-height:1.7; color:#71717a;">{{ notes }}</div>
+      </div>
+    </div>
+
+    <!-- Footer: signature + motto -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:56px;">
+      <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:13px; color:#9a9aa3;">পড়, তোমার প্রভুর নামে</div>
+      <div style="text-align:center;">
+        <div style="width:180px; border-top:1px solid #1b1b1f; padding-top:6px; font-size:12.5px; color:#71717a;">Authorized signature</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 794, &quot;height&quot;: 1123},
+  &quot;status&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;due&quot;, &quot;options&quot;: [&quot;paid&quot;, &quot;due&quot;, &quot;overdue&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Invoice&quot;},
+  &quot;invoiceNo&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;HJAMS-2026-0714&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Invoice&quot;},
+  &quot;studentName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Md. Rafiul Islam&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;className&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Eight, Section B&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;roll&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;17&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;studentId&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;HJ-2026-0117&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;guardianName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Md. Aminul Islam&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;issueDate&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;01 Jul 2026&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Invoice&quot;},
+  &quot;dueDate&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;15 Jul 2026&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Invoice&quot;},
+  &quot;billingPeriod&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;July 2026&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Invoice&quot;},
+  &quot;discount&quot;: {&quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 400, &quot;tsType&quot;: &quot;number&quot;, &quot;min&quot;: 0, &quot;max&quot;: 5000, &quot;step&quot;: 50, &quot;section&quot;: &quot;Invoice&quot;},
+  &quot;paymentMethod&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Cash at school office, or bKash/Nagad Merchant No. 017XXXXXXXX (ref: student ID).&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Payment&quot;},
+  &quot;notes&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Please clear dues before the due date to avoid a late fee. Contact the office for any discrepancy.&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Payment&quot;}
+}">
+class Component extends DCLogic {
+  renderVals() {
+    const status = this.props.status ?? 'due';
+    const statusMap = {
+      paid:    { label: 'Paid',    color: '#15803d', bg: '#e9f8ee', border: '#cdeed7', dot: '#22c55e' },
+      due:     { label: 'Due',     color: '#c2410c', bg: '#fff2e8', border: '#fbdcc4', dot: '#f97316' },
+      overdue: { label: 'Overdue', color: '#dc2626', bg: '#fdecec', border: '#f8d3d3', dot: '#ef4444' },
+    };
+    const s = statusMap[status] ?? statusMap.due;
+
+    const lineItems = [
+      { label: 'Tuition fee ( January - 2026 )', amount: '2,500' },
+      { label: 'Admission fee ', amount: '1,000' },
+      { label: 'Exam fee ( Second Semister - 2026 )', amount: '600' },
+      { label: 'Transport fee', amount: '800' },
+      { label: 'Session / development fee', amount: '1,200' },
+      { label: 'Library fee', amount: '300' },
+    ];
+    const subtotal = 6400;
+    const discount = this.props.discount ?? 400;
+    const total = subtotal - discount;
+    const fmt = n => n.toLocaleString('en-IN');
+
+    return {
+      invoiceNo: this.props.invoiceNo ?? 'HJAMS-2026-0714',
+      studentName: this.props.studentName ?? 'Md. Rafiul Islam',
+      className: this.props.className ?? 'Eight, Section B',
+      roll: this.props.roll ?? '17',
+      studentId: this.props.studentId ?? 'HJ-2026-0117',
+      guardianName: this.props.guardianName ?? 'Md. Aminul Islam',
+      issueDate: this.props.issueDate ?? '01 Jul 2026',
+      dueDate: this.props.dueDate ?? '15 Jul 2026',
+      billingPeriod: this.props.billingPeriod ?? 'July 2026',
+      statusLabel: s.label,
+      statusColor: s.color,
+      statusBg: s.bg,
+      statusBorder: s.border,
+      statusDot: s.dot,
+      lineItems,
+      subtotal: fmt(subtotal),
+      discount: fmt(discount),
+      total: fmt(total),
+      paymentMethod: this.props.paymentMethod ?? 'Cash at school office, or bKash/Nagad Merchant No. 017XXXXXXXX (ref: student ID).',
+      notes: this.props.notes ?? 'Please clear dues before the due date to avoid a late fee. Contact the office for any discrepancy.',
+      onPrint: () => window.print(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

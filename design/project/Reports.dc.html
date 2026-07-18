@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Geist", -apple-system, sans-serif; background: #f7f7f8; color: #1b1b1f; -webkit-font-smoothing: antialiased; }
+  a { color: #7c3aed; text-decoration: none; }
+  a:hover { color: #6d28d9; }
+  input::placeholder { color: #9a9aa3; }
+  select { appearance: none; -webkit-appearance: none; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #e2e2e6; border-radius: 8px; }
+</style>
+</helmet>
+
+<div data-screen-label="Reports" style="display:grid; grid-template-columns:256px 1fr; min-height:100vh;">
+
+  <!-- ============ Sidebar ============ -->
+  <aside style="border-right:1px solid #ececef; background:#ffffff; display:flex; flex-direction:column; position:sticky; top:0; height:100vh;">
+    <div style="padding:12px 12px 10px; border-bottom:1px solid #ececef;">
+      <button style="display:flex; align-items:center; gap:11px; width:100%; padding:8px 9px; border:1px solid #e2e2e6; border-radius:12px; background:#ffffff; cursor:pointer; font-family:inherit; text-align:left;" style-hover="border-color:#d7c9f8; background:#fbfaff;">
+        <span style="width:38px; height:38px; border-radius:11px; background:#7c3aed; color:#fff; display:grid; place-items:center; font-size:14px; font-weight:700; flex:none; box-shadow:0 2px 8px rgba(16,16,20,0.16);">MP</span>
+        <span style="min-width:0; flex:1; display:flex; flex-direction:column; gap:1px;">
+          <span style="font-size:14px; font-weight:600; color:#1b1b1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Madani PathShala</span>
+          <span style="font-size:11.5px; color:#9a9aa3; font-weight:500;">School MS</span>
+        </span>
+        <span style="width:24px; height:24px; border-radius:7px; display:grid; place-items:center; color:#71717a; flex:none; background:#f4f4f5;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"></path></svg>
+        </span>
+      </button>
+    </div>
+    <nav style="padding:8px 14px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+      <sc-for list="{{ navItems }}" as="nv" hint-placeholder-count="8">
+        <sc-if value="{{ nv.isLabel }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#9a9aa3; text-transform:uppercase; padding:14px 10px 6px;">{{ nv.label }}</div>
+        </sc-if>
+        <sc-if value="{{ nv.isItem }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; gap:12px; padding:9px 11px; border-radius:10px; color:{{ nv.color }}; background:{{ nv.bg }}; font-size:14.5px; font-weight:{{ nv.weight }}; cursor:pointer;" style-hover="background:#f4f4f5;">
+            <span style="display:grid; place-items:center; width:19px; height:19px;">{{ nv.icon }}</span>
+            <span>{{ nv.label }}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </nav>
+    <div style="flex:1;"></div>
+    <div style="display:flex; align-items:center; gap:10px; padding:14px 22px; color:#9a9aa3; font-size:13.5px; border-top:1px solid #ececef; cursor:pointer;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path></svg>
+      Collapse
+    </div>
+  </aside>
+
+  <!-- ============ Main ============ -->
+  <div style="display:flex; flex-direction:column; min-width:0;">
+
+    <!-- Topbar -->
+    <header style="height:68px; border-bottom:1px solid #ececef; background:rgba(247,247,248,0.86); backdrop-filter:blur(8px); display:flex; align-items:center; gap:14px; padding:0 26px; position:sticky; top:0; z-index:40;">
+      <div style="flex:1; max-width:540px; margin:0 auto; position:relative; display:flex; align-items:center;">
+        <svg style="position:absolute; left:13px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input placeholder="Search…" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; padding:0 46px 0 38px; font-size:14px; font-family:inherit; outline:none; color:#1b1b1f;">
+        <span style="position:absolute; right:11px; font-size:11px; color:#9a9aa3; border:1px solid #ececef; border-radius:6px; padding:2px 6px; background:#fafafa; font-family:'Geist Mono',monospace;">⌘K</span>
+      </div>
+      <button style="width:40px; height:40px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; display:grid; place-items:center; cursor:pointer; position:relative;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+        <span style="position:absolute; top:9px; right:10px; width:8px; height:8px; border-radius:50%; background:#f87171; border:1.5px solid #fff;"></span>
+      </button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:36px; height:36px; border-radius:50%; background:linear-gradient(160deg,#475569,#1e293b); color:#fff; display:grid; place-items:center; font-size:13px; font-weight:600;">HR</span>
+        <span style="font-size:15px; font-weight:500;">Hasinur Rahman</span>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main style="padding:30px 34px 60px; display:flex; flex-direction:column; gap:20px;">
+
+      <!-- Page header -->
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <h1 style="font-size:26px; font-weight:700; letter-spacing:-0.02em;">Reports</h1>
+          <p style="color:#71717a; font-size:14.5px;">Everything happening across the school — money, attendance, results and admissions.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px;">
+          <button onClick="{{ onExportPdf }}" style="display:flex; align-items:center; gap:8px; height:38px; padding:0 14px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"></path></svg>
+            PDF
+          </button>
+          <button onClick="{{ onExportExcel }}" style="display:flex; align-items:center; gap:8px; height:38px; padding:0 14px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+            Excel
+          </button>
+          <button onClick="{{ onPrint }}" style="display:flex; align-items:center; gap:8px; height:38px; padding:0 16px; border:none; border-radius:11px; background:#7c3aed; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600; color:#fff; box-shadow:0 2px 8px rgba(124,58,237,0.28);" style-hover="background:#6d28d9;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"></path></svg>
+            Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff; border:1px solid #ececef; border-radius:14px; padding:12px 14px; box-shadow:0 1px 3px rgba(16,16,20,0.05);">
+        <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:12px; font-weight:600; color:#71717a;">{{ f.label }}</span>
+            <span style="position:relative; display:inline-flex; align-items:center;">
+              <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="height:36px; border:1px solid #e2e2e6; border-radius:10px; background:#fafafa; padding:0 30px 0 12px; font-size:13px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3">
+                  <option value="{{ o }}">{{ o }}</option>
+                </sc-for>
+              </select>
+              <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+            </span>
+          </label>
+        </sc-for>
+        <sc-if value="{{ isCustomRange }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; animation:fadeIn 0.2s ease;">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:12px; font-weight:600; color:#71717a;">From</span>
+              <input type="date" value="{{ fromDate }}" onChange="{{ onFromDate }}" style="height:36px; border:1px solid #e2e2e6; border-radius:10px; background:#fafafa; padding:0 10px; font-size:13px; font-weight:600; font-family:inherit; color:#1b1b1f; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+            </label>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:12px; font-weight:600; color:#71717a;">To</span>
+              <input type="date" value="{{ toDate }}" onChange="{{ onToDate }}" style="height:36px; border:1px solid #e2e2e6; border-radius:10px; background:#fafafa; padding:0 10px; font-size:13px; font-weight:600; font-family:inherit; color:#1b1b1f; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+            </label>
+          </div>
+        </sc-if>
+        <div style="flex:1;"></div>
+        <button onClick="{{ resetFilters }}" style="height:34px; padding:0 12px; border:none; border-radius:9px; background:transparent; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#7c3aed;" style-hover="background:#f3effe;">Reset</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex; align-items:center; gap:4px; border-bottom:1px solid #ececef; overflow-x:auto;">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+          <button onClick="{{ t.select }}" style="height:42px; padding:0 15px; border:none; border-bottom:2px solid {{ t.border }}; background:transparent; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; color:{{ t.color }}; white-space:nowrap;" style-hover="color:#1b1b1f;">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- ===================== OVERVIEW ===================== -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.2s ease;">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:12.5px; font-weight:500; color:#71717a;">{{ k.label }}</span>
+                <span style="font-size:23px; font-weight:700; letter-spacing:-0.01em; font-family:'Geist Mono',monospace;">{{ k.value }}</span>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:{{ k.deltaColor }};">
+                  <span>{{ k.deltaArrow }}</span>{{ k.delta }}<span style="color:#9a9aa3; font-weight:500;">vs last month</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:14px;">
+            <!-- Collections chart -->
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:16px;">
+              <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px;">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Fee collection by month</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">Collected vs billed, {{ sessionLabel }}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:14px; font-size:12px; color:#71717a; font-weight:500;">
+                  <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:3px; background:#7c3aed;"></span>Collected</span>
+                  <span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:3px; background:#e7defb;"></span>Billed</span>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(12,1fr); gap:10px; align-items:end; height:180px;">
+                <sc-for list="{{ monthBars }}" as="m" hint-placeholder-count="12">
+                  <div title="{{ m.tip }}" style="display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; cursor:default;">
+                    <div style="position:relative; width:100%; max-width:26px; height:{{ m.billedH }}; background:#f0eafc; border-radius:6px 6px 3px 3px; display:flex; align-items:flex-end; transform-origin:bottom; animation:growUp 0.4s ease;">
+                      <div style="width:100%; height:{{ m.collectedH }}; background:#7c3aed; border-radius:6px 6px 3px 3px;"></div>
+                    </div>
+                    <span style="font-size:10.5px; font-weight:600; color:#9a9aa3;">{{ m.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <!-- Attendance snapshot -->
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:15px; font-weight:700;">Attendance this month</span>
+                <span style="font-size:12.5px; color:#9a9aa3;">Average present rate</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:13px;">
+                <sc-for list="{{ attSnapshot }}" as="a" hint-placeholder-count="5">
+                  <div style="display:flex; flex-direction:column; gap:5px;">
+                    <div style="display:flex; justify-content:space-between; font-size:13px;">
+                      <span style="font-weight:600;">{{ a.label }}</span>
+                      <span style="font-family:'Geist Mono',monospace; font-weight:600; color:{{ a.color }};">{{ a.pct }}</span>
+                    </div>
+                    <div style="height:7px; border-radius:99px; background:#f0f0f2; overflow:hidden;">
+                      <div style="height:100%; width:{{ a.pct }}; background:{{ a.color }}; border-radius:99px;"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:auto; padding-top:10px; border-top:1px solid #ececef; display:flex; justify-content:space-between; font-size:12.5px; color:#71717a;">
+                <span>Teachers present today</span><span style="font-weight:700; color:#1b1b1f; font-family:'Geist Mono',monospace;">{{ teachersToday }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top dues table -->
+          <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 22px 12px;">
+              <span style="font-size:15px; font-weight:700;">Highest outstanding dues</span>
+              <button onClick="{{ goFees }}" style="border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#7c3aed;" style-hover="color:#6d28d9;">View fees report →</button>
+            </div>
+            <div style="display:grid; grid-template-columns:1.4fr 0.9fr 1.2fr 0.8fr 0.9fr; padding:11px 22px; border-top:1px solid #ececef; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+              <span>Student</span><span>Class</span><span>Oldest invoice</span><span style="text-align:right;">Months due</span><span style="text-align:right;">Amount</span>
+            </div>
+            <sc-for list="{{ duesRows }}" as="r" hint-placeholder-count="5">
+              <div style="display:grid; grid-template-columns:1.4fr 0.9fr 1.2fr 0.8fr 0.9fr; align-items:center; padding:13px 22px; border-bottom:1px solid #ececef; font-size:14px;" style-hover="background:#fafafa;">
+                <span style="font-weight:600;">{{ r.student }}</span>
+                <span style="color:#71717a;">{{ r.cls }}</span>
+                <span style="font-family:'Geist Mono',monospace; font-size:12.5px; color:#71717a;">{{ r.invoice }}</span>
+                <span style="text-align:right;"><span style="display:inline-flex; padding:2px 9px; border-radius:99px; font-size:12.5px; font-weight:600; background:#fff2e8; border:1px solid #fbdcc4; color:#c2410c;">{{ r.months }}</span></span>
+                <span style="text-align:right; font-weight:700; font-family:'Geist Mono',monospace; font-size:13.5px;">{{ r.amount }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== FEES ===================== -->
+      <sc-if value="{{ isFees }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.2s ease;">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:820px;">
+            <sc-for list="{{ feeKpis }}" as="k" hint-placeholder-count="3">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:4px;">
+                <span style="font-size:12.5px; font-weight:500; color:#71717a;">{{ k.label }}</span>
+                <span style="font-size:22px; font-weight:700; font-family:'Geist Mono',monospace; color:{{ k.color }};">{{ k.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+            <div style="padding:16px 22px 12px; display:flex; flex-direction:column; gap:2px;">
+              <span style="font-size:15px; font-weight:700;">Collection by class</span>
+              <span style="font-size:12.5px; color:#9a9aa3;">{{ feeScopeLabel }}</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1.6fr; padding:11px 22px; border-top:1px solid #ececef; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+              <span>Class</span><span style="text-align:right;">Billed</span><span style="text-align:right;">Collected</span><span style="text-align:right;">Due</span><span style="padding-left:26px;">Collection rate</span>
+            </div>
+            <sc-for list="{{ feeRows }}" as="r" hint-placeholder-count="8">
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1.6fr; align-items:center; padding:13px 22px; border-bottom:1px solid #ececef; font-size:14px;" style-hover="background:#fafafa;">
+                <span style="font-weight:600;">{{ r.cls }}</span>
+                <span style="text-align:right; font-family:'Geist Mono',monospace; font-size:13px; color:#71717a;">{{ r.billed }}</span>
+                <span style="text-align:right; font-family:'Geist Mono',monospace; font-size:13px; font-weight:600;">{{ r.collected }}</span>
+                <span style="text-align:right; font-family:'Geist Mono',monospace; font-size:13px; color:#c2410c; font-weight:600;">{{ r.due }}</span>
+                <span style="display:flex; align-items:center; gap:10px; padding-left:26px;">
+                  <span style="flex:1; height:7px; border-radius:99px; background:#f0f0f2; overflow:hidden;"><span style="display:block; height:100%; width:{{ r.rate }}; background:{{ r.rateColor }}; border-radius:99px;"></span></span>
+                  <span style="font-family:'Geist Mono',monospace; font-size:12.5px; font-weight:600; width:42px; text-align:right;">{{ r.rate }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== ATTENDANCE ===================== -->
+      <sc-if value="{{ isAttendance }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.2s ease;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onClick="{{ setAttStudents }}" style="height:34px; padding:0 15px; border:1px solid {{ attStudentsBorder }}; border-radius:99px; background:{{ attStudentsBg }}; color:{{ attStudentsColor }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;">Students</button>
+            <button onClick="{{ setAttTeachers }}" style="height:34px; padding:0 15px; border:1px solid {{ attTeachersBorder }}; border-radius:99px; background:{{ attTeachersBg }}; color:{{ attTeachersColor }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;">Teachers</button>
+          </div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:14px;">
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:16px;">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:15px; font-weight:700;">{{ attChartTitle }}</span>
+                <span style="font-size:12.5px; color:#9a9aa3;">Present rate by month, {{ sessionLabel }}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(12,1fr); gap:10px; align-items:end; height:170px;">
+                <sc-for list="{{ attBars }}" as="m" hint-placeholder-count="12">
+                  <div title="{{ m.tip }}" style="display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;">
+                    <span style="font-size:10px; font-weight:600; color:#71717a; font-family:'Geist Mono',monospace;">{{ m.pctShort }}</span>
+                    <div style="width:100%; max-width:26px; height:{{ m.h }}; background:{{ m.color }}; border-radius:6px 6px 3px 3px; transform-origin:bottom; animation:growUp 0.4s ease;"></div>
+                    <span style="font-size:10.5px; font-weight:600; color:#9a9aa3;">{{ m.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden; display:flex; flex-direction:column;">
+              <div style="padding:16px 22px 12px;"><span style="font-size:15px; font-weight:700;">{{ attTableTitle }}</span></div>
+              <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; padding:10px 22px; border-top:1px solid #ececef; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+                <span>{{ attColLabel }}</span><span style="text-align:right;">Avg present</span><span style="text-align:right;">Absent days</span>
+              </div>
+              <sc-for list="{{ attRows }}" as="r" hint-placeholder-count="7">
+                <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr; align-items:center; padding:11px 22px; border-bottom:1px solid #ececef; font-size:13.5px;" style-hover="background:#fafafa;">
+                  <span style="font-weight:600;">{{ r.name }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; font-weight:600; color:{{ r.color }};">{{ r.pct }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; color:#71717a;">{{ r.absent }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== EXAMS ===================== -->
+      <sc-if value="{{ isExams }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.2s ease;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <sc-for list="{{ examChips }}" as="e" hint-placeholder-count="3">
+              <button onClick="{{ e.select }}" style="height:34px; padding:0 15px; border:1px solid {{ e.border }}; border-radius:99px; background:{{ e.bg }}; color:{{ e.color }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;">{{ e.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:14px;">
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:16px;">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:15px; font-weight:700;">Grade distribution</span>
+                <span style="font-size:12.5px; color:#9a9aa3;">{{ examLabel }} · all classes</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ gradeRows }}" as="g" hint-placeholder-count="6">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="width:34px; font-size:13px; font-weight:700; font-family:'Geist Mono',monospace;">{{ g.grade }}</span>
+                    <span style="flex:1; height:22px; border-radius:6px; background:#f0f0f2; overflow:hidden;"><span style="display:block; height:100%; width:{{ g.w }}; background:{{ g.color }}; border-radius:6px;"></span></span>
+                    <span style="width:44px; text-align:right; font-size:12.5px; font-weight:600; font-family:'Geist Mono',monospace; color:#71717a;">{{ g.count }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+              <div style="padding:16px 22px 12px;"><span style="font-size:15px; font-weight:700;">Class performance</span></div>
+              <div style="display:grid; grid-template-columns:1fr 0.9fr 0.9fr 0.9fr 1fr; padding:10px 22px; border-top:1px solid #ececef; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+                <span>Class</span><span style="text-align:right;">Appeared</span><span style="text-align:right;">Passed</span><span style="text-align:right;">Avg GPA</span><span style="text-align:right;">Pass rate</span>
+              </div>
+              <sc-for list="{{ examRows }}" as="r" hint-placeholder-count="8">
+                <div style="display:grid; grid-template-columns:1fr 0.9fr 0.9fr 0.9fr 1fr; align-items:center; padding:12px 22px; border-bottom:1px solid #ececef; font-size:13.5px;" style-hover="background:#fafafa;">
+                  <span style="font-weight:600;">{{ r.cls }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; color:#71717a;">{{ r.appeared }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; color:#71717a;">{{ r.passed }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; font-weight:600;">{{ r.gpa }}</span>
+                  <span style="text-align:right;"><span style="display:inline-flex; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; background:{{ r.rateBg }}; border:1px solid {{ r.rateBorder }}; color:{{ r.rateFg }};">{{ r.rate }}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== ADMISSIONS ===================== -->
+      <sc-if value="{{ isAdmissions }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.2s ease;">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:820px;">
+            <sc-for list="{{ admKpis }}" as="k" hint-placeholder-count="3">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:4px;">
+                <span style="font-size:12.5px; font-weight:500; color:#71717a;">{{ k.label }}</span>
+                <span style="font-size:22px; font-weight:700; font-family:'Geist Mono',monospace;">{{ k.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:14px;">
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:16px;">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:15px; font-weight:700;">New admissions by month</span>
+                <span style="font-size:12.5px; color:#9a9aa3;">{{ sessionLabel }}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(12,1fr); gap:10px; align-items:end; height:170px;">
+                <sc-for list="{{ admBars }}" as="m" hint-placeholder-count="12">
+                  <div title="{{ m.tip }}" style="display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;">
+                    <span style="font-size:10px; font-weight:600; color:#71717a; font-family:'Geist Mono',monospace;">{{ m.count }}</span>
+                    <div style="width:100%; max-width:26px; height:{{ m.h }}; background:#7c3aed; border-radius:6px 6px 3px 3px; transform-origin:bottom; animation:growUp 0.4s ease;"></div>
+                    <span style="font-size:10.5px; font-weight:600; color:#9a9aa3;">{{ m.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+              <div style="padding:16px 22px 12px;"><span style="font-size:15px; font-weight:700;">Enrollment by class</span></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 22px; border-top:1px solid #ececef; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+                <span>Class</span><span style="text-align:right;">Enrolled</span><span style="text-align:right;">New this year</span>
+              </div>
+              <sc-for list="{{ admRows }}" as="r" hint-placeholder-count="8">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; padding:11px 22px; border-bottom:1px solid #ececef; font-size:13.5px;" style-hover="background:#fafafa;">
+                  <span style="font-weight:600;">{{ r.cls }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; color:#71717a;">{{ r.enrolled }}</span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; font-weight:600; color:#15803d;">+{{ r.fresh }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== EXPENSES ===================== -->
+      <sc-if value="{{ isExpenses }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.2s ease;">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:820px;">
+            <sc-for list="{{ expKpis }}" as="k" hint-placeholder-count="3">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:4px;">
+                <span style="font-size:12.5px; font-weight:500; color:#71717a;">{{ k.label }}</span>
+                <span style="font-size:22px; font-weight:700; font-family:'Geist Mono',monospace; color:{{ k.color }};">{{ k.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:14px;">
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:20px 22px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:16px;">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:15px; font-weight:700;">Spend by category</span>
+                <span style="font-size:12.5px; color:#9a9aa3;">This month</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ expCats }}" as="c" hint-placeholder-count="6">
+                  <div style="display:flex; flex-direction:column; gap:5px;">
+                    <div style="display:flex; justify-content:space-between; font-size:13px;">
+                      <span style="font-weight:600;">{{ c.label }}</span>
+                      <span style="font-family:'Geist Mono',monospace; font-weight:600; color:#71717a;">{{ c.amount }}</span>
+                    </div>
+                    <div style="height:8px; border-radius:99px; background:#f0f0f2; overflow:hidden;"><div style="height:100%; width:{{ c.w }}; background:{{ c.color }}; border-radius:99px;"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+              <div style="padding:16px 22px 12px;"><span style="font-size:15px; font-weight:700;">Recent expenses</span></div>
+              <div style="display:grid; grid-template-columns:1.1fr 1.5fr 1fr 0.9fr; padding:10px 22px; border-top:1px solid #ececef; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+                <span>Voucher</span><span>Description</span><span>Category</span><span style="text-align:right;">Amount</span>
+              </div>
+              <sc-for list="{{ expRows }}" as="r" hint-placeholder-count="7">
+                <div style="display:grid; grid-template-columns:1.1fr 1.5fr 1fr 0.9fr; align-items:center; padding:12px 22px; border-bottom:1px solid #ececef; font-size:13.5px;" style-hover="background:#fafafa;">
+                  <span style="font-family:'Geist Mono',monospace; font-size:12.5px; color:#71717a;">{{ r.voucher }}</span>
+                  <span style="font-weight:600;">{{ r.desc }}</span>
+                  <span><span style="display:inline-flex; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; background:#f4f4f5; border:1px solid #ececef; color:#71717a;">{{ r.cat }}</span></span>
+                  <span style="text-align:right; font-family:'Geist Mono',monospace; font-weight:600;">{{ r.amount }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:70; background:#1b1b1f; color:#fff; border-radius:12px; padding:11px 18px; font-size:13.5px; font-weight:500; box-shadow:0 8px 30px rgba(16,16,20,0.3); display:flex; align-items:center; gap:9px; animation:fadeIn 0.2s ease;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTab&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;overview&quot;, &quot;fees&quot;, &quot;attendance&quot;, &quot;exams&quot;, &quot;admissions&quot;, &quot;expenses&quot;], &quot;default&quot;: &quot;overview&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;}, &quot;currency&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;৳&quot;, &quot;$&quot;, &quot;₹&quot;], &quot;default&quot;: &quot;৳&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  state = {
+    tab: this.props.defaultTab ?? "overview",
+    session: "2026–27",
+    range: "This month",
+    cls: "All classes",
+    payStatus: "All statuses",
+    attMode: "students",
+    fromDate: "2026-07-01",
+    toDate: "2026-07-15",
+    exam: 0,
+    toastMsg: "",
+    toastVisible: false,
+  };
+
+  cur(n) { return (this.props.currency ?? "৳") + n.toLocaleString("en-US"); }
+
+  rnd(seed) {
+    // deterministic pseudo-random 0..1
+    const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  seedBase() {
+    const s = this.state;
+    const sessions = ["2024–25", "2025–26", "2026–27"];
+    const ranges = ["This month", "Last month", "Last 3 months", "This session", "Custom range"];
+    if (s.range === "Custom range") return 900 + (s.fromDate + s.toDate).split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 97 + ["All classes","Play","Nursery","Class 1","Class 2","Class 3","Class 4","Class 5","Class 6","Class 7","Class 8"].indexOf(s.cls) * 7;
+    const classes = ["All classes","Play","Nursery","Class 1","Class 2","Class 3","Class 4","Class 5","Class 6","Class 7","Class 8"];
+    return sessions.indexOf(s.session) * 100 + ranges.indexOf(s.range) * 17 + classes.indexOf(s.cls) * 7;
+  }
+
+  showToast(msg) {
+    clearTimeout(this._t);
+    this.setState({ toastMsg: msg, toastVisible: true });
+    this._t = setTimeout(() => this.setState({ toastVisible: false }), 2400);
+  }
+
+  navIcon(d) {
+    return React.createElement("svg", { width: 19, height: 19, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d }));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const base = this.seedBase();
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const classList = ["Play","Nursery","Class 1","Class 2","Class 3","Class 4","Class 5","Class 6","Class 7","Class 8"];
+    const clsFiltered = s.cls === "All classes" ? classList : [s.cls];
+    const fmtD = d => { const [y, m, dd] = d.split("-"); return parseInt(dd) + " " + months[parseInt(m) - 1] + " " + y; };
+    const rangeLabel = s.range === "Custom range" ? fmtD(s.fromDate) + " – " + fmtD(s.toDate) : s.range.toLowerCase();
+
+    const nav = [
+      { isItem: true, label: "Academic", icon: this.navIcon("M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z") },
+      { isItem: true, label: "Attendance", icon: this.navIcon("M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z") },
+      { isItem: true, label: "Exams", icon: this.navIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2") },
+      { isItem: true, label: "Results", icon: this.navIcon("M12 15a7 7 0 100-14 7 7 0 000 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1") },
+      { isLabel: true, label: "Finance" },
+      { isItem: true, label: "Fees", icon: this.navIcon("M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6") },
+      { isItem: true, label: "Invoices", icon: this.navIcon("M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8") },
+      { isItem: true, label: "Payments", icon: this.navIcon("M21 8H3m18 0a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2v-8a2 2 0 012-2m18 0V6a2 2 0 00-2-2H5a2 2 0 00-2 2v2") },
+      { isLabel: true, label: "Administration" },
+      { isItem: true, label: "Reports", active: true, icon: this.navIcon("M3 3v18h18M18 17V9M13 17V5M8 17v-3") },
+      { isItem: true, label: "Settings", icon: this.navIcon("M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L14.8 3h-4l-.4 2.6a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 001.7 1l.4 2.4h4l.4-2.4a7.4 7.4 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z") },
+    ].map(n => ({
+      ...n,
+      color: n.active ? "#7c3aed" : "#71717a",
+      bg: n.active ? "#f3effe" : "transparent",
+      weight: n.active ? 600 : 500,
+    }));
+
+    // ---- filters ----
+    const mkFilter = (label, key, options) => ({
+      label, options, value: s[key],
+      onChange: e => this.setState({ [key]: e.target.value }),
+    });
+    const filters = [
+      mkFilter("Session", "session", ["2024–25", "2025–26", "2026–27"]),
+      mkFilter("Date range", "range", ["This month", "Last month", "Last 3 months", "This session", "Custom range"]),
+      mkFilter("Class", "cls", ["All classes", ...classList]),
+      mkFilter("Payment status", "payStatus", ["All statuses", "Paid", "Pending", "Overdue"]),
+    ];
+
+    // ---- tabs ----
+    const tabDefs = [
+      ["overview", "Overview"], ["fees", "Fees & Collections"], ["attendance", "Attendance"],
+      ["exams", "Exam Results"], ["admissions", "Admissions"], ["expenses", "Expenses"],
+    ];
+    const tabs = tabDefs.map(([id, label]) => ({
+      label,
+      border: s.tab === id ? "#7c3aed" : "transparent",
+      color: s.tab === id ? "#7c3aed" : "#71717a",
+      select: () => this.setState({ tab: id }),
+    }));
+
+    // ---- overview ----
+    const collected = Math.round((3.2 + this.rnd(base + 1) * 1.6) * 100000);
+    const kpis = [
+      { label: "Collected (" + rangeLabel + ")", value: this.cur(collected), delta: (4 + Math.round(this.rnd(base+2)*8)) + "%", up: true },
+      { label: "Outstanding dues", value: this.cur(Math.round(collected * (0.16 + this.rnd(base+3)*0.1))), delta: (2 + Math.round(this.rnd(base+4)*5)) + "%", up: false },
+      { label: "Avg student attendance", value: (88 + Math.round(this.rnd(base+5)*8)) + "%", delta: (1 + Math.round(this.rnd(base+6)*3)) + "%", up: true },
+      { label: "New admissions", value: String(8 + Math.round(this.rnd(base+7)*30)), delta: (3 + Math.round(this.rnd(base+8)*9)) + "%", up: true },
+    ].map(k => ({
+      ...k,
+      deltaColor: k.up ? "#15803d" : "#c2410c",
+      deltaArrow: k.up ? "↑" : "↓",
+    }));
+
+    const monthBars = months.map((m, i) => {
+      const billed = 0.55 + this.rnd(base + 20 + i) * 0.45;
+      const rate = 0.72 + this.rnd(base + 40 + i) * 0.26;
+      return {
+        label: m,
+        billedH: Math.round(billed * 100) + "%",
+        collectedH: Math.round(rate * 100) + "%",
+        tip: m + ": " + this.cur(Math.round(billed * rate * 420000)) + " collected of " + this.cur(Math.round(billed * 420000)) + " billed",
+      };
+    });
+
+    const attSnapshot = clsFiltered.slice(0, 5).map((c, i) => {
+      const p = 84 + Math.round(this.rnd(base + 60 + i) * 14);
+      return { label: c, pct: p + "%", color: p >= 92 ? "#15803d" : p >= 87 ? "#7c3aed" : "#c2410c" };
+    });
+
+    const students = ["Ayesha Siddiqua","Rafiul Karim","Devyn Bergstrom","Md. Tanvir Ahmed","Nusrat Jahan","Leonor Purdy","Sadia Islam","Humberto Pacocha"];
+    const duesRows = Array.from({ length: 5 }, (_, i) => {
+      const seed = base + 80 + i;
+      return {
+        student: students[Math.floor(this.rnd(seed) * students.length)],
+        cls: clsFiltered[Math.floor(this.rnd(seed + 1) * clsFiltered.length)],
+        invoice: "INV-MP-2026" + String(Math.floor(this.rnd(seed+2)*6)+1).padStart(2,"0") + "-" + String(100 + Math.floor(this.rnd(seed+3)*899)),
+        months: (2 + Math.floor(this.rnd(seed + 4) * 4)) + " mo",
+        amount: this.cur(3600 + Math.floor(this.rnd(seed + 5) * 9) * 800),
+      };
+    });
+
+    // ---- fees ----
+    const feeRows = clsFiltered.map((c, i) => {
+      const billed = 180000 + Math.round(this.rnd(base + 100 + i) * 220000);
+      let rate = 0.68 + this.rnd(base + 120 + i) * 0.3;
+      if (s.payStatus === "Paid") rate = Math.min(0.99, rate + 0.14);
+      if (s.payStatus === "Overdue") rate = rate - 0.22;
+      rate = Math.max(0.4, Math.min(0.99, rate));
+      const col = Math.round(billed * rate);
+      const pct = Math.round(rate * 100);
+      return {
+        cls: c, billed: this.cur(billed), collected: this.cur(col), due: this.cur(billed - col),
+        rate: pct + "%",
+        rateColor: pct >= 90 ? "#15803d" : pct >= 75 ? "#7c3aed" : "#c2410c",
+      };
+    });
+    const totBilled = clsFiltered.length * 290000;
+    const feeKpis = [
+      { label: "Total billed", value: this.cur(Math.round(totBilled * (0.9 + this.rnd(base+140)*0.2))), color: "#1b1b1f" },
+      { label: "Collected", value: this.cur(Math.round(totBilled * (0.72 + this.rnd(base+141)*0.15))), color: "#15803d" },
+      { label: "Overdue", value: this.cur(Math.round(totBilled * (0.08 + this.rnd(base+142)*0.07))), color: "#c2410c" },
+    ];
+
+    // ---- attendance ----
+    const isStudents = s.attMode === "students";
+    const attBars = months.map((m, i) => {
+      const p = (isStudents ? 84 : 90) + Math.round(this.rnd(base + 160 + i + (isStudents ? 0 : 500)) * (isStudents ? 14 : 9));
+      return {
+        label: m, pctShort: p + "", h: Math.round((p - 60) / 40 * 100) + "%",
+        color: p >= 92 ? "#15803d" : p >= 87 ? "#7c3aed" : "#c2410c",
+        tip: m + ": " + p + "% present",
+      };
+    });
+    const teacherNames = ["Farhana Akter","Md. Salim Reza","Shirin Sultana","Abdul Kader","Rokeya Begum","Mahmudul Hasan","Tania Rahman"];
+    const attRows = (isStudents ? clsFiltered.slice(0, 7) : teacherNames).map((n, i) => {
+      const p = (isStudents ? 85 : 91) + Math.round(this.rnd(base + 200 + i) * (isStudents ? 13 : 8));
+      return {
+        name: n, pct: p + "%",
+        color: p >= 92 ? "#15803d" : p >= 87 ? "#1b1b1f" : "#c2410c",
+        absent: String(Math.round((100 - p) / 100 * 22)),
+      };
+    });
+    const chip = on => ({
+      border: on ? "#7c3aed" : "#e2e2e6",
+      bg: on ? "#f3effe" : "#fff",
+      color: on ? "#7c3aed" : "#71717a",
+    });
+
+    // ---- exams ----
+    const examNames = ["Half-Yearly 2026", "First Terminal 2026", "Annual 2025"];
+    const examChips = examNames.map((n, i) => ({
+      label: n, ...chip(s.exam === i),
+      select: () => this.setState({ exam: i }),
+    }));
+    const grades = [["A+","#15803d"],["A","#22c55e"],["A−","#7c3aed"],["B","#a78bfa"],["C","#f97316"],["F","#dc2626"]];
+    const gCounts = grades.map(([g], i) => Math.round(this.rnd(base + s.exam * 31 + 220 + i) * (i < 2 ? 160 : i < 4 ? 120 : 40)) + 8);
+    const gMax = Math.max(...gCounts);
+    const gradeRows = grades.map(([g, color], i) => ({
+      grade: g, color, count: String(gCounts[i]), w: Math.round(gCounts[i] / gMax * 100) + "%",
+    }));
+    const examRows = clsFiltered.map((c, i) => {
+      const appeared = 40 + Math.round(this.rnd(base + 250 + i) * 40);
+      const rate = 82 + Math.round(this.rnd(base + s.exam * 13 + 260 + i) * 17);
+      const good = rate >= 95, mid = rate >= 88;
+      return {
+        cls: c, appeared: String(appeared), passed: String(Math.round(appeared * rate / 100)),
+        gpa: (3.1 + this.rnd(base + 270 + i) * 1.6).toFixed(2),
+        rate: rate + "%",
+        rateBg: good ? "#e9f8ee" : mid ? "#f3effe" : "#fff2e8",
+        rateBorder: good ? "#cdeed7" : mid ? "#e7defb" : "#fbdcc4",
+        rateFg: good ? "#15803d" : mid ? "#7c3aed" : "#c2410c",
+      };
+    });
+
+    // ---- admissions ----
+    const admCounts = months.map((m, i) => Math.round(this.rnd(base + 300 + i) * (i === 0 ? 60 : 18)) + (i === 0 ? 25 : 2));
+    const admMax = Math.max(...admCounts);
+    const admBars = months.map((m, i) => ({
+      label: m, count: String(admCounts[i]),
+      h: Math.round(admCounts[i] / admMax * 100) + "%",
+      tip: m + ": " + admCounts[i] + " new students",
+    }));
+    const admTotal = admCounts.reduce((a, b) => a + b, 0);
+    const admKpis = [
+      { label: "New admissions (" + s.session + ")", value: String(admTotal) },
+      { label: "Total enrolled", value: String(680 + Math.round(this.rnd(base + 320) * 240)) },
+      { label: "Transfers out", value: String(6 + Math.round(this.rnd(base + 321) * 18)) },
+    ];
+    const admRows = clsFiltered.map((c, i) => ({
+      cls: c,
+      enrolled: String(48 + Math.round(this.rnd(base + 330 + i) * 46)),
+      fresh: String(3 + Math.round(this.rnd(base + 340 + i) * 22)),
+    }));
+
+    // ---- expenses ----
+    const cats = [["Salaries","#7c3aed"],["Utilities","#1d4ed8"],["Maintenance","#0f766e"],["Supplies","#b45309"],["Transport","#be185d"],["Others","#71717a"]];
+    const catAmts = cats.map(([c], i) => Math.round(this.rnd(base + 360 + i) * (i === 0 ? 260000 : 60000)) + (i === 0 ? 180000 : 8000));
+    const catMax = Math.max(...catAmts);
+    const expCats = cats.map(([label, color], i) => ({
+      label, color, amount: this.cur(catAmts[i]), w: Math.round(catAmts[i] / catMax * 100) + "%",
+    }));
+    const expTotal = catAmts.reduce((a, b) => a + b, 0);
+    const expKpis = [
+      { label: "Total spent (" + rangeLabel + ")", value: this.cur(expTotal), color: "#1b1b1f" },
+      { label: "Collected (same period)", value: this.cur(collected), color: "#15803d" },
+      { label: "Net", value: this.cur(collected - expTotal), color: collected - expTotal >= 0 ? "#15803d" : "#c2410c" },
+    ];
+    const descs = [["Teacher salaries — June","Salaries"],["Electricity bill","Utilities"],["Classroom fan repair","Maintenance"],["Exam paper printing","Supplies"],["Van fuel & driver","Transport"],["Whiteboard markers","Supplies"],["Generator servicing","Maintenance"]];
+    const expRows = descs.map(([desc, cat], i) => ({
+      voucher: "EXP-2026" + String(Math.floor(this.rnd(base+380+i)*6)+1).padStart(2,"0") + "-" + String(100 + Math.floor(this.rnd(base + 381 + i) * 899)),
+      desc, cat,
+      amount: this.cur(1200 + Math.round(this.rnd(base + 390 + i) * (cat === "Salaries" ? 300 : 40)) * 1000),
+    }));
+
+    return {
+      navItems: nav,
+      filters,
+      resetFilters: () => this.setState({ session: "2026–27", range: "This month", cls: "All classes", payStatus: "All statuses", fromDate: "2026-07-01", toDate: "2026-07-15" }),
+      isCustomRange: s.range === "Custom range",
+      fromDate: s.fromDate,
+      toDate: s.toDate,
+      onFromDate: e => this.setState({ fromDate: e.target.value }),
+      onToDate: e => this.setState({ toDate: e.target.value }),
+      tabs,
+      sessionLabel: "session " + s.session,
+      isOverview: s.tab === "overview",
+      isFees: s.tab === "fees",
+      isAttendance: s.tab === "attendance",
+      isExams: s.tab === "exams",
+      isAdmissions: s.tab === "admissions",
+      isExpenses: s.tab === "expenses",
+
+      onExportPdf: () => this.showToast("Preparing PDF report — it will download shortly"),
+      onExportExcel: () => this.showToast("Exporting to Excel — it will download shortly"),
+      onPrint: () => this.showToast("Sending report to printer…"),
+
+      kpis, monthBars, attSnapshot, duesRows,
+      teachersToday: (34 + Math.round(this.rnd(base + 9) * 8)) + " / 46",
+      goFees: () => this.setState({ tab: "fees" }),
+
+      feeKpis, feeRows,
+      feeScopeLabel: s.cls + " · " + rangeLabel + " · " + s.payStatus.toLowerCase(),
+
+      setAttStudents: () => this.setState({ attMode: "students" }),
+      setAttTeachers: () => this.setState({ attMode: "teachers" }),
+      attStudentsBorder: chip(isStudents).border, attStudentsBg: chip(isStudents).bg, attStudentsColor: chip(isStudents).color,
+      attTeachersBorder: chip(!isStudents).border, attTeachersBg: chip(!isStudents).bg, attTeachersColor: chip(!isStudents).color,
+      attChartTitle: isStudents ? "Student attendance" : "Teacher attendance",
+      attTableTitle: isStudents ? "By class" : "By teacher",
+      attColLabel: isStudents ? "Class" : "Teacher",
+      attBars, attRows,
+
+      examChips, gradeRows, examRows,
+      examLabel: examNames[s.exam],
+
+      admKpis, admBars, admRows,
+      expKpis, expCats, expRows,
+
+      toastVisible: s.toastVisible,
+      toastMsg: s.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Geist", -apple-system, sans-serif; background: #f7f7f8; color: #1b1b1f; -webkit-font-smoothing: antialiased; }
+  a { color: #7c3aed; text-decoration: none; }
+  a:hover { color: #6d28d9; }
+  input::placeholder { color: #9a9aa3; }
+  @keyframes popIn { from { opacity: 0; transform: translateY(-6px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #e2e2e6; border-radius: 8px; }
+</style>
+</helmet>
+
+<div data-screen-label="Branch Switcher" style="display:grid; grid-template-columns:256px 1fr; min-height:100vh;">
+
+  <!-- ============ Sidebar ============ -->
+  <aside style="border-right:1px solid #ececef; background:#ffffff; display:flex; flex-direction:column; position:sticky; top:0; height:100vh;">
+    <div style="position:relative; padding:12px 12px 10px; border-bottom:1px solid #ececef;">
+      <button onClick="{{ togglePopup }}" style="display:flex; align-items:center; gap:11px; width:100%; padding:8px 9px; border:1px solid {{ triggerBorder }}; border-radius:12px; background:{{ triggerBg }}; cursor:pointer; font-family:inherit; text-align:left;" style-hover="border-color:#d7c9f8; background:#fbfaff;">
+        <span style="width:38px; height:38px; border-radius:11px; background:{{ curColor }}; color:#fff; display:grid; place-items:center; font-size:14px; font-weight:700; flex:none; box-shadow:0 2px 8px rgba(16,16,20,0.16);">{{ curInitials }}</span>
+        <span style="min-width:0; flex:1; display:flex; flex-direction:column; gap:1px;">
+          <span style="font-size:14px; font-weight:600; color:#1b1b1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ curName }}</span>
+          <span style="font-size:11.5px; color:#9a9aa3; font-weight:500;">School MS</span>
+        </span>
+        <span style="width:24px; height:24px; border-radius:7px; display:grid; place-items:center; color:#71717a; flex:none; background:#f4f4f5;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"></path></svg>
+        </span>
+      </button>
+
+      <!-- Branch popup -->
+      <sc-if value="{{ popupOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed; inset:0; z-index:49;" onClick="{{ closePopup }}"></div>
+        <div style="position:absolute; top:calc(100% - 4px); left:12px; width:340px; background:#fff; border:1px solid #ececef; border-radius:16px; box-shadow:0 12px 40px rgba(16,16,20,0.14), 0 2px 8px rgba(16,16,20,0.06); z-index:50; animation:popIn 0.16s ease; overflow:hidden;">
+            <!-- search -->
+            <div style="padding:12px 12px 8px;">
+              <div style="position:relative; display:flex; align-items:center;">
+                <svg style="position:absolute; left:11px;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+                <input placeholder="Search branches…" value="{{ query }}" onChange="{{ onQuery }}" ref="{{ searchRef }}" style="width:100%; height:38px; border:1px solid #e2e2e6; border-radius:10px; padding:0 12px 0 34px; font-size:13.5px; font-family:inherit; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+              </div>
+            </div>
+
+            <div style="max-height:380px; overflow-y:auto; padding:0 8px 8px;">
+              <!-- Recent -->
+              <sc-if value="{{ showRecent }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase; padding:8px 10px 5px;">Recently used</div>
+                <sc-for list="{{ recentList }}" as="b" hint-placeholder-count="2">
+                  <div onClick="{{ b.select }}" style="display:flex; align-items:center; gap:11px; padding:8px 10px; border-radius:10px; cursor:pointer; background:{{ b.bg }};" style-hover="background:#f4f4f5;">
+                    <span style="width:32px; height:32px; border-radius:9px; background:{{ b.color }}; color:#fff; display:grid; place-items:center; font-size:12.5px; font-weight:700; flex:none;">{{ b.initials }}</span>
+                    <span style="min-width:0; flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:13.5px; font-weight:600; color:#1b1b1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ b.name }}</span>
+                      <span style="font-size:12px; color:#71717a; font-family:'Noto Sans Bengali','Geist',sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ b.nameBn }}</span>
+                    </span>
+                    <sc-if value="{{ b.isCurrent }}" hint-placeholder-val="{{ false }}">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </sc-if>
+
+              <!-- All -->
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase; padding:10px 10px 5px; display:flex; justify-content:space-between;"><span>{{ allLabel }}</span><span style="font-weight:500;">{{ countLabel }}</span></div>
+              <sc-for list="{{ branchList }}" as="b" hint-placeholder-count="6">
+                <div onClick="{{ b.select }}" style="display:flex; align-items:center; gap:11px; padding:8px 10px; border-radius:10px; cursor:pointer; background:{{ b.bg }};" style-hover="background:#f4f4f5;">
+                  <span style="width:32px; height:32px; border-radius:9px; background:{{ b.color }}; color:#fff; display:grid; place-items:center; font-size:12.5px; font-weight:700; flex:none;">{{ b.initials }}</span>
+                  <span style="min-width:0; flex:1; display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-size:13.5px; font-weight:600; color:#1b1b1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ b.name }}</span>
+                    <span style="font-size:12px; color:#71717a; font-family:'Noto Sans Bengali','Geist',sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ b.nameBn }}</span>
+                  </span>
+                  <sc-if value="{{ b.isCurrent }}" hint-placeholder-val="{{ false }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:22px 10px; text-align:center; color:#9a9aa3; font-size:13.5px;">No branches match “{{ query }}”</div>
+              </sc-if>
+            </div>
+
+            <!-- footer -->
+            <div style="border-top:1px solid #ececef; padding:8px;">
+              <button onClick="{{ openModal }}" style="display:flex; align-items:center; gap:10px; width:100%; padding:9px 10px; border:none; border-radius:10px; background:transparent; cursor:pointer; font-family:inherit; color:#7c3aed; font-size:13.5px; font-weight:600;" style-hover="background:#f3effe;">
+                <span style="width:32px; height:32px; border-radius:9px; border:1.5px dashed #c9b3f5; display:grid; place-items:center; flex:none;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                </span>
+                Create new branch
+              </button>
+            </div>
+        </div>
+      </sc-if>
+    </div>
+    <nav style="padding:8px 14px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+      <sc-for list="{{ navItems }}" as="nv" hint-placeholder-count="8">
+        <sc-if value="{{ nv.isLabel }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#9a9aa3; text-transform:uppercase; padding:14px 10px 6px;">{{ nv.label }}</div>
+        </sc-if>
+        <sc-if value="{{ nv.isItem }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; gap:12px; padding:9px 11px; border-radius:10px; color:{{ nv.color }}; background:{{ nv.bg }}; font-size:14.5px; font-weight:{{ nv.weight }}; cursor:pointer;" style-hover="background:#f4f4f5;">
+            <span style="display:grid; place-items:center; width:19px; height:19px;">{{ nv.icon }}</span>
+            <span>{{ nv.label }}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </nav>
+    <div style="flex:1;"></div>
+    <div style="display:flex; align-items:center; gap:10px; padding:14px 22px; color:#9a9aa3; font-size:13.5px; border-top:1px solid #ececef; cursor:pointer;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path></svg>
+      Collapse
+    </div>
+  </aside>
+
+  <!-- ============ Main ============ -->
+  <div style="display:flex; flex-direction:column; min-width:0;">
+
+    <!-- Topbar -->
+    <header style="height:68px; border-bottom:1px solid #ececef; background:rgba(247,247,248,0.86); backdrop-filter:blur(8px); display:flex; align-items:center; gap:14px; padding:0 26px; position:sticky; top:0; z-index:40;">
+      <div style="flex:1; max-width:540px; margin:0 auto; position:relative; display:flex; align-items:center;">
+        <svg style="position:absolute; left:13px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input placeholder="Search…" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; padding:0 46px 0 38px; font-size:14px; font-family:inherit; outline:none; color:#1b1b1f;">
+        <span style="position:absolute; right:11px; font-size:11px; color:#9a9aa3; border:1px solid #ececef; border-radius:6px; padding:2px 6px; background:#fafafa; font-family:'Geist Mono',monospace;">⌘K</span>
+      </div>
+
+      <button style="width:40px; height:40px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; display:grid; place-items:center; cursor:pointer; position:relative;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+        <span style="position:absolute; top:9px; right:10px; width:8px; height:8px; border-radius:50%; background:#f87171; border:1.5px solid #fff;"></span>
+      </button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:36px; height:36px; border-radius:50%; background:linear-gradient(160deg,#475569,#1e293b); color:#fff; display:grid; place-items:center; font-size:13px; font-weight:600;">HR</span>
+        <span style="font-size:15px; font-weight:500;">Hasinur Rahman</span>
+      </div>
+    </header>
+
+    <!-- Page content (changes per branch) -->
+    <main style="padding:30px 34px; display:flex; flex-direction:column; gap:22px;">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h1 style="font-size:26px; font-weight:700; letter-spacing:-0.02em;">Payments</h1>
+            <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:99px; background:#f3effe; border:1px solid #e7defb; color:#7c3aed; font-size:12.5px; font-weight:600;">
+              <span style="width:7px; height:7px; border-radius:50%; background:{{ curColor }};"></span>{{ curName }}
+            </span>
+          </div>
+          <p style="color:#71717a; font-size:14.5px;">Every counter and online payment recorded against invoices for this branch.</p>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:760px;">
+        <sc-for list="{{ stats }}" as="st" hint-placeholder-count="3">
+          <div style="background:#fff; border:1px solid #ececef; border-radius:14px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,16,20,0.05); display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size:12.5px; font-weight:500; color:#71717a;">{{ st.label }}</span>
+            <span style="font-size:22px; font-weight:700; letter-spacing:-0.01em; font-family:'Geist Mono',monospace;">{{ st.value }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1.2fr 1.3fr 1.5fr 0.8fr 0.9fr 1fr; padding:13px 22px; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+          <span>Receipt</span><span>Student</span><span>Invoice</span><span>Status</span><span style="text-align:right;">Amount</span><span style="text-align:right;">Date</span>
+        </div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid; grid-template-columns:1.2fr 1.3fr 1.5fr 0.8fr 0.9fr 1fr; align-items:center; padding:15px 22px; border-bottom:1px solid #ececef; font-size:14px;">
+            <span style="font-family:'Geist Mono',monospace; font-size:12.5px; color:#71717a;">{{ r.receipt }}</span>
+            <span style="font-weight:600;">{{ r.student }}</span>
+            <span style="font-family:'Geist Mono',monospace; font-size:12.5px; color:#71717a;">{{ r.invoice }}</span>
+            <span><span style="display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:99px; font-size:12.5px; font-weight:600; background:{{ r.stBg }}; border:1px solid {{ r.stBorder }}; color:{{ r.stFg }};"><span style="width:6px; height:6px; border-radius:50%; background:{{ r.stDot }};"></span>{{ r.status }}</span></span>
+            <span style="text-align:right; font-weight:600; font-family:'Geist Mono',monospace; font-size:13.5px;">{{ r.amount }}</span>
+            <span style="text-align:right; color:#71717a;">{{ r.date }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ Create branch modal ============ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(16,16,20,0.42); backdrop-filter:blur(3px); z-index:60; display:grid; place-items:center; animation:fadeIn 0.15s ease;" onClick="{{ onOverlayClick }}">
+      <div onClick="{{ stopProp }}" style="width:440px; max-width:92vw; background:#fff; border-radius:18px; box-shadow:0 24px 64px rgba(16,16,20,0.22); animation:modalIn 0.18s ease; overflow:hidden;">
+        <div style="padding:22px 24px 0; display:flex; align-items:flex-start; justify-content:space-between;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <h2 style="font-size:18px; font-weight:700; letter-spacing:-0.01em;">Create new branch</h2>
+            <p style="font-size:13.5px; color:#71717a;">The new branch gets its own students, fees and invoices.</p>
+          </div>
+          <button onClick="{{ closeModal }}" style="width:30px; height:30px; border:none; border-radius:8px; background:transparent; cursor:pointer; display:grid; place-items:center; color:#9a9aa3;" style-hover="background:#f4f4f5; color:#1b1b1f;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <div style="padding:20px 24px; display:flex; flex-direction:column; gap:16px;">
+          <!-- Logo -->
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="width:56px; height:56px; border-radius:14px; background:{{ draftColor }}; color:#fff; display:grid; place-items:center; font-size:20px; font-weight:700; flex:none; transition:background 0.2s;">{{ draftInitials }}</span>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <button style="align-self:flex-start; display:flex; align-items:center; gap:7px; padding:7px 12px; border:1px solid #e2e2e6; border-radius:9px; background:#fff; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>
+                Upload logo
+              </button>
+              <span style="font-size:12px; color:#9a9aa3;">PNG or JPG, square works best. Initials are used until then.</span>
+            </div>
+          </div>
+
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-size:13px; font-weight:600;">Branch name (English)</span>
+            <input placeholder="e.g. Uttara Campus" value="{{ draftName }}" onChange="{{ onDraftName }}" style="height:42px; border:1px solid #e2e2e6; border-radius:11px; padding:0 13px; font-size:14px; font-family:inherit; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+          </label>
+
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-size:13px; font-weight:600;">Branch name (বাংলা)</span>
+            <input placeholder="যেমন — উত্তরা ক্যাম্পাস" value="{{ draftNameBn }}" onChange="{{ onDraftNameBn }}" style="height:42px; border:1px solid #e2e2e6; border-radius:11px; padding:0 13px; font-size:14px; font-family:'Noto Sans Bengali','Geist',sans-serif; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+          </label>
+        </div>
+
+        <div style="padding:16px 24px 22px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #ececef;">
+          <button onClick="{{ closeModal }}" style="height:40px; padding:0 16px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">Cancel</button>
+          <button onClick="{{ createBranch }}" style="height:40px; padding:0 18px; border:none; border-radius:11px; background:{{ createBtnBg }}; cursor:{{ createBtnCursor }}; font-family:inherit; font-size:14px; font-weight:600; color:#fff; box-shadow:0 2px 8px rgba(124,58,237,0.28);" style-hover="background:#6d28d9;">Create branch</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Toast -->
+  <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:70; background:#1b1b1f; color:#fff; border-radius:12px; padding:11px 18px; font-size:13.5px; font-weight:500; box-shadow:0 8px 30px rgba(16,16,20,0.3); display:flex; align-items:center; gap:9px; animation:modalIn 0.2s ease;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const palette = ["#7c3aed","#0f766e","#b45309","#be185d","#1d4ed8","#15803d","#c2410c","#4338ca","#a21caf","#0e7490"];
+    const namesEn = ["Madani PathShala","Banani Campus","Rampura 45 Branch","Mirpur DOHS Campus","Uttara Sector 7","Dhanmondi Girls Wing","Mohammadpur Campus","Badda Link Road","Khilgaon Taltola","Gulshan 2 Campus","Bashundhara Block C","Motijheel Boys Wing","Wari Campus","Tejgaon Industrial","Shyamoli Ring Road","Cantonment Campus","Jatrabari South","Savar Bazar Road","Tongi Station Road","Narayanganj Chashara","Keraniganj Model Town","Demra Staff Quarter","Malibagh Chowdhurypara","Farmgate Campus","Panthapath Wing"];
+    const namesBn = ["মাদানী পাঠশালা","বনানী ক্যাম্পাস","রামপুরা ৪৫ শাখা","মিরপুর ডিওএইচএস ক্যাম্পাস","উত্তরা সেক্টর ৭","ধানমন্ডি গার্লস উইং","মোহাম্মদপুর ক্যাম্পাস","বাড্ডা লিংক রোড","খিলগাঁও তালতলা","গুলশান ২ ক্যাম্পাস","বসুন্ধরা ব্লক সি","মতিঝিল বয়েজ উইং","ওয়ারী ক্যাম্পাস","তেজগাঁও ইন্ডাস্ট্রিয়াল","শ্যামলী রিং রোড","ক্যান্টনমেন্ট ক্যাম্পাস","যাত্রাবাড়ী সাউথ","সাভার বাজার রোড","টঙ্গী স্টেশন রোড","নারায়ণগঞ্জ চাষাড়া","কেরানীগঞ্জ মডেল টাউন","ডেমরা স্টাফ কোয়ার্টার","মালিবাগ চৌধুরীপাড়া","ফার্মগেট ক্যাম্পাস","পান্থপথ উইং"];
+    const branches = namesEn.map((n, i) => ({
+      id: i, name: n, nameBn: namesBn[i],
+      code: this.makeCode(n), color: palette[i % palette.length],
+    }));
+    this.state = {
+      branches,
+      currentId: 0,
+      recentIds: [2, 4],
+      popupOpen: false,
+      modalOpen: false,
+      query: "",
+      draftName: "",
+      draftNameBn: "",
+      toastMsg: "",
+      toastVisible: false,
+    };
+    this.searchRef = React.createRef();
+  }
+
+  makeCode(name) {
+    return name.split(/\s+/).map(w => w[0]).join("").toUpperCase().slice(0, 3);
+  }
+
+  initials(name) {
+    return name.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  }
+
+  selectBranch(id) {
+    this.setState(s => {
+      const recentIds = [s.currentId, ...s.recentIds.filter(r => r !== s.currentId && r !== id)].slice(0, 3);
+      return { currentId: id, recentIds, popupOpen: false, query: "" };
+    });
+    const b = this.state.branches.find(x => x.id === id);
+    this.showToast("Switched to " + b.name + " — all data now shows this branch");
+  }
+
+  showToast(msg) {
+    clearTimeout(this._toastT);
+    this.setState({ toastMsg: msg, toastVisible: true });
+    this._toastT = setTimeout(() => this.setState({ toastVisible: false }), 2600);
+  }
+
+  branchRow(b, cur) {
+    return {
+      name: b.name, nameBn: b.nameBn, color: b.color,
+      initials: this.initials(b.name),
+      isCurrent: b.id === cur,
+      bg: b.id === cur ? "#f3effe" : "transparent",
+      select: () => this.selectBranch(b.id),
+    };
+  }
+
+  seededRows(b) {
+    const students = ["Leonor Purdy","Humberto Pacocha III","Devyn Bergstrom","Md. Hasinur Rahman","Ayesha Siddiqua","Rafiul Karim"];
+    const statuses = [
+      { status: "Paid", stBg: "#e9f8ee", stBorder: "#cdeed7", stFg: "#15803d", stDot: "#22c55e" },
+      { status: "Pending", stBg: "#fff2e8", stBorder: "#fbdcc4", stFg: "#c2410c", stDot: "#f97316" },
+    ];
+    const rows = [];
+    for (let i = 0; i < 6; i++) {
+      const seed = (b.id * 7 + i * 13) % 97;
+      const st = statuses[seed % 5 === 0 ? 1 : 0];
+      const paid = st.status === "Paid";
+      rows.push({
+        receipt: paid ? "RCPT-" + b.code + "-" + String(160 + b.id * 3 + i).padStart(6, "0") : "—",
+        student: students[(seed + i) % students.length],
+        invoice: "INV-" + b.code + "-2026" + String((seed % 6) + 1).padStart(2, "0") + "-" + String(190 + seed).padStart(4, "0"),
+        amount: "৳" + (1800 + (seed % 4) * 200).toLocaleString("en-US") + ".00",
+        date: paid ? ((seed % 27) + 1) + " Jul 2026" : "—",
+        ...st,
+      });
+    }
+    return rows;
+  }
+
+  navIcon(d) {
+    return React.createElement("svg", { width: 19, height: 19, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d }));
+  }
+
+  componentDidUpdate() {
+    const open = this.state.popupOpen;
+    if (open && !this._wasOpen && this.searchRef.current) this.searchRef.current.focus();
+    this._wasOpen = open;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const cur = s.branches.find(b => b.id === s.currentId);
+    const q = s.query.trim().toLowerCase();
+    const matches = s.branches.filter(b => !q || b.name.toLowerCase().includes(q) || b.nameBn.includes(s.query.trim()));
+    const recent = q ? [] : s.recentIds.map(id => s.branches.find(b => b.id === id)).filter(Boolean);
+    const recentSet = new Set(recent.map(b => b.id));
+    const all = matches.filter(b => !recentSet.has(b.id));
+    const canCreate = s.draftName.trim().length > 0;
+    const seed = cur.id;
+
+    const nav = [
+      { isItem: true, label: "Academic", icon: this.navIcon("M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z") },
+      { isItem: true, label: "Attendance", icon: this.navIcon("M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z") },
+      { isItem: true, label: "Exams", icon: this.navIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2") },
+      { isItem: true, label: "Results", icon: this.navIcon("M12 15a7 7 0 100-14 7 7 0 000 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1") },
+      { isLabel: true, label: "Finance" },
+      { isItem: true, label: "Fees", icon: this.navIcon("M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6") },
+      { isItem: true, label: "Invoices", icon: this.navIcon("M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8") },
+      { isItem: true, label: "Payments", active: true, icon: this.navIcon("M21 8H3m18 0a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2v-8a2 2 0 012-2m18 0V6a2 2 0 00-2-2H5a2 2 0 00-2 2v2") },
+      { isLabel: true, label: "Administration" },
+      { isItem: true, label: "Reports", icon: this.navIcon("M3 3v18h18M18 17V9M13 17V5M8 17v-3") },
+      { isItem: true, label: "Settings", icon: this.navIcon("M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L14.8 3h-4l-.4 2.6a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 001.7 1l.4 2.4h4l.4-2.4a7.4 7.4 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z") },
+    ].map(n => ({
+      ...n,
+      color: n.active ? "#7c3aed" : "#71717a",
+      bg: n.active ? "#f3effe" : "transparent",
+      weight: n.active ? 600 : 500,
+    }));
+
+    return {
+      navItems: nav,
+      curName: cur.name,
+      curInitials: this.initials(cur.name),
+      curColor: cur.color,
+      triggerBorder: s.popupOpen ? "#c9b3f5" : "#e2e2e6",
+      triggerBg: s.popupOpen ? "#fbfaff" : "#ffffff",
+      popupOpen: s.popupOpen,
+      togglePopup: () => this.setState(st => ({ popupOpen: !st.popupOpen, query: "" })),
+      closePopup: () => this.setState({ popupOpen: false }),
+      searchRef: this.searchRef,
+      query: s.query,
+      onQuery: e => this.setState({ query: e.target.value }),
+      showRecent: recent.length > 0,
+      recentList: recent.map(b => this.branchRow(b, s.currentId)),
+      branchList: all.map(b => this.branchRow(b, s.currentId)),
+      allLabel: q ? "Results" : "All branches",
+      countLabel: String(q ? matches.length : s.branches.length),
+      noResults: q.length > 0 && matches.length === 0,
+
+      modalOpen: s.modalOpen,
+      openModal: () => this.setState({ modalOpen: true, popupOpen: false, draftName: "", draftNameBn: "" }),
+      closeModal: () => this.setState({ modalOpen: false }),
+      onOverlayClick: () => this.setState({ modalOpen: false }),
+      stopProp: e => e.stopPropagation(),
+      draftName: s.draftName,
+      draftNameBn: s.draftNameBn,
+      onDraftName: e => this.setState({ draftName: e.target.value }),
+      onDraftNameBn: e => this.setState({ draftNameBn: e.target.value }),
+      draftInitials: canCreate ? this.initials(s.draftName.trim()) : "?",
+      draftColor: canCreate ? "#7c3aed" : "#d4d4d8",
+      createBtnBg: canCreate ? "#7c3aed" : "#c9b3f5",
+      createBtnCursor: canCreate ? "pointer" : "not-allowed",
+      createBranch: () => {
+        if (!this.state.draftName.trim()) return;
+        const palette = ["#7c3aed","#0f766e","#b45309","#be185d","#1d4ed8","#15803d","#c2410c","#4338ca","#a21caf","#0e7490"];
+        const name = this.state.draftName.trim();
+        const nb = this.state.branches;
+        const branch = { id: nb.length, name, nameBn: this.state.draftNameBn.trim() || name, code: this.makeCode(name), color: palette[nb.length % palette.length] };
+        this.setState(st => ({
+          branches: [...st.branches, branch],
+          recentIds: [st.currentId, ...st.recentIds.filter(r => r !== st.currentId)].slice(0, 3),
+          currentId: branch.id,
+          modalOpen: false,
+        }));
+        this.showToast("Branch “" + name + "” created — you are now in it");
+      },
+
+      stats: [
+        { label: "Collected this month", value: "৳" + ((seed % 9 + 3) * 48200).toLocaleString("en-US") },
+        { label: "Pending invoices", value: String(seed % 14 + 4) },
+        { label: "Active students", value: String(240 + (seed * 37) % 460) },
+      ],
+      rows: this.seededRows(cur),
+
+      toastVisible: s.toastVisible,
+      toastMsg: s.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

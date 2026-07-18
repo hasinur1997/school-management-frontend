@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Geist", -apple-system, sans-serif; background: #f7f7f8; color: #1b1b1f; -webkit-font-smoothing: antialiased; }
+  a { color: #7c3aed; text-decoration: none; }
+  a:hover { color: #6d28d9; }
+  input::placeholder, textarea::placeholder { color: #9a9aa3; }
+  select { appearance: none; -webkit-appearance: none; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #e2e2e6; border-radius: 8px; }
+</style>
+</helmet>
+
+<div data-screen-label="Settings" style="display:grid; grid-template-columns:256px 1fr; min-height:100vh;">
+
+  <!-- Sidebar -->
+  <aside style="border-right:1px solid #ececef; background:#ffffff; display:flex; flex-direction:column; position:sticky; top:0; height:100vh;">
+    <div style="padding:12px 12px 10px; border-bottom:1px solid #ececef;">
+      <button style="display:flex; align-items:center; gap:11px; width:100%; padding:8px 9px; border:1px solid #e2e2e6; border-radius:12px; background:#ffffff; cursor:pointer; font-family:inherit; text-align:left;" style-hover="border-color:#d7c9f8; background:#fbfaff;">
+        <span style="width:38px; height:38px; border-radius:11px; background:#7c3aed; color:#fff; display:grid; place-items:center; font-size:14px; font-weight:700; flex:none; box-shadow:0 2px 8px rgba(16,16,20,0.16);">MP</span>
+        <span style="min-width:0; flex:1; display:flex; flex-direction:column; gap:1px;">
+          <span style="font-size:14px; font-weight:600; color:#1b1b1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Madani PathShala</span>
+          <span style="font-size:11.5px; color:#9a9aa3; font-weight:500;">School MS</span>
+        </span>
+        <span style="width:24px; height:24px; border-radius:7px; display:grid; place-items:center; color:#71717a; flex:none; background:#f4f4f5;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"></path></svg>
+        </span>
+      </button>
+    </div>
+    <nav style="padding:8px 14px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+      <sc-for list="{{ navItems }}" as="nv" hint-placeholder-count="8">
+        <sc-if value="{{ nv.isLabel }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#9a9aa3; text-transform:uppercase; padding:14px 10px 6px;">{{ nv.label }}</div>
+        </sc-if>
+        <sc-if value="{{ nv.isItem }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; gap:12px; padding:9px 11px; border-radius:10px; color:{{ nv.color }}; background:{{ nv.bg }}; font-size:14.5px; font-weight:{{ nv.weight }}; cursor:pointer;" style-hover="background:#f4f4f5;">
+            <span style="display:grid; place-items:center; width:19px; height:19px;">{{ nv.icon }}</span>
+            <span>{{ nv.label }}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </nav>
+    <div style="flex:1;"></div>
+    <div style="display:flex; align-items:center; gap:10px; padding:14px 22px; color:#9a9aa3; font-size:13.5px; border-top:1px solid #ececef; cursor:pointer;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path></svg>
+      Collapse
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div style="display:flex; flex-direction:column; min-width:0;">
+    <header style="height:68px; border-bottom:1px solid #ececef; background:rgba(247,247,248,0.86); backdrop-filter:blur(8px); display:flex; align-items:center; gap:14px; padding:0 26px; position:sticky; top:0; z-index:40;">
+      <div style="flex:1; max-width:540px; margin:0 auto; position:relative; display:flex; align-items:center;">
+        <svg style="position:absolute; left:13px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input placeholder="Search…" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; padding:0 46px 0 38px; font-size:14px; font-family:inherit; outline:none; color:#1b1b1f;">
+        <span style="position:absolute; right:11px; font-size:11px; color:#9a9aa3; border:1px solid #ececef; border-radius:6px; padding:2px 6px; background:#fafafa; font-family:'Geist Mono',monospace;">⌘K</span>
+      </div>
+      <button style="width:40px; height:40px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; display:grid; place-items:center; cursor:pointer; position:relative;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 01-3.4 0"></path></svg>
+        <span style="position:absolute; top:9px; right:10px; width:8px; height:8px; border-radius:50%; background:#f87171; border:1.5px solid #fff;"></span>
+      </button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:36px; height:36px; border-radius:50%; background:linear-gradient(160deg,#475569,#1e293b); color:#fff; display:grid; place-items:center; font-size:13px; font-weight:600;">HR</span>
+        <span style="font-size:15px; font-weight:500;">Hasinur Rahman</span>
+      </div>
+    </header>
+
+    <main style="padding:30px 34px 60px; display:flex; flex-direction:column; gap:20px;">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <h1 style="font-size:26px; font-weight:700; letter-spacing:-0.02em;">Settings</h1>
+          <p style="color:#71717a; font-size:14.5px;">School profile, academic sessions, billing rules, notifications and user access.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px;">
+          <button onClick="{{ onDiscard }}" style="height:38px; padding:0 14px; border:1px solid #e2e2e6; border-radius:11px; background:#fff; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">Discard changes</button>
+          <button onClick="{{ onSave }}" style="display:flex; align-items:center; gap:8px; height:38px; padding:0 16px; border:none; border-radius:11px; background:#7c3aed; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:600; color:#fff; box-shadow:0 2px 8px rgba(124,58,237,0.28);" style-hover="background:#6d28d9;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"></path></svg>
+            Save changes
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:216px 1fr; gap:24px; align-items:start;">
+        <!-- Settings nav -->
+        <nav style="display:flex; flex-direction:column; gap:2px; position:sticky; top:98px;">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+            <button onClick="{{ t.select }}" style="display:flex; align-items:center; gap:11px; padding:9px 12px; border:none; border-radius:10px; background:{{ t.bg }}; color:{{ t.color }}; cursor:pointer; font-family:inherit; font-size:14px; font-weight:{{ t.weight }}; text-align:left;" style-hover="background:#f4f4f5;">
+              <span style="display:grid; place-items:center; width:18px; height:18px;">{{ t.icon }}</span>
+              {{ t.label }}
+            </button>
+          </sc-for>
+        </nav>
+
+        <!-- Panels -->
+        <div style="display:flex; flex-direction:column; gap:16px; max-width:760px; min-width:0;">
+
+          <!-- ============ SCHOOL PROFILE ============ -->
+          <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; gap:16px; animation:fadeIn 0.2s ease;">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">School profile</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">Shown on invoices, receipts, ID cards and certificates.</span>
+                </div>
+                <div style="padding:20px 22px; display:flex; flex-direction:column; gap:18px;">
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <img src="logo.jpeg" alt="School logo" style="width:64px; height:64px; border-radius:14px; object-fit:cover; border:1px solid #ececef;">
+                    <div style="display:flex; flex-direction:column; gap:7px;">
+                      <div style="display:flex; gap:8px;">
+                        <button onClick="{{ onUploadLogo }}" style="height:32px; padding:0 12px; border:1px solid #e2e2e6; border-radius:9px; background:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">Upload new</button>
+                        <button onClick="{{ onRemoveLogo }}" style="height:32px; padding:0 12px; border:none; border-radius:9px; background:transparent; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#c2410c;" style-hover="background:#fff2e8;">Remove</button>
+                      </div>
+                      <span style="font-size:12px; color:#9a9aa3;">PNG or JPG, at least 256×256. Used on all printed documents.</span>
+                    </div>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 16px;">
+                    <label style="display:flex; flex-direction:column; gap:6px;">
+                      <span style="font-size:12.5px; font-weight:600; color:#71717a;">School name</span>
+                      <input value="{{ schoolName }}" onChange="{{ setSchoolName }}" style="height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 12px; font-size:14px; font-family:inherit; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                    </label>
+                    <label style="display:flex; flex-direction:column; gap:6px;">
+                      <span style="font-size:12.5px; font-weight:600; color:#71717a;">Name in Bangla</span>
+                      <input value="{{ schoolNameBn }}" onChange="{{ setSchoolNameBn }}" style="height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 12px; font-size:14px; font-family:'Noto Sans Bengali','Geist',sans-serif; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                    </label>
+                    <label style="display:flex; flex-direction:column; gap:6px;">
+                      <span style="font-size:12.5px; font-weight:600; color:#71717a;">EIIN number</span>
+                      <input value="{{ eiin }}" onChange="{{ setEiin }}" style="height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 12px; font-size:14px; font-family:'Geist Mono',monospace; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                    </label>
+                    <label style="display:flex; flex-direction:column; gap:6px;">
+                      <span style="font-size:12.5px; font-weight:600; color:#71717a;">Phone</span>
+                      <input value="{{ phone }}" onChange="{{ setPhone }}" style="height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 12px; font-size:14px; font-family:'Geist Mono',monospace; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                    </label>
+                    <label style="display:flex; flex-direction:column; gap:6px; grid-column:1 / -1;">
+                      <span style="font-size:12.5px; font-weight:600; color:#71717a;">Address</span>
+                      <input value="{{ address }}" onChange="{{ setAddress }}" style="height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 12px; font-size:14px; font-family:inherit; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Branches</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">Each branch keeps its own students, fees and reports.</span>
+                </div>
+                <sc-for list="{{ branches }}" as="b" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid #ececef;" style-hover="background:#fafafa;">
+                    <span style="width:36px; height:36px; border-radius:10px; background:{{ b.chipBg }}; color:{{ b.chipFg }}; display:grid; place-items:center; font-size:12.5px; font-weight:700; flex:none;">{{ b.initials }}</span>
+                    <span style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:14px; font-weight:600;">{{ b.name }}</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">{{ b.meta }}</span>
+                    </span>
+                    <sc-if value="{{ b.isMain }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-flex; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; background:#f3effe; border:1px solid #e7defb; color:#7c3aed;">Main</span>
+                    </sc-if>
+                    <button style="border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#7c3aed;" style-hover="color:#6d28d9;">Manage</button>
+                  </div>
+                </sc-for>
+                <div style="padding:13px 22px;">
+                  <button onClick="{{ onAddBranch }}" style="display:flex; align-items:center; gap:7px; border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#7c3aed;" style-hover="color:#6d28d9;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                    Add branch
+                  </button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ ACADEMIC ============ -->
+          <sc-if value="{{ isAcademic }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:16px; animation:fadeIn 0.2s ease;">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Academic session</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">The active session applies to admissions, fees and results.</span>
+                </div>
+                <div style="padding:20px 22px; display:grid; grid-template-columns:1fr 1fr; gap:14px 16px;">
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Active session</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ session }}" onChange="{{ setSession }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option value="2024–25">2024–25</option><option value="2025–26">2025–26</option><option value="2026–27">2026–27</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Session starts</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ sessionStart }}" onChange="{{ setSessionStart }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option>January</option><option>April</option><option>July</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Weekly holiday</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ weeklyHoliday }}" onChange="{{ setWeeklyHoliday }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option>Friday</option><option>Friday + Saturday</option><option>Sunday</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Grading system</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ grading }}" onChange="{{ setGrading }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option>GPA 5.0 (NCTB)</option><option>Percentage</option><option>Letter grades only</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; align-items:center; justify-content:space-between;">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="font-size:15px; font-weight:700;">Classes</span>
+                    <span style="font-size:12.5px; color:#9a9aa3;">Classes offered in the active session.</span>
+                  </div>
+                  <button onClick="{{ onAddClass }}" style="display:flex; align-items:center; gap:7px; height:32px; padding:0 12px; border:1px solid #e2e2e6; border-radius:9px; background:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#1b1b1f;" style-hover="background:#f4f4f5;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                    Add class
+                  </button>
+                </div>
+                <div style="padding:16px 22px; display:flex; flex-wrap:wrap; gap:8px;">
+                  <sc-for list="{{ classes }}" as="c" hint-placeholder-count="10">
+                    <span style="display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 8px 0 14px; border:1px solid #e2e2e6; border-radius:99px; background:#fafafa; font-size:13px; font-weight:600;">
+                      {{ c.name }}
+                      <span style="font-size:11.5px; font-weight:500; color:#9a9aa3;">{{ c.sections }}</span>
+                    </span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ FEES & BILLING ============ -->
+          <sc-if value="{{ isBilling }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:16px; animation:fadeIn 0.2s ease;">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Invoicing</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">How monthly fee invoices are generated and numbered.</span>
+                </div>
+                <div style="padding:20px 22px; display:grid; grid-template-columns:1fr 1fr; gap:14px 16px;">
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Currency</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ currency }}" onChange="{{ setCurrency }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option value="৳">Bangladeshi Taka (৳)</option><option value="₹">Indian Rupee (₹)</option><option value="$">US Dollar ($)</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Invoice prefix</span>
+                    <input value="{{ invoicePrefix }}" onChange="{{ setInvoicePrefix }}" style="height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 12px; font-size:14px; font-family:'Geist Mono',monospace; outline:none; color:#1b1b1f;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Generate invoices on</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ genDay }}" onChange="{{ setGenDay }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option>1st of the month</option><option>5th of the month</option><option>10th of the month</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:6px;">
+                    <span style="font-size:12.5px; font-weight:600; color:#71717a;">Payment due within</span>
+                    <span style="position:relative; display:flex; align-items:center;">
+                      <select value="{{ dueDays }}" onChange="{{ setDueDays }}" style="width:100%; height:40px; border:1px solid #e2e2e6; border-radius:10px; background:#fff; padding:0 30px 0 12px; font-size:14px; font-weight:600; font-family:inherit; color:#1b1b1f; cursor:pointer; outline:none;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <option>7 days</option><option>10 days</option><option>15 days</option><option>30 days</option>
+                      </select>
+                      <svg style="position:absolute; right:10px; pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                    </span>
+                  </label>
+                </div>
+                <div style="padding:0 22px 20px; display:flex; flex-direction:column; gap:0;">
+                  <div style="display:flex; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #ececef;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <span style="font-size:14px; font-weight:600;">Late fee</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">Added automatically after the due date passes.</span>
+                    </span>
+                    <sc-if value="{{ lateFeeOn }}" hint-placeholder-val="{{ true }}">
+                      <span style="display:flex; align-items:center; gap:6px;">
+                        <input value="{{ lateFeeAmt }}" onChange="{{ setLateFeeAmt }}" style="width:74px; height:36px; border:1px solid #e2e2e6; border-radius:9px; background:#fff; padding:0 10px; font-size:13.5px; font-family:'Geist Mono',monospace; outline:none; color:#1b1b1f; text-align:right;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <span style="font-size:12.5px; color:#71717a; font-weight:600;">{{ currency }}</span>
+                      </span>
+                    </sc-if>
+                    <button onClick="{{ toggleLateFee }}" style="width:42px; height:24px; border:none; border-radius:99px; background:{{ lateFeeTrack }}; cursor:pointer; position:relative; transition:background 0.15s; flex:none;">
+                      <span style="position:absolute; top:3px; left:{{ lateFeeKnob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(16,16,20,0.25); transition:left 0.15s;"></span>
+                    </button>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #ececef;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <span style="font-size:14px; font-weight:600;">Sibling discount</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">Applied to the second and later children of a family.</span>
+                    </span>
+                    <sc-if value="{{ siblingOn }}" hint-placeholder-val="{{ true }}">
+                      <span style="display:flex; align-items:center; gap:6px;">
+                        <input value="{{ siblingPct }}" onChange="{{ setSiblingPct }}" style="width:58px; height:36px; border:1px solid #e2e2e6; border-radius:9px; background:#fff; padding:0 10px; font-size:13.5px; font-family:'Geist Mono',monospace; outline:none; color:#1b1b1f; text-align:right;" style-focus="border-color:#c9b3f5; box-shadow:0 0 0 3px #f3effe;">
+                        <span style="font-size:12.5px; color:#71717a; font-weight:600;">%</span>
+                      </span>
+                    </sc-if>
+                    <button onClick="{{ toggleSibling }}" style="width:42px; height:24px; border:none; border-radius:99px; background:{{ siblingTrack }}; cursor:pointer; position:relative; transition:background 0.15s; flex:none;">
+                      <span style="position:absolute; top:3px; left:{{ siblingKnob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(16,16,20,0.25); transition:left 0.15s;"></span>
+                    </button>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:14px; padding:14px 0 0; border-top:1px solid #ececef;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <span style="font-size:14px; font-weight:600;">Allow partial payments</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">Guardians can pay an invoice across several receipts.</span>
+                    </span>
+                    <button onClick="{{ togglePartial }}" style="width:42px; height:24px; border:none; border-radius:99px; background:{{ partialTrack }}; cursor:pointer; position:relative; transition:background 0.15s; flex:none;">
+                      <span style="position:absolute; top:3px; left:{{ partialKnob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(16,16,20,0.25); transition:left 0.15s;"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Payment methods</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">Methods accepted at the counter and shown on receipts.</span>
+                </div>
+                <sc-for list="{{ payMethods }}" as="p" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid #ececef;">
+                    <span style="width:36px; height:36px; border-radius:10px; background:{{ p.iconBg }}; color:{{ p.iconFg }}; display:grid; place-items:center; font-size:11px; font-weight:700; flex:none;">{{ p.abbr }}</span>
+                    <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:14px; font-weight:600;">{{ p.name }}</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">{{ p.desc }}</span>
+                    </span>
+                    <button onClick="{{ p.toggle }}" style="width:42px; height:24px; border:none; border-radius:99px; background:{{ p.track }}; cursor:pointer; position:relative; transition:background 0.15s; flex:none;">
+                      <span style="position:absolute; top:3px; left:{{ p.knob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(16,16,20,0.25); transition:left 0.15s;"></span>
+                    </button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ NOTIFICATIONS ============ -->
+          <sc-if value="{{ isNotifications }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:16px; animation:fadeIn 0.2s ease;">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">SMS to guardians</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">Sent to the guardian's phone number on file. {{ smsBalance }} SMS credits left.</span>
+                </div>
+                <sc-for list="{{ smsRules }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid #ececef;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:14px; font-weight:600;">{{ r.name }}</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">{{ r.desc }}</span>
+                    </span>
+                    <button onClick="{{ r.toggle }}" style="width:42px; height:24px; border:none; border-radius:99px; background:{{ r.track }}; cursor:pointer; position:relative; transition:background 0.15s; flex:none;">
+                      <span style="position:absolute; top:3px; left:{{ r.knob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(16,16,20,0.25); transition:left 0.15s;"></span>
+                    </button>
+                  </div>
+                </sc-for>
+                <div style="padding:13px 22px; display:flex; align-items:center; justify-content:space-between;">
+                  <span style="font-size:12.5px; color:#9a9aa3;">Sender ID: <span style="font-family:'Geist Mono',monospace; color:#71717a; font-weight:600;">MADANI-PS</span></span>
+                  <button onClick="{{ onBuyCredits }}" style="height:32px; padding:0 12px; border:1px solid #e2e2e6; border-radius:9px; background:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#7c3aed;" style-hover="background:#f3effe;">Buy credits</button>
+                </div>
+              </div>
+
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Staff alerts</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">In-app notifications for admins and teachers.</span>
+                </div>
+                <sc-for list="{{ staffRules }}" as="r" hint-placeholder-count="3">
+                  <div style="display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid #ececef;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:14px; font-weight:600;">{{ r.name }}</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">{{ r.desc }}</span>
+                    </span>
+                    <button onClick="{{ r.toggle }}" style="width:42px; height:24px; border:none; border-radius:99px; background:{{ r.track }}; cursor:pointer; position:relative; transition:background 0.15s; flex:none;">
+                      <span style="position:absolute; top:3px; left:{{ r.knob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(16,16,20,0.25); transition:left 0.15s;"></span>
+                    </button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ============ USERS & ROLES ============ -->
+          <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:16px; animation:fadeIn 0.2s ease;">
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; align-items:center; justify-content:space-between;">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="font-size:15px; font-weight:700;">Users</span>
+                    <span style="font-size:12.5px; color:#9a9aa3;">People who can sign in to the management system.</span>
+                  </div>
+                  <button onClick="{{ onInvite }}" style="display:flex; align-items:center; gap:7px; height:34px; padding:0 13px; border:none; border-radius:10px; background:#7c3aed; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#fff; box-shadow:0 2px 8px rgba(124,58,237,0.28);" style-hover="background:#6d28d9;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                    Invite user
+                  </button>
+                </div>
+                <div style="display:grid; grid-template-columns:1.6fr 1fr 1fr 0.7fr; padding:10px 22px; border-bottom:1px solid #ececef; font-size:11.5px; font-weight:600; letter-spacing:0.07em; color:#9a9aa3; text-transform:uppercase;">
+                  <span>User</span><span>Role</span><span>Last active</span><span></span>
+                </div>
+                <sc-for list="{{ users }}" as="u" hint-placeholder-count="5">
+                  <div style="display:grid; grid-template-columns:1.6fr 1fr 1fr 0.7fr; align-items:center; padding:12px 22px; border-bottom:1px solid #ececef; font-size:13.5px;" style-hover="background:#fafafa;">
+                    <span style="display:flex; align-items:center; gap:11px; min-width:0;">
+                      <span style="width:34px; height:34px; border-radius:50%; background:{{ u.avatarBg }}; color:#fff; display:grid; place-items:center; font-size:12px; font-weight:600; flex:none;">{{ u.initials }}</span>
+                      <span style="min-width:0; display:flex; flex-direction:column; gap:0;">
+                        <span style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ u.name }}</span>
+                        <span style="font-size:12px; color:#9a9aa3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ u.phone }}</span>
+                      </span>
+                    </span>
+                    <span><span style="display:inline-flex; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; background:{{ u.roleBg }}; border:1px solid {{ u.roleBorder }}; color:{{ u.roleFg }};">{{ u.role }}</span></span>
+                    <span style="color:#71717a; font-size:12.5px;">{{ u.lastActive }}</span>
+                    <span style="text-align:right;"><button style="border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#7c3aed;" style-hover="color:#6d28d9;">Edit</button></span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px 14px; border-bottom:1px solid #ececef; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:15px; font-weight:700;">Roles</span>
+                  <span style="font-size:12.5px; color:#9a9aa3;">What each role can see and do.</span>
+                </div>
+                <sc-for list="{{ roles }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid #ececef;" style-hover="background:#fafafa;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:14px; font-weight:600;">{{ r.name }}</span>
+                      <span style="font-size:12.5px; color:#9a9aa3;">{{ r.desc }}</span>
+                    </span>
+                    <span style="font-size:12.5px; color:#71717a; font-family:'Geist Mono',monospace;">{{ r.count }}</span>
+                    <button style="border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; color:#7c3aed;" style-hover="color:#6d28d9;">Permissions</button>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="background:#fff; border:1px solid #fbdcc4; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+                <div style="padding:18px 22px; display:flex; align-items:center; gap:14px;">
+                  <span style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                    <span style="font-size:14px; font-weight:700; color:#c2410c;">Close academic session</span>
+                    <span style="font-size:12.5px; color:#9a9aa3;">Locks all records for {{ session }}. Reports stay available, but nothing can be edited.</span>
+                  </span>
+                  <button onClick="{{ onCloseSession }}" style="height:36px; padding:0 14px; border:1px solid #fbdcc4; border-radius:10px; background:#fff; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#c2410c;" style-hover="background:#fff2e8;">Close session…</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:70; background:#1b1b1f; color:#fff; border-radius:12px; padding:11px 18px; font-size:13.5px; font-weight:500; box-shadow:0 8px 30px rgba(16,16,20,0.3); display:flex; align-items:center; gap:9px; animation:fadeIn 0.2s ease;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+      {{ toastMsg }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultSection&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;profile&quot;, &quot;academic&quot;, &quot;billing&quot;, &quot;notifications&quot;, &quot;users&quot;], &quot;default&quot;: &quot;profile&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  state = {
+    tab: this.props.defaultSection ?? "profile",
+    schoolName: "Madani PathShala",
+    schoolNameBn: "মাদানী পাঠশালা",
+    eiin: "138274",
+    phone: "+880 1712-345678",
+    address: "House 14, Road 3, Mirpur-10, Dhaka 1216",
+    session: "2026–27",
+    sessionStart: "January",
+    weeklyHoliday: "Friday",
+    grading: "GPA 5.0 (NCTB)",
+    currency: "৳",
+    invoicePrefix: "INV-MP-",
+    genDay: "1st of the month",
+    dueDays: "10 days",
+    lateFeeOn: true, lateFeeAmt: "100",
+    siblingOn: true, siblingPct: "20",
+    partialOn: true,
+    pay: { cash: true, bkash: true, nagad: true, bank: false },
+    sms: { invoice: true, receipt: true, overdue: true, absent: false, result: true },
+    staff: { newAdmission: true, largeExpense: true, lowSms: false },
+    toastMsg: "", toastVisible: false,
+  };
+
+  showToast(msg) {
+    clearTimeout(this._t);
+    this.setState({ toastMsg: msg, toastVisible: true });
+    this._t = setTimeout(() => this.setState({ toastVisible: false }), 2400);
+  }
+
+  navIcon(d) {
+    return React.createElement("svg", { width: 19, height: 19, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d }));
+  }
+  tabIcon(d) {
+    return React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d }));
+  }
+  toggleParts(on) {
+    return { track: on ? "#7c3aed" : "#e2e2e6", knob: on ? "21px" : "3px" };
+  }
+  set(key) { return e => this.setState({ [key]: e.target.value }); }
+
+  renderVals() {
+    const s = this.state;
+
+    const nav = [
+      { isItem: true, label: "Academic", icon: this.navIcon("M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z") },
+      { isItem: true, label: "Attendance", icon: this.navIcon("M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z") },
+      { isItem: true, label: "Exams", icon: this.navIcon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2") },
+      { isItem: true, label: "Results", icon: this.navIcon("M12 15a7 7 0 100-14 7 7 0 000 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1") },
+      { isLabel: true, label: "Finance" },
+      { isItem: true, label: "Fees", icon: this.navIcon("M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6") },
+      { isItem: true, label: "Invoices", icon: this.navIcon("M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8") },
+      { isItem: true, label: "Payments", icon: this.navIcon("M21 8H3m18 0a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2v-8a2 2 0 012-2m18 0V6a2 2 0 00-2-2H5a2 2 0 00-2 2v2") },
+      { isLabel: true, label: "Administration" },
+      { isItem: true, label: "Reports", icon: this.navIcon("M3 3v18h18M18 17V9M13 17V5M8 17v-3") },
+      { isItem: true, label: "Settings", active: true, icon: this.navIcon("M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1l2-1.6-2-3.4-2.4 1a7.4 7.4 0 00-1.7-1L14.8 3h-4l-.4 2.6a7.4 7.4 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 001.7 1l.4 2.4h4l.4-2.4a7.4 7.4 0 001.7-1l2.4 1 2-3.4-2-1.6c.06-.33.1-.66.1-1z") },
+    ].map(n => ({
+      ...n,
+      color: n.active ? "#7c3aed" : "#71717a",
+      bg: n.active ? "#f3effe" : "transparent",
+      weight: n.active ? 600 : 500,
+    }));
+
+    const tabDefs = [
+      ["profile", "School profile", "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"],
+      ["academic", "Academic", "M22 10L12 5 2 10l10 5 10-5zM6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"],
+      ["billing", "Fees & billing", "M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"],
+      ["notifications", "Notifications", "M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"],
+      ["users", "Users & roles", "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"],
+    ];
+    const tabs = tabDefs.map(([id, label, d]) => ({
+      label, icon: this.tabIcon(d),
+      bg: s.tab === id ? "#f3effe" : "transparent",
+      color: s.tab === id ? "#7c3aed" : "#71717a",
+      weight: s.tab === id ? 600 : 500,
+      select: () => this.setState({ tab: id }),
+    }));
+
+    const branches = [
+      { name: "Mirpur-10 (Main campus)", meta: "742 students · 46 teachers", initials: "M10", isMain: true, chipBg: "#f3effe", chipFg: "#7c3aed" },
+      { name: "Pallabi branch", meta: "318 students · 21 teachers", initials: "PB", isMain: false, chipBg: "#f4f4f5", chipFg: "#71717a" },
+    ];
+
+    const classes = ["Play","Nursery","Class 1","Class 2","Class 3","Class 4","Class 5","Class 6","Class 7","Class 8"].map((name, i) => ({
+      name, sections: (i < 2 ? 1 : 2) + (i < 2 ? " section" : " sections"),
+    }));
+
+    const payDefs = [
+      ["cash", "CASH", "Cash", "Counter payments, recorded on money receipts", "#f4f4f5", "#71717a"],
+      ["bkash", "bK", "bKash", "Merchant account 01712-345678", "#fde7ef", "#d6246e"],
+      ["nagad", "NG", "Nagad", "Merchant account 01712-345678", "#fff2e8", "#c2410c"],
+      ["bank", "BNK", "Bank transfer", "Islami Bank, A/C 20501234567890123", "#e8f0fe", "#1d4ed8"],
+    ];
+    const payMethods = payDefs.map(([key, abbr, name, desc, iconBg, iconFg]) => ({
+      abbr, name, desc, iconBg, iconFg,
+      ...this.toggleParts(s.pay[key]),
+      toggle: () => this.setState({ pay: { ...s.pay, [key]: !s.pay[key] } }),
+    }));
+
+    const smsDefs = [
+      ["invoice", "Invoice generated", "When the monthly invoice is created"],
+      ["receipt", "Payment received", "Confirmation with receipt number and amount"],
+      ["overdue", "Overdue reminder", "3 days after the due date, then weekly"],
+      ["absent", "Student absent", "Same day, if the student is marked absent"],
+      ["result", "Result published", "GPA and grade when a result is published"],
+    ];
+    const smsRules = smsDefs.map(([key, name, desc]) => ({
+      name, desc,
+      ...this.toggleParts(s.sms[key]),
+      toggle: () => this.setState({ sms: { ...s.sms, [key]: !s.sms[key] } }),
+    }));
+
+    const staffDefs = [
+      ["newAdmission", "New admission", "When a student is admitted at any branch"],
+      ["largeExpense", "Large expense", "Any voucher above ৳20,000 needs a second approval"],
+      ["lowSms", "Low SMS balance", "When credits fall below 200"],
+    ];
+    const staffRules = staffDefs.map(([key, name, desc]) => ({
+      name, desc,
+      ...this.toggleParts(s.staff[key]),
+      toggle: () => this.setState({ staff: { ...s.staff, [key]: !s.staff[key] } }),
+    }));
+
+    const roleStyle = {
+      "Admin": ["#f3effe", "#e7defb", "#7c3aed"],
+      "Accountant": ["#e9f8ee", "#cdeed7", "#15803d"],
+      "Teacher": ["#f4f4f5", "#ececef", "#71717a"],
+      "Reception": ["#fff2e8", "#fbdcc4", "#c2410c"],
+    };
+    const users = [
+      ["Hasinur Rahman", "+880 1712-345678", "Admin", "Just now", "linear-gradient(160deg,#475569,#1e293b)"],
+      ["Farhana Akter", "+880 1815-223344", "Accountant", "2 hours ago", "linear-gradient(160deg,#7c3aed,#5b21b6)"],
+      ["Md. Salim Reza", "+880 1911-556677", "Teacher", "Yesterday", "linear-gradient(160deg,#0f766e,#134e4a)"],
+      ["Shirin Sultana", "+880 1620-889900", "Teacher", "3 days ago", "linear-gradient(160deg,#b45309,#78350f)"],
+      ["Rokeya Begum", "+880 1733-112233", "Reception", "Today, 9:12 AM", "linear-gradient(160deg,#be185d,#831843)"],
+    ].map(([name, phone, role, lastActive, avatarBg]) => ({
+      name, phone, role, lastActive, avatarBg,
+      initials: name.split(" ").filter(w => w.length > 2 || w === name.split(" ")[0]).slice(0, 2).map(w => w[0]).join("").toUpperCase(),
+      roleBg: roleStyle[role][0], roleBorder: roleStyle[role][1], roleFg: roleStyle[role][2],
+    }));
+
+    const roles = [
+      { name: "Admin", desc: "Full access, including settings and user management", count: "1 user" },
+      { name: "Accountant", desc: "Fees, invoices, receipts, expenses and finance reports", count: "1 user" },
+      { name: "Teacher", desc: "Attendance, marks entry and their own class lists", count: "2 users" },
+      { name: "Reception", desc: "Admissions, student records and counter payments", count: "1 user" },
+    ];
+
+    return {
+      navItems: nav, tabs,
+      isProfile: s.tab === "profile",
+      isAcademic: s.tab === "academic",
+      isBilling: s.tab === "billing",
+      isNotifications: s.tab === "notifications",
+      isUsers: s.tab === "users",
+
+      schoolName: s.schoolName, setSchoolName: this.set("schoolName"),
+      schoolNameBn: s.schoolNameBn, setSchoolNameBn: this.set("schoolNameBn"),
+      eiin: s.eiin, setEiin: this.set("eiin"),
+      phone: s.phone, setPhone: this.set("phone"),
+      address: s.address, setAddress: this.set("address"),
+      onUploadLogo: () => this.showToast("Choose a new logo file to upload"),
+      onRemoveLogo: () => this.showToast("Logo removed — documents will show the school name only"),
+      branches,
+      onAddBranch: () => this.showToast("New branch setup will open here"),
+
+      session: s.session, setSession: this.set("session"),
+      sessionStart: s.sessionStart, setSessionStart: this.set("sessionStart"),
+      weeklyHoliday: s.weeklyHoliday, setWeeklyHoliday: this.set("weeklyHoliday"),
+      grading: s.grading, setGrading: this.set("grading"),
+      classes,
+      onAddClass: () => this.showToast("New class setup will open here"),
+
+      currency: s.currency, setCurrency: this.set("currency"),
+      invoicePrefix: s.invoicePrefix, setInvoicePrefix: this.set("invoicePrefix"),
+      genDay: s.genDay, setGenDay: this.set("genDay"),
+      dueDays: s.dueDays, setDueDays: this.set("dueDays"),
+      lateFeeOn: s.lateFeeOn, lateFeeAmt: s.lateFeeAmt, setLateFeeAmt: this.set("lateFeeAmt"),
+      lateFeeTrack: this.toggleParts(s.lateFeeOn).track, lateFeeKnob: this.toggleParts(s.lateFeeOn).knob,
+      toggleLateFee: () => this.setState({ lateFeeOn: !s.lateFeeOn }),
+      siblingOn: s.siblingOn, siblingPct: s.siblingPct, setSiblingPct: this.set("siblingPct"),
+      siblingTrack: this.toggleParts(s.siblingOn).track, siblingKnob: this.toggleParts(s.siblingOn).knob,
+      toggleSibling: () => this.setState({ siblingOn: !s.siblingOn }),
+      partialTrack: this.toggleParts(s.partialOn).track, partialKnob: this.toggleParts(s.partialOn).knob,
+      togglePartial: () => this.setState({ partialOn: !s.partialOn }),
+      payMethods,
+
+      smsBalance: "1,240",
+      smsRules, staffRules,
+      onBuyCredits: () => this.showToast("SMS credit top-up will open here"),
+
+      users, roles,
+      onInvite: () => this.showToast("Invitation form will open here"),
+      onCloseSession: () => this.showToast("Session close requires confirmation from the Admin"),
+
+      onSave: () => this.showToast("Settings saved"),
+      onDiscard: () => this.showToast("Changes discarded"),
+      toastVisible: s.toastVisible, toastMsg: s.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      body { background: #fff !important; }
+      .no-print { display: none !important; }
+      .page { box-shadow: none !important; margin: 0 !important; }
+    }
+    a { color: #7c3aed; }
+    a:hover { color: #6d28d9; }
+  </style>
+</helmet>
+
+<div style="background:#f7f7f8; min-height:100vh; padding:40px 20px; font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; display:flex; flex-direction:column; align-items:center; gap:16px;">
+
+  <!-- Print button -->
+  <div class="no-print" style="width:794px; max-width:100%; display:flex; justify-content:flex-end;">
+    <button onClick="{{ onPrint }}" style="height:40px; padding:0 18px; border-radius:10px; border:1px solid #e2e2e6; background:#fff; color:#1b1b1f; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 1px 2px rgba(16,16,20,0.04);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      Print / Save as PDF
+    </button>
+  </div>
+
+  <!-- Page -->
+  <div class="page" data-screen-label="Transfer Certificate" style="width:794px; max-width:100%; min-height:1123px; background:#ffffff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05), 0 1px 1px rgba(16,16,20,0.03); padding:52px 56px 44px; box-sizing:border-box; color:#1b1b1f; display:flex; flex-direction:column;">
+
+    <!-- Header: school identity -->
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px; border-bottom:2px solid #1b3a63; padding-bottom:22px;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <img src="logo.jpeg" alt="School logo" style="width:76px; height:76px; border-radius:50%; object-fit:cover; flex:none;">
+        <div>
+          <div style="font-size:21px; font-weight:800; letter-spacing:-0.01em; line-height:1.2;">Hazi Jabed Ali Memorial School</div>
+          <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:15px; font-weight:600; color:#1b3a63; margin-top:2px;">হাজী জাবেদ আলী মেমোরিয়াল স্কুল</div>
+          <div style="font-size:13px; color:#71717a; margin-top:6px;">Lakshmipur, Dhanuyaghata, Chatmohor, Pabna · Estd. 2017</div>
+        </div>
+      </div>
+      <div style="text-align:right; flex:none;">
+        <div style="font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Ref No.</div>
+        <div style="font-family:'Geist Mono',monospace; font-size:13px; color:#1b1b1f; margin-top:4px;">{{ refNo }}</div>
+        <div style="font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3; margin-top:12px;">Date of issue</div>
+        <div style="font-family:'Geist Mono',monospace; font-size:13px; color:#1b1b1f; margin-top:4px;">{{ issueDate }}</div>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div style="text-align:center; margin-top:34px;">
+      <div style="display:inline-block; font-size:24px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#1b3a63; border-bottom:2px solid #1b3a63; padding:0 18px 8px;">Transfer Certificate</div>
+      <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:14px; color:#71717a; margin-top:10px;">ছাড়পত্র / স্থানান্তর সনদ</div>
+    </div>
+
+    <!-- Certification statement -->
+    <div style="font-size:14.5px; line-height:1.8; color:#1b1b1f; margin-top:30px;">
+      This is to certify that <strong>{{ studentName }}</strong>, son/daughter of <strong>{{ fatherName }}</strong> and <strong>{{ motherName }}</strong>, was a bona fide student of this institution. On the guardian&rsquo;s application, he/she is hereby granted this Transfer Certificate. All dues to the school have been cleared, and nothing remains outstanding against his/her name.
+    </div>
+
+    <!-- Student record grid -->
+    <div style="margin-top:26px; border:1px solid #ececef; border-radius:12px; overflow:hidden;">
+      <div style="background:#fafafa; padding:12px 18px; border-bottom:1px solid #ececef; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Student record</div>
+      <sc-for list="{{ recordRows }}" as="row" hint-placeholder-count="8">
+        <div style="display:grid; grid-template-columns:260px 1fr;">
+          <div style="padding:12px 18px; border-bottom:1px solid #ececef; font-size:13.5px; color:#71717a;">{{ row.label }}</div>
+          <div style="padding:12px 18px; border-bottom:1px solid #ececef; font-size:14px; font-weight:600;">{{ row.value }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Conduct + remarks -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:26px;">
+      <div style="background:#fafafa; border:1px solid #ececef; border-radius:12px; padding:16px 18px;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">General conduct</div>
+        <div style="font-size:14.5px; font-weight:700; margin-top:8px; color:#15803d;">{{ conduct }}</div>
+      </div>
+      <div style="background:#fafafa; border:1px solid #ececef; border-radius:12px; padding:16px 18px;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Reason for leaving</div>
+        <div style="font-size:14px; font-weight:600; margin-top:8px;">{{ reason }}</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px; line-height:1.7; color:#71717a; margin-top:22px;">
+      We wish him/her every success in future endeavours. This certificate is issued without any erasure or alteration; any correction is valid only under the Head Teacher&rsquo;s signature and the school seal.
+    </div>
+
+    <!-- Signatures -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto; padding-top:64px;">
+      <div style="text-align:center;">
+        <div style="width:170px; border-top:1px solid #1b1b1f; padding-top:6px; font-size:12.5px; color:#71717a;">Class Teacher</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:170px; border-top:1px solid #1b1b1f; padding-top:6px; font-size:12.5px; color:#71717a;">Office Seal</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:170px; border-top:1px solid #1b1b1f; padding-top:6px; font-size:12.5px; color:#71717a;">Head Teacher</div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:28px; padding-top:16px; border-top:1px solid #ececef;">
+      <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:13px; color:#9a9aa3;">পড়, তোমার প্রভুর নামে</div>
+      <div style="font-size:12px; color:#9a9aa3;">This certificate is invalid without the official seal and signature.</div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 794, &quot;height&quot;: 1123},
+  &quot;refNo&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;HJAMS/TC/2026-041&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Certificate&quot;},
+  &quot;issueDate&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;12 July 2026&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Certificate&quot;},
+  &quot;studentName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Md. Rafiul Islam&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;fatherName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Md. Aminul Islam&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;motherName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Mst. Rahima Khatun&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;studentId&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;HJ-2026-0117&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;dateOfBirth&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;12 March 2012&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;className&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Eight, Section B&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Record&quot;},
+  &quot;roll&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;17&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Record&quot;},
+  &quot;admissionDate&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;05 January 2019&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Record&quot;},
+  &quot;leavingDate&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;30 June 2026&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Record&quot;},
+  &quot;lastExam&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Half-Yearly Examination 2026 — Passed&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Record&quot;},
+  &quot;promotedTo&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Nine&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Record&quot;},
+  &quot;conduct&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;Good&quot;, &quot;options&quot;: [&quot;Excellent&quot;, &quot;Very Good&quot;, &quot;Good&quot;, &quot;Satisfactory&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Certificate&quot;},
+  &quot;reason&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Guardian’s transfer of residence&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Certificate&quot;}
+}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const recordRows = [
+      { label: 'Student ID', value: p.studentId ?? 'HJ-2026-0117' },
+      { label: 'Date of birth', value: p.dateOfBirth ?? '12 March 2012' },
+      { label: 'Class last attended', value: p.className ?? 'Eight, Section B' },
+      { label: 'Roll number', value: p.roll ?? '17' },
+      { label: 'Date of admission', value: p.admissionDate ?? '05 January 2019' },
+      { label: 'Date of leaving', value: p.leavingDate ?? '30 June 2026' },
+      { label: 'Last examination taken', value: p.lastExam ?? 'Half-Yearly Examination 2026 — Passed' },
+      { label: 'Promoted to class', value: p.promotedTo ?? 'Nine' },
+    ];
+    return {
+      refNo: p.refNo ?? 'HJAMS/TC/2026-041',
+      issueDate: p.issueDate ?? '12 July 2026',
+      studentName: p.studentName ?? 'Md. Rafiul Islam',
+      fatherName: p.fatherName ?? 'Md. Aminul Islam',
+      motherName: p.motherName ?? 'Mst. Rahima Khatun',
+      conduct: p.conduct ?? 'Good',
+      reason: p.reason ?? 'Guardian\u2019s transfer of residence',
+      recordRows,
+      onPrint: () => window.print(),
+    };
+  }
+}
+</script>
+</body>
+</html>

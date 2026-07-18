@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; }
+    a { color: #7c3aed; }
+    a:hover { color: #6d28d9; }
+    ::placeholder { color: #a1a1aa; }
+  </style>
+</helmet>
+
+<div data-screen-label="Exam Results" style="background:#f7f7f8; min-height:100vh; font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#1b1b1f; display:flex; flex-direction:column;">
+
+  <!-- Top bar -->
+  <div style="background:#ffffff; border-bottom:1px solid #ececef;">
+    <div style="max-width:1080px; margin:0 auto; padding:18px 24px; display:flex; align-items:center; gap:14px;">
+      <img src="logo.jpeg" alt="School logo" style="width:44px; height:44px; border-radius:50%; object-fit:cover; flex:none;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:16px; font-weight:800; letter-spacing:-0.01em; line-height:1.2;">Hazi Jabed Ali Memorial School</div>
+        <div style="font-size:12.5px; color:#71717a; margin-top:2px;">Exam Results · Academic Year 2026</div>
+      </div>
+      <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:13px; color:#9a9aa3;">পরীক্ষার ফলাফল</div>
+    </div>
+  </div>
+
+  <!-- Search + filters -->
+  <div style="max-width:1080px; width:100%; margin:0 auto; padding:24px 24px 0; box-sizing:border-box;">
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div style="flex:1; min-width:260px; position:relative; display:flex; align-items:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a9aa3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:14px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search by name, roll or student ID…" style="width:100%; height:44px; padding:0 14px 0 40px; border-radius:12px; border:1px solid #e2e2e6; background:#fff; font-family:inherit; font-size:14px; color:#1b1b1f; outline:none; box-sizing:border-box; box-shadow:0 1px 2px rgba(16,16,20,0.04);" style-focus="border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,0.12);">
+      </div>
+      <select value="{{ classFilter }}" onChange="{{ onClassFilter }}" style="height:44px; padding:0 12px; border-radius:12px; border:1px solid #e2e2e6; background:#fff; font-family:inherit; font-size:14px; font-weight:500; color:#1b1b1f; cursor:pointer; box-shadow:0 1px 2px rgba(16,16,20,0.04);">
+        <option value="all">All classes</option>
+        <option value="Six">Class Six</option>
+        <option value="Seven">Class Seven</option>
+        <option value="Eight">Class Eight</option>
+      </select>
+      <select value="{{ examFilter }}" onChange="{{ onExamFilter }}" style="height:44px; padding:0 12px; border-radius:12px; border:1px solid #e2e2e6; background:#fff; font-family:inherit; font-size:14px; font-weight:500; color:#1b1b1f; cursor:pointer; box-shadow:0 1px 2px rgba(16,16,20,0.04);">
+        <option value="First Semester 2026">First Semester 2026</option>
+        <option value="Second Semester 2026">Second Semester 2026</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Body: list + detail -->
+  <div style="max-width:1080px; width:100%; margin:0 auto; padding:20px 24px 40px; box-sizing:border-box; display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start;">
+
+    <!-- Result list -->
+    <div style="background:#fff; border:1px solid #ececef; border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(16,16,20,0.05);">
+      <div style="padding:14px 18px; border-bottom:1px solid #ececef; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">{{ resultCountLabel }}</div>
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column;">
+          <sc-for list="{{ results }}" as="st" hint-placeholder-count="4">
+            <div onClick="{{ st.select }}" style="display:flex; align-items:center; gap:12px; padding:13px 18px; cursor:pointer; border-bottom:1px solid #f2f2f4; background:{{ st.rowBg }}; border-left:3px solid {{ st.rowAccent }};" style-hover="background:#faf8ff;">
+              <div style="width:38px; height:38px; border-radius:50%; background:#eef0f6; color:#1b3a63; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex:none;">{{ st.initials }}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:14px; font-weight:600; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ st.name }}</div>
+                <div style="font-size:12.5px; color:#71717a; margin-top:2px;">Class {{ st.className }} · Roll {{ st.roll }}</div>
+              </div>
+              <div style="text-align:right; flex:none;">
+                <div style="font-size:13px; font-weight:700; font-family:'Geist Mono',monospace; color:{{ st.gpaColor }};">{{ st.gpa }}</div>
+                <div style="font-size:11.5px; color:#9a9aa3; margin-top:2px;">GPA</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:36px 18px; text-align:center;">
+          <div style="font-size:14px; font-weight:600; color:#71717a;">No students found</div>
+          <div style="font-size:12.5px; color:#9a9aa3; margin-top:4px;">Try a different name, roll or ID.</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- Marksheet detail -->
+    <sc-if value="{{ hasSelected }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff; border:1px solid #ececef; border-radius:14px; box-shadow:0 1px 3px rgba(16,16,20,0.05); overflow:hidden;">
+
+        <!-- Student header -->
+        <div style="padding:22px 26px; border-bottom:2px solid #1b3a63; display:flex; align-items:center; gap:16px;">
+          <div style="width:54px; height:54px; border-radius:50%; background:#1b3a63; color:#fff; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; flex:none;">{{ sel.initials }}</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:19px; font-weight:800; letter-spacing:-0.01em;">{{ sel.name }}</div>
+            <div style="font-size:13px; color:#71717a; margin-top:3px;">Class {{ sel.className }}, Section {{ sel.section }} · Roll {{ sel.roll }} · ID <span style="font-family:'Geist Mono',monospace;">{{ sel.id }}</span></div>
+          </div>
+          <div style="text-align:right; flex:none;">
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:999px; font-size:12.5px; font-weight:700; border:1px solid {{ sel.statusBorder }}; color:{{ sel.statusColor }}; background:{{ sel.statusBg }};">
+              <span style="width:7px; height:7px; border-radius:50%; background:{{ sel.statusDot }};"></span>{{ sel.statusLabel }}
+            </div>
+            <div style="font-size:12px; color:#9a9aa3; margin-top:6px;">{{ examFilter }}</div>
+          </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); border-bottom:1px solid #ececef;">
+          <div style="padding:16px 20px; border-right:1px solid #ececef;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">GPA</div>
+            <div style="font-size:24px; font-weight:800; font-family:'Geist Mono',monospace; color:#7c3aed; margin-top:4px;">{{ sel.gpa }}</div>
+          </div>
+          <div style="padding:16px 20px; border-right:1px solid #ececef;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Grade</div>
+            <div style="font-size:24px; font-weight:800; margin-top:4px; color:#1b3a63;">{{ sel.grade }}</div>
+          </div>
+          <div style="padding:16px 20px; border-right:1px solid #ececef;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Total marks</div>
+            <div style="font-size:24px; font-weight:800; font-family:'Geist Mono',monospace; margin-top:4px;">{{ sel.totalMarks }}<span style="font-size:14px; font-weight:600; color:#9a9aa3;">/{{ sel.fullMarks }}</span></div>
+          </div>
+          <div style="padding:16px 20px;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9a9aa3;">Class position</div>
+            <div style="font-size:24px; font-weight:800; font-family:'Geist Mono',monospace; margin-top:4px;">{{ sel.position }}<span style="font-size:14px; font-weight:600; color:#9a9aa3;"> of {{ sel.classSize }}</span></div>
+          </div>
+        </div>
+
+        <!-- Subject table -->
+        <div style="padding:6px 0;">
+          <div style="display:grid; grid-template-columns:1fr 110px 110px 90px 90px; padding:10px 26px; font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#9a9aa3; border-bottom:1px solid #ececef;">
+            <div>Subject</div>
+            <div style="text-align:right;">Full marks</div>
+            <div style="text-align:right;">Obtained</div>
+            <div style="text-align:right;">Grade</div>
+            <div style="text-align:right;">Point</div>
+          </div>
+          <sc-for list="{{ sel.subjects }}" as="sub" hint-placeholder-count="6">
+            <div style="display:grid; grid-template-columns:1fr 110px 110px 90px 90px; padding:12px 26px; font-size:14px; border-bottom:1px solid #f2f2f4; align-items:center;">
+              <div style="font-weight:500;">{{ sub.name }}</div>
+              <div style="text-align:right; font-family:'Geist Mono',monospace; color:#71717a;">{{ sub.full }}</div>
+              <div style="text-align:right; font-family:'Geist Mono',monospace; font-weight:600;">{{ sub.marks }}</div>
+              <div style="text-align:right;"><span style="display:inline-block; min-width:34px; text-align:center; padding:3px 8px; border-radius:8px; font-size:12.5px; font-weight:700; background:{{ sub.gradeBg }}; color:{{ sub.gradeColor }};">{{ sub.grade }}</span></div>
+              <div style="text-align:right; font-family:'Geist Mono',monospace; color:#71717a;">{{ sub.point }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- Footer actions -->
+        <div style="padding:16px 26px 20px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:12.5px; color:#9a9aa3;">Published 05 Jul 2026 · Controller of Examinations</div>
+          <button onClick="{{ onPrint }}" style="height:38px; padding:0 16px; border-radius:10px; border:1px solid #e2e2e6; background:#fff; color:#1b1b1f; font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px;" style-hover="border-color:#7c3aed; color:#7c3aed;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print marksheet
+          </button>
+        </div>
+
+      </div>
+    </sc-if>
+    <sc-if value="{{ noSelected }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border:1px dashed #e2e2e6; border-radius:14px; padding:60px 24px; text-align:center;">
+        <div style="font-size:15px; font-weight:600; color:#71717a;">Select a student</div>
+        <div style="font-size:13px; color:#9a9aa3; margin-top:4px;">Search and pick a student to view their marksheet.</div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 1080, &quot;height&quot;: 900}
+}">
+class Component extends DCLogic {
+  state = { query: '', classFilter: 'all', examFilter: 'First Semester 2026', selectedId: 'HJ-2026-0117' };
+
+  gradeFor(marks, full) {
+    const pct = (marks / full) * 100;
+    if (pct >= 80) return { grade: 'A+', point: 5.0, color: '#15803d', bg: '#e9f8ee' };
+    if (pct >= 70) return { grade: 'A',  point: 4.0, color: '#15803d', bg: '#e9f8ee' };
+    if (pct >= 60) return { grade: 'A-', point: 3.5, color: '#1b3a63', bg: '#eef0f6' };
+    if (pct >= 50) return { grade: 'B',  point: 3.0, color: '#1b3a63', bg: '#eef0f6' };
+    if (pct >= 40) return { grade: 'C',  point: 2.0, color: '#c2410c', bg: '#fff2e8' };
+    if (pct >= 33) return { grade: 'D',  point: 1.0, color: '#c2410c', bg: '#fff2e8' };
+    return { grade: 'F', point: 0, color: '#dc2626', bg: '#fdecec' };
+  }
+
+  students() {
+    const mk = (id, name, className, section, roll, position, classSize, marksBySem) => ({ id, name, className, section, roll, position, classSize, marksBySem });
+    const SUBJECTS = ['Bangla', 'English', 'Mathematics', 'Science', 'Bangladesh & Global Studies', 'Religion & Moral Education', 'ICT'];
+    const FULL = [100, 100, 100, 100, 100, 100, 50];
+    const wrap = (arr) => arr.map((m, i) => ({ name: SUBJECTS[i], full: FULL[i], marks: m }));
+    return [
+      mk('HJ-2026-0117', 'Md. Rafiul Islam', 'Eight', 'B', '17', 3, 46, {
+        'First Semester 2026':  wrap([82, 74, 91, 78, 69, 85, 44]),
+        'Second Semester 2026': wrap([79, 77, 88, 81, 72, 83, 42]),
+      }),
+      mk('HJ-2026-0104', 'Sadia Akter', 'Eight', 'A', '04', 1, 44, {
+        'First Semester 2026':  wrap([90, 86, 94, 88, 84, 91, 47]),
+        'Second Semester 2026': wrap([92, 84, 95, 90, 86, 89, 48]),
+      }),
+      mk('HJ-2026-0231', 'Tanvir Hasan', 'Seven', 'A', '31', 12, 52, {
+        'First Semester 2026':  wrap([65, 58, 71, 62, 55, 68, 33]),
+        'Second Semester 2026': wrap([68, 61, 74, 66, 59, 70, 35]),
+      }),
+      mk('HJ-2026-0209', 'Nusrat Jahan', 'Seven', 'B', '09', 5, 50, {
+        'First Semester 2026':  wrap([78, 81, 69, 75, 72, 80, 41]),
+        'Second Semester 2026': wrap([80, 83, 72, 77, 74, 82, 43]),
+      }),
+      mk('HJ-2026-0322', 'Arif Mahmud', 'Six', 'A', '22', 20, 48, {
+        'First Semester 2026':  wrap([52, 45, 38, 49, 41, 56, 22]),
+        'Second Semester 2026': wrap([55, 48, 42, 51, 44, 58, 25]),
+      }),
+      mk('HJ-2026-0308', 'Mim Khatun', 'Six', 'B', '08', 2, 47, {
+        'First Semester 2026':  wrap([88, 79, 85, 82, 77, 90, 45]),
+        'Second Semester 2026': wrap([86, 82, 87, 84, 80, 88, 46]),
+      }),
+    ];
+  }
+
+  compute(st, exam) {
+    const raw = st.marksBySem[exam];
+    let totalPoint = 0, totalMarks = 0, fullMarks = 0, failed = false;
+    const subjects = raw.map(s => {
+      const g = this.gradeFor(s.marks, s.full);
+      totalPoint += g.point; totalMarks += s.marks; fullMarks += s.full;
+      if (g.point === 0) failed = true;
+      return { name: s.name, full: s.full, marks: s.marks, grade: g.grade, point: g.point.toFixed(2), gradeColor: g.color, gradeBg: g.bg };
+    });
+    const gpa = failed ? 0 : totalPoint / raw.length;
+    const overall = failed ? 'F' : this.gradeFor(gpa * 20, 100).grade;
+    return { subjects, gpa: gpa.toFixed(2), grade: overall, totalMarks, fullMarks, failed };
+  }
+
+  initials(name) {
+    const parts = name.replace('Md. ', '').split(' ');
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+
+  renderVals() {
+    const { query, classFilter, examFilter, selectedId } = this.state;
+    const q = query.trim().toLowerCase();
+    const all = this.students();
+
+    const filtered = all.filter(st => {
+      if (classFilter !== 'all' && st.className !== classFilter) return false;
+      if (!q) return true;
+      return st.name.toLowerCase().includes(q) || st.roll.includes(q) || st.id.toLowerCase().includes(q);
+    });
+
+    const results = filtered.map(st => {
+      const c = this.compute(st, examFilter);
+      const selected = st.id === selectedId;
+      return {
+        name: st.name, className: st.className, roll: st.roll,
+        initials: this.initials(st.name),
+        gpa: c.gpa,
+        gpaColor: c.failed ? '#dc2626' : '#1b3a63',
+        rowBg: selected ? '#faf8ff' : '#fff',
+        rowAccent: selected ? '#7c3aed' : 'transparent',
+        select: () => this.setState({ selectedId: st.id }),
+      };
+    });
+
+    const selSt = all.find(s => s.id === selectedId && filtered.includes(s)) || filtered[0] || null;
+    let sel = null;
+    if (selSt) {
+      const c = this.compute(selSt, examFilter);
+      const status = c.failed
+        ? { label: 'Failed', color: '#dc2626', bg: '#fdecec', border: '#f8d3d3', dot: '#ef4444' }
+        : { label: 'Passed', color: '#15803d', bg: '#e9f8ee', border: '#cdeed7', dot: '#22c55e' };
+      sel = {
+        name: selSt.name, className: selSt.className, section: selSt.section,
+        roll: selSt.roll, id: selSt.id, initials: this.initials(selSt.name),
+        gpa: c.gpa, grade: c.grade, totalMarks: c.totalMarks, fullMarks: c.fullMarks,
+        position: selSt.position, classSize: selSt.classSize,
+        subjects: c.subjects,
+        statusLabel: status.label, statusColor: status.color, statusBg: status.bg,
+        statusBorder: status.border, statusDot: status.dot,
+      };
+    }
+
+    return {
+      query, classFilter, examFilter,
+      onQuery: e => this.setState({ query: e.target.value }),
+      onClassFilter: e => this.setState({ classFilter: e.target.value }),
+      onExamFilter: e => this.setState({ examFilter: e.target.value }),
+      results,
+      hasResults: results.length > 0,
+      noResults: results.length === 0,
+      resultCountLabel: results.length + (results.length === 1 ? ' student' : ' students'),
+      hasSelected: !!sel,
+      noSelected: !sel,
+      sel,
+      onPrint: () => window.print(),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      body { background: #fff !important; }
+      .no-print { display: none !important; }
+    }
+    a { color: #7c3aed; }
+    a:hover { color: #6d28d9; }
+  </style>
+</helmet>
+
+<div style="background:#f7f7f8; min-height:100vh; padding:40px 20px; font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; display:flex; flex-direction:column; align-items:center; gap:20px;">
+
+  <div class="no-print" style="width:648px; max-width:100%; display:flex; justify-content:flex-end;">
+    <button onclick="{{ onPrint }}" style="height:40px; padding:0 18px; border-radius:10px; border:1px solid #e2e2e6; background:#fff; color:#1b1b1f; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 1px 2px rgba(16,16,20,0.04);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      Print / Save as PDF
+    </button>
+  </div><div style="display:flex; gap:32px; flex-wrap:wrap; justify-content:center;">
+
+    <!-- FRONT -->
+    <div data-screen-label="ID Card — Front" style="width:324px; height:512px; background:#ffffff; border-radius:20px; box-shadow:0 1px 3px rgba(16,16,20,0.08), 0 8px 24px rgba(16,16,20,0.08); overflow:hidden; position:relative; display:flex; flex-direction:column; box-sizing:border-box;">
+      <!-- Top band -->
+      <div style="background:linear-gradient(160deg,#8b5cf6,#6d28d9); padding:16px 22px; position:relative;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="logo.jpeg" alt="School logo" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex:none; border:2px solid rgba(255,255,255,0.7);">
+          <div style="min-width:0; padding-right:56px;">
+            <div style="font-size: 13px; font-weight: 800; color: #fff; letter-spacing: -0.01em; line-height: 1.25; width: 203px; height: 20px">Hazi Jabed Ali Memorial School</div>
+            <div style="font-size:10.5px; color:rgba(255,255,255,0.75); margin-top:2px;">Luxmipur, Chatmohor, Pabna</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#f1ecfb; text-align:center; padding:4px 22px; font-size:10px; font-weight:700; letter-spacing:0.12em; color:#6d28d9; text-transform:uppercase;">Student ID</div>
+
+      <!-- Photo, below header -->
+      <div style="display:flex; justify-content:center; margin-top:16px;">
+        <img src="{{ photoUrl }}" alt="Student photo" style="width:96px; height:96px; border-radius:50%; object-fit:cover; border:4px solid #ede9fe; box-shadow:0 2px 8px rgba(16,16,20,0.12); background:#e7e7ea;">
+      </div>
+
+      <!-- Name + details -->
+      <div style="text-align:center; padding:10px 20px 0;">
+        <div style="font-size:18px; font-weight:800; letter-spacing:-0.01em; color:#1b1b1f;">{{ studentName }}</div>
+        <div style="font-size:12.5px; color:#71717a; margin-top:2px;">Class {{ className }} · Roll {{ roll }}</div>
+      </div>
+
+      <div style="margin:12px 22px 0; border:1px solid #ececef; border-radius:12px; padding:10px 16px; display:flex; flex-direction:column; gap:7px; background:#fafafa;">
+        <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#9a9aa3;">Student ID</span><span style="font-weight:700; font-family:'Geist Mono',monospace;">{{ studentId }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#9a9aa3;">Blood group</span><span style="font-weight:700;">{{ bloodGroup }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#9a9aa3;">Date of birth</span><span style="font-weight:700;">{{ dob }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#9a9aa3;">Valid thru</span><span style="font-weight:700;">{{ validThru }}</span></div>
+      </div>
+
+      <div style="flex:1;"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 22px 14px; border-top:1px solid #ececef; margin-top:10px;">
+        <div style="font-family:'Noto Sans Bengali',sans-serif; font-size:10.5px; color:#9a9aa3;">পড়, তোমার প্রভুর নামে</div>
+        <div style="font-size:9.5px; color:#c4c4c9; letter-spacing:0.04em;">Estd. 2017</div>
+      </div>
+    </div>
+
+    <!-- BACK -->
+    <div data-screen-label="ID Card — Back" style="width:324px; height:512px; background:#ffffff; border-radius:20px; box-shadow:0 1px 3px rgba(16,16,20,0.08), 0 8px 24px rgba(16,16,20,0.08); overflow:hidden; position:relative; display:flex; flex-direction:column; box-sizing:border-box;">
+      <div style="background:linear-gradient(160deg,#8b5cf6,#6d28d9); padding:16px 22px; text-align:center;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#fff;">Terms &amp; Contact</div>
+      </div>
+
+      <div style="padding:20px 22px 0; display:flex; flex-direction:column; gap:14px;">
+        <div>
+          <div style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#9a9aa3;">Guardian</div>
+          <div style="font-size:14px; font-weight:700; margin-top:4px;">{{ guardianName }}</div>
+          <div style="font-size:12.5px; color:#71717a; margin-top:2px;">{{ guardianPhone }}</div>
+        </div>
+
+        <div style="height:1px; background:#ececef;"></div>
+
+        <div style="font-size:11.5px; color:#71717a; line-height:1.7;">
+          {{ termsText }}
+        </div>
+
+        <div style="height:1px; background:#ececef;"></div>
+
+        <div>
+          <div style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#9a9aa3;">School office</div>
+          <div style="font-size:12.5px; color:#1b1b1f; margin-top:4px; line-height:1.6;">{{ schoolPhone }}<br>{{ schoolAddress }}</div>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <!-- Barcode-ish + signature -->
+      <div style="padding:0 22px 20px;">
+        <div style="display:flex; align-items:flex-end; gap:2px; height:38px; margin-bottom:14px;">
+          <sc-for list="{{ barBars }}" as="bar" hint-placeholder-count="28">
+            <div style="width:{{ bar.w }}px; height:{{ bar.h }}%; background:#1b1b1f;"></div>
+          </sc-for>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-family:'Geist Mono',monospace; font-size:11px; color:#9a9aa3;">{{ studentId }}</div>
+          <div style="text-align:center;">
+            <div style="width:110px; border-top:1px solid #1b1b1f; padding-top:4px; font-size:10px; color:#9a9aa3;">Authorized signature</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 700, &quot;height&quot;: 560},
+  &quot;studentName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Md. Rafiul Islam&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;className&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Eight, Section B&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;roll&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;17&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;studentId&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;HJ-2026-0117&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;bloodGroup&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;B+&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;A+&quot;,&quot;A-&quot;,&quot;B+&quot;,&quot;B-&quot;,&quot;AB+&quot;,&quot;AB-&quot;,&quot;O+&quot;,&quot;O-&quot;], &quot;section&quot;: &quot;Student&quot;},
+  &quot;dob&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;14 Mar 2012&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;validThru&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Dec 2026&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Student&quot;},
+  &quot;guardianName&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Md. Aminul Islam&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Guardian &amp; Contact&quot;},
+  &quot;guardianPhone&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;+880 1712-345678&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Guardian &amp; Contact&quot;},
+  &quot;schoolPhone&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;+880 1911-223344&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Guardian &amp; Contact&quot;},
+  &quot;schoolAddress&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Lakshmipur, Dhanuyaghata, Chatmohor, Pabna&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Guardian &amp; Contact&quot;},
+  &quot;termsText&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;This card is the property of Hazi Jabed Ali Memorial School and must be carried at all times on campus. If found, please return to the school office.&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Guardian &amp; Contact&quot;}
+}">
+class Component extends DCLogic {
+  renderVals() {
+    // deterministic pseudo-random barcode pattern
+    const bars = [];
+    let seed = 42;
+    const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (let i = 0; i < 28; i++) {
+      bars.push({ w: rand() > 0.6 ? 3 : 1.5, h: 60 + Math.floor(rand() * 40) });
+    }
+
+    return {
+      studentName: this.props.studentName ?? 'Md. Rafiul Islam',
+      className: this.props.className ?? 'Eight, Section B',
+      roll: this.props.roll ?? '17',
+      studentId: this.props.studentId ?? 'HJ-2026-0117',
+      bloodGroup: this.props.bloodGroup ?? 'B+',
+      dob: this.props.dob ?? '14 Mar 2012',
+      validThru: this.props.validThru ?? 'Dec 2026',
+      photoUrl: this.props.photoUrl ?? 'https://i.pravatar.cc/200?img=59',
+      guardianName: this.props.guardianName ?? 'Md. Aminul Islam',
+      guardianPhone: this.props.guardianPhone ?? '+880 1712-345678',
+      schoolPhone: this.props.schoolPhone ?? '+880 1911-223344',
+      schoolAddress: this.props.schoolAddress ?? 'Lakshmipur, Dhanuyaghata, Chatmohor, Pabna',
+      termsText: this.props.termsText ?? 'This card is the property of Hazi Jabed Ali Memorial School and must be carried at all times on campus. If found, please return to the school office.',
+      barBars: bars,
+      onPrint: () => window.print(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
