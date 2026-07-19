@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Phase | 6 — Documents, Reports, Settings |
-| Status | `todo` (blocked) |
-| Depends on | 6.4; **backend task 15.1 (access control API) — not yet implemented** |
+| Status | `done` |
+| Depends on | 6.4; backend task 15.1 (access control API) — **now live** (`routes/api/v1/access-control.php`) |
 | Feature spec | `feature-specs/20-access-control.md` |
 | Contract | `docs/api/access-control.md` |
 | Endpoints | `GET /permissions`, `GET /roles`, `GET /roles/{id}`, `PUT /roles/{id}/permissions`, `GET /users`, `PUT /users/{id}/roles` |
@@ -34,8 +34,15 @@ Super-admin screen to manage authorization: edit which permissions each role gra
 - `403/404` from the API is the authoritative access boundary → access/not-found state.
 
 ## Check When Done
-- [ ] Backend 15.1 endpoints confirmed live.
-- [ ] Role permission set edited and saved (sync); super_admin role locked.
-- [ ] Roles assigned to users with search/role filter + pagination.
-- [ ] Lockout (last super admin) and protected-role errors surfaced; loading/empty/error states present.
-- [ ] `npm run build` passes.
+- [x] Backend 15.1 endpoints confirmed live.
+- [x] Role permission set edited and saved (sync); super_admin role locked.
+- [x] Roles assigned to users with search/role filter + pagination.
+- [x] Lockout (last super admin) and protected-role errors surfaced; loading/empty/error states present.
+- [x] `npm run build` passes.
+
+## Implementation notes
+- Route `app/(app)/settings/access-control/` (page/loading/error), gated on `role.manage`; sidebar item added under Administration; the Settings "Users & roles" section now links here.
+- **Imported "Access Control" Claude Design implemented exactly** for the Roles → permissions editor (`components/access-control/roles-permissions-editor.tsx`): sticky role list (coloured dot/badge per role, `users_count`, live grant count), permission-matrix card with role badge header + protected-role banner, Save/Discard, legend, and Grant all / Deny all. The matrix is the design's **exact `Module | View | Create | Edit | Delete` grid** (`grid-template-columns: minmax(0,1fr) repeat(4,74px)`, 23px purple check-squares, `14×2px` dash for **Not applicable**, 3-item legend). Because the registry is seeder-fixed with richer verbs than CRUD, `components/access-control/matrix.ts` projects each real permission onto one of the four columns (`view→View`; `create/entry/generate/issue/execute/collect→Create`; `update/edit/manage/approve/override→Edit`; `delete→Delete`) — verified collision-free across all 24 modules, a cell holds an array so nothing is ever dropped, and the real permission name is the cell tooltip so the CRUD relabel isn't misleading. super_admin (`is_protected`) is locked → "Full access", no toggles, no save.
+- **Users → roles** (`users-roles-panel.tsx`): paginated `GET /users` with debounced search + role filter, table ≥ md / cards below. A user may hold **one or more roles** — the per-row control is a **multi-select popover** (checkbox list, Cancel/Save) syncing the whole set `{ roles: [...] }`; the Roles column shows every current role as a coloured pill.
+- Writes invalidate `["roles"]`, `["access-users"]` **and** `["auth","me"]` (a permission/role change can alter the acting super admin's own gating). 403 (edit super_admin) and 422 (last super admin / unknown permission) surface as toasts.
+- Types `types/access-control.ts`; hooks `hooks/access-control/use-access-control.ts`. `tsc` + `lint` (0 errors) + `npm run build` (`/settings/access-control` emitted) pass.

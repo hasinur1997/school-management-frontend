@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   Bell,
   CalendarRange,
@@ -8,6 +9,7 @@ import {
   Lock,
   Save,
   School,
+  ShieldCheck,
   Users,
 } from "lucide-react"
 
@@ -319,12 +321,29 @@ export function SettingsPage() {
           ) : null}
 
           {active === "users" ? (
-            <div className="rounded-[14px] border border-[#ececef] bg-white p-8 shadow-[0_1px_3px_rgba(16,16,20,0.05)]">
-              <EmptyState
-                icon={Users}
-                title="Users and roles are not wired here yet"
-                description="This part of the imported settings design depends on the access-control work tracked in task 6.6 and the blocked backend 15.1 deliverable."
-              />
+            <div className="flex flex-col gap-4 rounded-[14px] border border-[#ececef] bg-white p-6 shadow-[0_1px_3px_rgba(16,16,20,0.05)]">
+              <div className="flex items-start gap-3">
+                <span className="grid size-11 flex-none place-items-center rounded-[12px] border border-[#e7defb] bg-[#f3effe] text-[#7c3aed]">
+                  <ShieldCheck className="size-[21px]" aria-hidden />
+                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[15px] font-bold text-[#1b1b1f]">
+                    Roles &amp; access control
+                  </span>
+                  <span className="max-w-md text-[13.5px] text-[#71717a]">
+                    Edit what each role can do and assign roles to user accounts
+                    on the dedicated access-control screen.
+                  </span>
+                </div>
+              </div>
+              <div>
+                <Link
+                  href="/settings/access-control"
+                  className="inline-flex h-[38px] items-center rounded-[11px] bg-[#7c3aed] px-4 text-[13.5px] font-semibold text-white shadow-[0_2px_8px_rgba(124,58,237,0.28)] transition-colors hover:bg-[#6d28d9]"
+                >
+                  Open access control
+                </Link>
+              </div>
             </div>
           ) : null}
         </div>

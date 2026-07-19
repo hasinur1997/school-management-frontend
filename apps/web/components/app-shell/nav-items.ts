@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Receipt,
   Settings,
+  ShieldCheck,
   UserPlus,
   UserRound,
   Users,
@@ -308,6 +309,16 @@ export const NAV_GROUPS: NavGroup[] = [
         // Global settings reads/writes are guarded by `setting.manage`
         // (`routes/api/v1/settings.php`); no `settings.view` permission exists.
         permission: "setting.manage",
+      },
+      {
+        // Access control (task 6.6, backend 15.1) is super-admin only — the
+        // route, list and writes are all guarded by `role.manage`, which is
+        // seeded into no role bundle (only super admins reach it via
+        // `Gate::before`).
+        label: "Access control",
+        href: "/settings/access-control",
+        icon: ShieldCheck,
+        permission: "role.manage",
       },
     ],
   },

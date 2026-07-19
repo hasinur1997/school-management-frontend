@@ -15,23 +15,32 @@ import { cn } from "@workspace/ui/lib/utils"
 import { useAuth } from "@/components/auth/auth-provider"
 import { NAV_GROUPS, type NavItem } from "@/components/app-shell/nav-items"
 
-/** A route is active when it matches exactly or is a parent of the current path. */
-function isActive(
+/**
+ * How strongly an item matches the current route: the length of the matched
+ * href, or `-1` when it doesn't match. A route matches when it equals the
+ * item's href or is a child of it. Returning a score (not a boolean) lets the
+ * caller pick the **most specific** match so a nested route like
+ * `/settings/access-control` lights up its own item, not the parent `/settings`.
+ */
+function matchScore(
   pathname: string,
   searchParams: Pick<URLSearchParams, "get" | "has">,
   item: NavItem
-): boolean {
+): number {
   const href = item.activePath ?? item.href
   if (item.activeSearch) {
-    if (pathname !== href) return false
-    return Object.entries(item.activeSearch).every(([key, value]) =>
+    if (pathname !== href) return -1
+    const ok = Object.entries(item.activeSearch).every(([key, value]) =>
       value == null ? !searchParams.has(key) : searchParams.get(key) === value
     )
+    // Search-scoped items outrank a bare path match on the same href.
+    return ok ? href.length + 1 : -1
   }
   // "/" is the dashboard root; it must match exactly so it doesn't light up as a
   // parent of every other route.
-  if (href === "/") return pathname === "/"
-  return pathname === href || pathname.startsWith(`${href}/`)
+  if (href === "/") return pathname === "/" ? href.length : -1
+  if (pathname === href || pathname.startsWith(`${href}/`)) return href.length
+  return -1
 }
 
 export function SidebarNav({
@@ -65,6 +74,20 @@ export function SidebarNav({
     items: group.items.filter(canSee),
   })).filter((group) => group.items.length > 0)
 
+  // Only the most specific matching item is active, so a nested route (e.g.
+  // `/settings/access-control`) highlights its own item and not the parent.
+  let activeItem: NavItem | null = null
+  let activeScore = 0
+  for (const group of groups) {
+    for (const item of group.items) {
+      const score = matchScore(pathname, searchParams, item)
+      if (score > activeScore) {
+        activeItem = item
+        activeScore = score
+      }
+    }
+  }
+
   return (
     <nav className="flex flex-col gap-4 px-3 py-4" aria-label="Main navigation">
       {groups.map((group) => (
@@ -78,7 +101,7 @@ export function SidebarNav({
             <SidebarLink
               key={item.href}
               item={item}
-              active={isActive(pathname, searchParams, item)}
+              active={item === activeItem}
               collapsed={collapsed}
               onNavigate={onNavigate}
             />
