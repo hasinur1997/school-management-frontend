@@ -19,7 +19,8 @@ import type {
   ResultBundle,
   ResultStudentSummary,
 } from "@/types/result"
-import { ResultMarkSheet, type MarkSheetField } from "./result-mark-sheet"
+import { ResultMarkSheet } from "./result-mark-sheet"
+import { examToMarkSheetProps } from "./result-mark-sheet-mapping"
 
 function formatFigure(value: string | number | null | undefined): string {
   if (value == null || value === "") return "-"
@@ -72,44 +73,9 @@ function ExamMarkSheet({
   student: ResultStudentSummary
   scale: GradingBand[] | undefined
 }) {
-  const label = EXAM_TYPE_LABELS[result.type] ?? result.type
-  const fields: MarkSheetField[] = [
-    { label: "Student Name", value: student.name_en },
-    { label: "Father's Name", value: student.father_name },
-    { label: "Mother's Name", value: student.mother_name },
-    { label: "Admission No", value: student.admission_no, mono: true },
-    { label: "Class", value: student.class },
-    { label: "Section", value: student.section },
-    { label: "Roll No", value: student.roll_no, mono: true },
-    { label: "Examination", value: label },
-  ]
-  const subjects = result.subjects.map((subject) => ({
-    name: subject.name,
-    marks: subject.obtained_marks,
-    grade: subject.grade,
-    point: subject.grade_point,
-  }))
-
-  // "Second Semester Examination, 2016" when the session year is known, else a
-  // plain "… Result" heading. The paper drops the year from the month line when
-  // the title already carries it, so it never prints twice.
-  const title = result.year
-    ? `${label} Examination, ${result.year}`
-    : `${label} Result`
-
   // School name/logo come from settings (not yet implemented); until then the
   // sheet renders its default institution from the imported design.
-  return (
-    <ResultMarkSheet
-      title={title}
-      examMonth={result.held_in}
-      fields={fields}
-      scale={scale}
-      subjects={subjects}
-      gpa={result.gpa}
-      grade={result.grade}
-    />
-  )
+  return <ResultMarkSheet {...examToMarkSheetProps(result, student, scale)} />
 }
 
 function AnnualResultCard({ annual }: { annual: AnnualResult | null }) {

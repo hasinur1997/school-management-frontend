@@ -25,6 +25,7 @@ import {
   BadgeCheck,
   CalendarCheck,
   CalendarOff,
+  FileDown,
   FileText,
   GraduationCap,
   IdCard,
@@ -45,7 +46,7 @@ import { EmptyState } from "@/components/empty-state"
 import { ErrorPanel } from "@/components/error-state"
 import { DetailSkeleton } from "@/components/skeletons"
 import { StudentAttendancePanel } from "@/components/attendance/student-attendance-panel"
-import { EnrollmentResultsPanel } from "@/components/results"
+import { EnrollmentResultsPanel, MarksheetGeneratePanel } from "@/components/results"
 import { StudentInvoicesPanel } from "@/components/invoices"
 import { IdCardPanel, StudentTcPanel } from "@/components/documents"
 import { PromoteStudentDialog } from "@/components/promotions/promote-student-dialog"
@@ -246,6 +247,9 @@ export function StudentDetail({
       : []),
     ...(canViewResults
       ? [{ key: "results", label: "Results", icon: FileText }]
+      : []),
+    ...(canViewResults
+      ? [{ key: "marksheet", label: "Marksheet", icon: FileDown }]
       : []),
     ...(canViewAttendance
       ? [{ key: "leaves", label: "Leaves", icon: CalendarOff }]
@@ -454,6 +458,13 @@ function StudentDetailTabs({
         <StudentAttendancePanel studentId={student.id} />
       ) : active === "results" ? (
         <EnrollmentResultsPanel
+          enrollmentId={
+            student.enrollments?.find((e) => e.status === "active")?.id ??
+            student.enrollments?.[0]?.id
+          }
+        />
+      ) : active === "marksheet" ? (
+        <MarksheetGeneratePanel
           enrollmentId={
             student.enrollments?.find((e) => e.status === "active")?.id ??
             student.enrollments?.[0]?.id
